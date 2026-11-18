@@ -14,7 +14,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import dev.cupr.weather.palette.Palette
 
 // The palette turned into the platform's colours (D7): Material's colour scheme and the system bars' style. The two
-// entry points below read the mode from the configuration's isNightModeActive, the only place the app reads it.
+// entry points below read the mode from the configuration's isNightModeActive, the only place the app's code reads
+// it; the resources follow night mode through values-night.
 
 /** The app's screens in the palette's colours, light or dark with the system. */
 @Composable
