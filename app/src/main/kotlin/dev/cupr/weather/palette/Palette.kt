@@ -3,16 +3,14 @@ package dev.cupr.weather.palette
 import androidx.annotation.ColorInt
 
 /**
- * The single home of every colour the app shows, the Material colour scheme included (D7): one field per role, in a
- * light and a dark instance. The roles are named after the shared colour scheme "copper", except the weather roles
- * [rain] and [sun], which that scheme does not have yet. ColorLiteralTest finds colour literals elsewhere in the app's
- * sources: hex numbers and strings, Android's and Compose's colour constants and factories, and Android's colour
- * resources. The resources' own colours mirror fields of this palette, and tests keep them equal.
+ * The palette of D7: one field per role, in a light and a dark instance; [rain] and [sun] are the app's own weather
+ * roles. The values are interim, those of the Home Assistant dashboard theme the weather card uses. ARGB, opaque.
  *
- * The values are interim: those of the Home Assistant dashboard theme the weather card uses, until the shared colour
- * scheme's values exist. ARGB, opaque.
+ * Only [LIGHT] and [DARK] exist: the constructor is private, and so is `copy()`, which Kotlin 2.4 makes public unless
+ * the class says otherwise. What keeps colours out of the app's other sources: ColorLiteralTest.
  */
-data class Palette(
+@ConsistentCopyVisibility
+data class Palette private constructor(
     /** The ground of a screen and of the window; `primary-background-color`. */
     @param:ColorInt val surfaceBackground: Int,
     /** A card on the ground, and a widget's card; `card-background-color`. */
