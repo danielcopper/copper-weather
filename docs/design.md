@@ -15,7 +15,7 @@ To fill: the sensor's data format.
 
 ## App
 
-What the app does: D4. Until signing in exists, its one screen says that the app is not set up yet.
+What the app does: D4.
 
 To fill: the screens.
 

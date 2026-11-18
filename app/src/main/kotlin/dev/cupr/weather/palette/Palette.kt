@@ -4,7 +4,7 @@ import androidx.annotation.ColorInt
 
 /**
  * The palette of D7: one field per role, in a light and a dark instance; [rain] and [sun] are the app's own weather
- * roles. The values are interim, those of the Home Assistant dashboard theme the weather card uses. ARGB, opaque.
+ * roles. ARGB, opaque.
  *
  * Only [LIGHT] and [DARK] exist: the constructor is private, and so is `copy()`, which Kotlin 2.4 makes public unless
  * the class says otherwise. What keeps colours out of the app's other sources: ColorLiteralTest.
