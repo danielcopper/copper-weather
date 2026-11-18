@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The launcher icon in night mode: the palette's dark surface and sun. -->
+    <color name="ic_launcher_background">#FF1A1F25</color>
+    <color name="ic_launcher_glyph">#FFF5C451</color>
+</resources>
