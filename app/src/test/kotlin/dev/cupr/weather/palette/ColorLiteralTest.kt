@@ -8,8 +8,9 @@ import java.io.File
 /**
  * Every colour of the app lives in [Palette] (D7): no other file of the app's sources holds a colour literal. The
  * one exception is the launcher icon's colours, which an adaptive icon can only take from the resources; they
- * mirror tokens of the palette (AppIdentityTest keeps them equal). Detekt and Android Lint have no rule for this, so
- * this test reads the sources; the test task declares them as its input (build.gradle.kts).
+ * mirror tokens of the palette (AppIdentityTest keeps them equal). No built-in rule of detekt or Android Lint finds
+ * colour literals in Kotlin and in the resources alike, so this test reads the sources; the test task declares them
+ * as its input (build.gradle.kts).
  */
 class ColorLiteralTest {
     private val main = File("src/main")
