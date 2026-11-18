@@ -38,7 +38,7 @@ class ColorLiteralTest {
     }
 
     @Test
-    fun `the resources' only colours are the launcher icon's`() {
+    fun `the resources' only colours are the palette's surface and sun`() {
         val names =
             resourceColors.map { path ->
                 COLOR_NAME
@@ -48,7 +48,7 @@ class ColorLiteralTest {
             }
 
         for (colors in names) {
-            assertEquals(setOf("ic_launcher_background", "ic_launcher_glyph"), colors)
+            assertEquals(setOf("palette_surface", "palette_sun"), colors)
         }
     }
 
@@ -69,7 +69,7 @@ class ColorLiteralTest {
         for (line in kotlin) assertTrue(line, kotlinLiterals.any { it.containsMatchIn(line) })
         for (line in resources) assertTrue(line, resourceLiterals.any { it.containsMatchIn(line) })
         assertTrue(kotlinLiterals.none { it.containsMatchIn("Color(Palette.color(token, dark))") })
-        assertTrue(resourceLiterals.none { it.containsMatchIn("android:fillColor=\"@color/ic_launcher_glyph\"") })
+        assertTrue(resourceLiterals.none { it.containsMatchIn("android:fillColor=\"@color/palette_sun\"") })
     }
 
     private companion object {

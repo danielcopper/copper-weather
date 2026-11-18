@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The launcher icon outside night mode (night: values-night): the
-         palette's surface as its background and its sun as the glyph
-         (dev.cupr.weather.palette.Palette; a test keeps them equal, D7). -->
-    <color name="ic_launcher_background">#FFFFFFFF</color>
-    <color name="ic_launcher_glyph">#FFB07800</color>
+    <!-- Fields of the palette (dev.cupr.weather.palette.Palette, D7) that the
+         resources need, outside night mode (night: values-night): the surface
+         for the window, the splash screen and the launcher icon's background,
+         the sun for the icon's glyph. Tests keep them equal to the palette. -->
+    <color name="palette_surface">#FFFFFFFF</color>
+    <color name="palette_sun">#FFB07800</color>
 </resources>
