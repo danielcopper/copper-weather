@@ -14,7 +14,10 @@ class PaletteTest {
 
     @Test
     fun `the colours read by reflection are every role of the palette`() {
-        val parameters = Palette::class.java.declaredConstructors.maxOf { it.parameterCount }
+        val parameters =
+            Palette::class.java.declaredConstructors
+                .filterNot { it.isSynthetic }
+                .maxOf { it.parameterCount }
 
         assertEquals(parameters, Palette.LIGHT.colors().size)
     }

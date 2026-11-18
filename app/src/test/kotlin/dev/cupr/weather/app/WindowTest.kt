@@ -57,13 +57,8 @@ class WindowTest {
     /** Before Android 15, edge-to-edge sets the scrims as the window's status and navigation bar colours. */
     @Suppress("DEPRECATION") // The bar colours are what Android 14 and older draw; this case runs on Android 14.
     private fun assertBarColors(dark: Boolean) {
-        val window =
-            Robolectric
-                .buildActivity(MainActivity::class.java)
-                .setup()
-                .get()
-                .window
-        val ground = Integer.toHexString(Palette.of(dark).surfaceBackground)
+        val window = started().window
+        val ground = groundHex(dark)
 
         assertEquals("status bar", ground, Integer.toHexString(window.statusBarColor))
         assertEquals("navigation bar", ground, Integer.toHexString(window.navigationBarColor))
@@ -76,8 +71,8 @@ class WindowTest {
     private fun assertBars(dark: Boolean) {
         val api = Build.VERSION.SDK_INT
         assertTrue("Robolectric runs API $api", api >= Build.VERSION_CODES.VANILLA_ICE_CREAM)
-        val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
-        val ground = Integer.toHexString(Palette.of(dark).surfaceBackground)
+        val activity = started()
+        val ground = groundHex(dark)
 
         val scrims =
             (activity.window.decorView as ViewGroup)
@@ -92,8 +87,8 @@ class WindowTest {
     }
 
     private fun assertWindow(dark: Boolean) {
-        val activity = Robolectric.buildActivity(MainActivity::class.java).create().get()
-        val ground = Integer.toHexString(Palette.of(dark).surfaceBackground)
+        val activity = started()
+        val ground = groundHex(dark)
 
         val attributes =
             activity.theme.obtainStyledAttributes(
@@ -105,6 +100,10 @@ class WindowTest {
             assertEquals("splash screen", ground, Integer.toHexString(it.colorAt(1)))
         }
     }
+
+    private fun started(): MainActivity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+
+    private fun groundHex(dark: Boolean): String = Integer.toHexString(Palette.of(dark).surfaceBackground)
 
     private fun TypedArray.colorAt(index: Int): Int = getColor(index, 0)
 

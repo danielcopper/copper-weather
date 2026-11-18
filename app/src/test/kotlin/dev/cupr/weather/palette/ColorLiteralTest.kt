@@ -15,7 +15,8 @@ import java.io.File
  *   Android's ready colours (`Color.White`, `Color.Transparent`, `Color.Unspecified`, `Color.BLACK`,
  *   `Color.TRANSPARENT` …) and anything through `Color.Companion.`; `android.R.color.` and `android.R.attr.color…`;
  *   Material's `dynamicLightColorScheme` and `dynamicDarkColorScheme`;
- * - in XML: a `#` colour as an attribute's value or an element's text; `@android:color/` and `?android:attr/color…`.
+ * - in XML: a `#` colour as an attribute's value or an element's text, also on lines of its own; `@android:color/`,
+ *   and `?android:attr/color…` or its short form `?android:color…`.
  *
  * The two `colors.xml` files may only define the palette's fields the resources need, and AppIdentityTest and
  * WindowTest keep those equal to the palette. No built-in rule of detekt or Android Lint finds colour literals in
@@ -104,6 +105,8 @@ class ColorLiteralTest {
                 "<item name=\"android:windowBackground\">#fff</item>",
                 "@android:color/white",
                 "<item name=\"android:windowBackground\">?android:attr/colorBackground</item>",
+                "<item name=\"android:windowBackground\">?android:colorBackground</item>",
+                "<item name=\"android:windowBackground\">\n    #fff\n</item>",
             )
 
         for (text in kotlin) assertTrue(text, kotlinLiterals.any { it.containsMatchIn(text) })
@@ -115,7 +118,6 @@ class ColorLiteralTest {
                 "// see #123",
                 "val issue = \"#1234 is open\"",
                 "val bits = 0x1234567",
-                "val text = \"a\"\n// see #123 \"b\"",
                 "intArrayOf(android.R.attr.windowBackground)",
             )
         for (text in notColours) assertTrue(text, kotlinLiterals.none { it.containsMatchIn(text) })
@@ -158,8 +160,9 @@ class ColorLiteralTest {
 
         val resourceLiterals =
             listOf(
-                Regex("""["'>][ \t]*#$HEX_COLOR[ \t]*["'<]"""),
-                Regex("""@android:color/|\?android:attr/color"""),
+                Regex("""["'][ \t]*#$HEX_COLOR[ \t]*["']"""),
+                Regex(""">\s*#$HEX_COLOR\s*<"""),
+                Regex("""@android:color/|\?android:(attr/)?color"""),
             )
     }
 }

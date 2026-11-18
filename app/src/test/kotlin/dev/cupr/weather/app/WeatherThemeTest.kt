@@ -10,7 +10,11 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Every colour of Material's colour scheme comes from the palette of its mode (D7). */
+/**
+ * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, the main roles are
+ * the palette's roles of that name, the containers differ from the ground, and text on the accent and on the warning
+ * is readable.
+ */
 class WeatherThemeTest {
     @Test
     fun `every colour of the scheme is a palette colour outside night mode`() {
@@ -40,25 +44,38 @@ class WeatherThemeTest {
     }
 
     @Test
-    fun `a card or filled field stands out from the ground in both modes`() {
+    fun `the containers, the bright surface and the surface variant differ from the ground in both modes`() {
         for (dark in listOf(false, true)) {
             val scheme = colorScheme(dark)
+            val containers =
+                mapOf(
+                    "surfaceContainerLow" to scheme.surfaceContainerLow,
+                    "surfaceContainer" to scheme.surfaceContainer,
+                    "surfaceContainerHigh" to scheme.surfaceContainerHigh,
+                    "surfaceContainerHighest" to scheme.surfaceContainerHighest,
+                    "surfaceBright" to scheme.surfaceBright,
+                    "surfaceVariant" to scheme.surfaceVariant,
+                )
 
-            assertNotEquals("highest container, dark=$dark", scheme.background, scheme.surfaceContainerHighest)
-            assertNotEquals("container, dark=$dark", scheme.background, scheme.surfaceContainer)
+            for ((role, color) in containers) assertNotEquals("$role, dark=$dark", scheme.background, color)
         }
     }
 
     @Test
-    fun `text on the accent and on the error reaches WCAG's 4,5 to 1 in both modes`() {
+    fun `text on the accent, the error and the error container reaches WCAG's 4,5 to 1 in both modes`() {
         for (dark in listOf(false, true)) {
             val scheme = colorScheme(dark)
+            val pairs =
+                mapOf(
+                    "onPrimary" to (scheme.onPrimary to scheme.primary),
+                    "onError" to (scheme.onError to scheme.error),
+                    "onErrorContainer" to (scheme.onErrorContainer to scheme.errorContainer),
+                )
 
-            val onPrimary = contrast(scheme.onPrimary.toArgb(), scheme.primary.toArgb())
-            val onError = contrast(scheme.onError.toArgb(), scheme.error.toArgb())
-
-            assertTrue("onPrimary $onPrimary:1, dark=$dark", onPrimary >= MINIMUM_CONTRAST)
-            assertTrue("onError $onError:1, dark=$dark", onError >= MINIMUM_CONTRAST)
+            for ((role, colors) in pairs) {
+                val ratio = contrast(colors.first.toArgb(), colors.second.toArgb())
+                assertTrue("$role $ratio:1, dark=$dark", ratio >= MINIMUM_CONTRAST)
+            }
         }
     }
 
