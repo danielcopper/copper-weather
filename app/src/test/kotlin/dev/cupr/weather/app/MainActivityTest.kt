@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** The app's screen until signing in exists: its name and that it is not set up yet, on the palette's surface. */
+/** The app's screen until signing in exists: its name and that it is not set up yet, on the palette's ground. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainActivityTest {
@@ -28,13 +28,13 @@ class MainActivityTest {
     }
 
     @Test
-    fun `the screen's ground is the palette's surface outside night mode`() {
+    fun `the screen's ground is the palette's ground outside night mode`() {
         assertGround(dark = false)
     }
 
     @Test
     @Config(qualifiers = "+night")
-    fun `the screen's ground is the palette's surface in night mode`() {
+    fun `the screen's ground is the palette's ground in night mode`() {
         assertGround(dark = true)
     }
 
@@ -44,6 +44,6 @@ class MainActivityTest {
         // The bottom-right corner, away from the text.
         val ground = screen.getPixel(screen.width - 1, screen.height - 1)
 
-        assertEquals(Integer.toHexString(Palette.of(dark).surface), Integer.toHexString(ground))
+        assertEquals(Integer.toHexString(Palette.of(dark).surfaceBackground), Integer.toHexString(ground))
     }
 }

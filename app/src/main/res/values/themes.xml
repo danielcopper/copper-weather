@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The window of the app's screen, light or dark with the system, until
-         Compose draws it: the palette's surface as its ground and that of the
+         Compose draws it: the palette's ground as its own and that of the
          splash screen. -->
     <style name="Theme.CopperWeather" parent="android:Theme.DeviceDefault.DayNight">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@color/palette_surface</item>
-        <item name="android:windowSplashScreenBackground">@color/palette_surface</item>
+        <item name="android:windowBackground">@color/palette_surface_background</item>
+        <item name="android:windowSplashScreenBackground">@color/palette_surface_background</item>
     </style>
 </resources>

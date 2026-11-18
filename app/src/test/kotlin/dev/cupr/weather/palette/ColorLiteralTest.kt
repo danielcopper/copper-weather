@@ -38,7 +38,7 @@ class ColorLiteralTest {
     }
 
     @Test
-    fun `the resources' only colours are the palette's surface and sun`() {
+    fun `the resources' only colours are the palette's ground, card and sun`() {
         for (path in resourceColors) {
             val names =
                 COLOR_NAME
@@ -46,7 +46,7 @@ class ColorLiteralTest {
                     .map { it.groupValues[1] }
                     .toSet()
 
-            assertEquals(path, setOf("palette_surface", "palette_sun"), names)
+            assertEquals(path, setOf("palette_surface_background", "palette_surface_card", "palette_sun"), names)
         }
     }
 
@@ -86,9 +86,9 @@ class ColorLiteralTest {
 
         for (line in kotlin) assertTrue(line, kotlinLiterals.any { it.containsMatchIn(line) })
         for (line in resources) assertTrue(line, resourceLiterals.any { it.containsMatchIn(line) })
-        for (line in listOf("Color(Palette.of(dark).surface)", "// see #123", "val issue = \"#1234 is open\"")) {
-            assertTrue(line, kotlinLiterals.none { it.containsMatchIn(line) })
-        }
+        val notColours =
+            listOf("Color(Palette.of(dark).surfaceBackground)", "// see #123", "val issue = \"#1234 is open\"")
+        for (line in notColours) assertTrue(line, kotlinLiterals.none { it.containsMatchIn(line) })
         for (line in listOf("android:fillColor=\"@color/palette_sun\"", "<!-- see #123 -->")) {
             assertTrue(line, resourceLiterals.none { it.containsMatchIn(line) })
         }
