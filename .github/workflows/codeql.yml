@@ -36,8 +36,8 @@ jobs:
           languages: java-kotlin
           build-mode: manual
       - name: Build
-        # Kotlin compiles inside Gradle's process (gradle.properties), where
-        # the tracer sees it; --no-build-cache keeps Gradle from reusing outputs.
+        # Kotlin compiles inside Gradle's process (gradle.properties says
+        # why); --no-build-cache keeps Gradle from reusing outputs.
         run: ./gradlew --no-daemon --no-build-cache --no-configuration-cache assembleDebug
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:

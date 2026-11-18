@@ -8,10 +8,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
 
-/**
- * The app's version is the one release-please writes into version.txt, and its version code follows from it by the
- * rule in build.gradle.kts: major × 1,000,000 + minor × 1,000 + patch.
- */
+/** The app's version is version.txt's, and its version code follows from it by the rule in app/build.gradle.kts. */
 @RunWith(RobolectricTestRunner::class)
 class VersionTest {
     @Test

@@ -72,7 +72,9 @@ description = "Rewrite the lock files and the dependency verification metadata a
 # every POM and module file again, as on a machine with an empty cache: from a
 # warm cache Gradle skips parent POMs and BOMs it parsed before, and CI would
 # then fail on them. CI's lock file check (ci.yml) runs the same resolution
-# without the gate's tasks.
+# without the gate's tasks; what is resolved only while a task runs (aapt2) is
+# checked by CI's other jobs, which, like `gate`, fail on a stale state with
+# Gradle's own errors.
 run = """
 set -eu
 rm -f gradle/verification-metadata.xml

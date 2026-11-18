@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
-// The app's version, which release-please writes into version.txt with each release.
+// The app's version, from version.txt (release.yml says how it gets there).
 val appVersion =
     providers
         .fileContents(rootProject.layout.projectDirectory.file("version.txt"))
@@ -18,7 +18,8 @@ val appVersion =
 
 /**
  * The version code of a "major.minor.patch" version: major × 1,000,000 + minor × 1,000 + patch, so a later release
- * always has a larger code while minor and patch stay below 1,000, which this checks. VersionTest restates the rule.
+ * always has a larger code while minor and patch stay below 1,000, which this checks. The rule's one home; VersionTest
+ * checks the built app against it.
  */
 fun versionCodeOf(version: String): Int {
     val parts = version.split(".").map { it.toIntOrNull() ?: -1 }
@@ -99,8 +100,7 @@ android {
     }
 }
 
-// The unit tests' coverage, written by `createDebugUnitTestCoverageReport`. Set on this module, not in the root
-// `sonar` block: the scanner resolves a relative path against the module's directory.
+// The unit tests' coverage, written by `createDebugUnitTestCoverageReport`.
 extensions.configure<SonarExtension> {
     properties {
         property(
