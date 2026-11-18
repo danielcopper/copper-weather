@@ -1,43 +1,30 @@
 # Design
 
-A skeleton: what the decisions in [decisions.md](decisions.md) fix so far. Each section grows as its decisions land;
-what is still open is listed under "To decide" there.
+A skeleton that grows as the design does. What is decided stands in [decisions.md](decisions.md), what is open under
+"To decide" there; this file holds only what the decisions leave to the design.
 
 ## Widget
 
-One widget in the first version, drawn as RemoteViews (D4, D5). What it shows by size bucket:
-
-| Size bucket | Content |
-|---|---|
-| small | now, today's high and low |
-| wide | plus the next hours |
-| tall | plus the next days (D4) |
-
-On top of that the warnings banner and "Stand …" (D4).
-
-## Weather icons
-
-AnimatedVectorDrawables translated from the dashboard's icons; in a widget, the indeterminate drawable of a
-ProgressBar (D6).
+Its content by size bucket, the warnings banner and "Stand …": D4. How it is drawn: D5. Weather icons: D6.
 
 ## Data
 
-The snapshot of the app sensor's last good answer (D2, D3).
+The app sensor and the snapshot: D2, D3.
 
 To fill: the sensor's data format.
 
 ## App
 
-Sign-in and the fetch interval (D4); until signing in exists, a screen that says the app is not set up yet.
+What the app does: D4. Until signing in exists, its one screen says that the app is not set up yet.
 
 To fill: the screens.
 
 ## Colours
 
-The roles and their interim values live in the palette (`dev.cupr.weather.palette.Palette`); the Material colour
-scheme is mapped from it (D7).
+D7; the roles and their interim values are in `dev.cupr.weather.palette.Palette`, the mapping to Material's colour
+scheme in `app/src/main/kotlin/dev/cupr/weather/app/WeatherTheme.kt`.
 
 ## Launcher icon
 
-A placeholder: a sun with four rays behind a cloud, in the palette's sun on its card surface, light and dark; the same
+A placeholder: a sun with four rays behind a cloud, in the palette's sun on its card colour, light and dark; the same
 drawable is the monochrome layer for themed icons.

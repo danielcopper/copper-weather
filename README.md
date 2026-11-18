@@ -17,7 +17,7 @@ without root.
 
 ```sh
 mise run setup    # Android command-line tools, SDK packages, local.properties
-mise run gate     # what CI checks, as far as it runs locally (mise.toml)
+mise run gate     # most of what CI checks; mise.toml says what it leaves out
 mise run install  # builds the debug APK and installs it with adb
 ```
 

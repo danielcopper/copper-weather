@@ -26,8 +26,7 @@ Home Assistant's last good answer, kept on the phone; the widgets draw from it (
 ### App sensor
 
 The one Home Assistant sensor made for the app, and the only thing the app reads from Home Assistant (D3). It carries
-the weather in the shape the widgets need, so the logic stays in Home Assistant and the app draws. Documents call it
-"the app sensor".
+the weather in the shape the widgets need, so the logic stays in Home Assistant and the app draws.
 
 ### Schema version
 
@@ -63,9 +62,7 @@ The two forms of a weather icon (D6). The **animated icon** is an AnimatedVector
 widget is seen; the platform stops it when the widget is not seen. The **still image** is the same icon without
 motion, which a setting per widget switches it to.
 
-### Palette token
+### Palette role
 
-The name of a colour by its role, such as `surfaceCard`, `textPrimary`, `accentSolid`, `rain` or `scale1`: a field of
-`dev.cupr.weather.palette.Palette`. The names follow the shared colour scheme "copper"; `rain` and `sun` are the app's
-own weather roles. The palette gives every token one colour for light and one for dark, and every colour the app
-shows comes from it, the Material colour scheme included (D7).
+What a colour is for, such as `surfaceCard`, `textPrimary`, `accentSolid`, `rain` or `scale1`: a field of
+`dev.cupr.weather.palette.Palette`, which gives every role one colour for light and one for dark (D7).

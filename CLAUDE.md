@@ -7,7 +7,7 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - **Gate**: `mise run gate`; its description in `mise.toml` says what it covers. On a fresh machine `mise run setup` first.
 - **Lint only**: `mise run lint`; ktlint, detekt and Android Lint run on the whole module, not on single files. Warnings are errors in all three and in the Kotlin compiler.
 - **Dependency change**: `mise run deps-refresh` rewrites the lock files (`*.lockfile`) and `gradle/verification-metadata.xml`, which every build checks; commit them with the change after reading the diff.
-- **Versions of the tools**: libraries and Gradle plugins in `gradle/libs.versions.toml`, Gradle in `gradle/wrapper/gradle-wrapper.properties`, the JDK in `mise.toml` and CI's `JAVA_VERSION`; the reason for a version held back stands beside it.
+- **Versions**: libraries and Gradle plugins in `gradle/libs.versions.toml`, Gradle in `gradle/wrapper/gradle-wrapper.properties`, the JDK in `mise.toml` and CI's `JAVA_VERSION`, the Android SDK packages and command-line tools in `mise.toml`'s `setup`, the GitHub Actions in the workflows; the reason for a version held back stands beside it.
 - **App version**: `version.txt`, kept by release-please (`.github/workflows/release.yml`); the version code follows from it (`app/build.gradle.kts`). Never edit `version.txt` or `CHANGELOG.md` by hand.
 
 ## Tests
@@ -19,7 +19,7 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - Conventional Commits, lowercase, imperative.
 - Code, comments and docs in English; the app's visible texts are German Android string resources, except its name.
 - Comments name the decision behind a rule (`D7`), from `docs/decisions.md`.
-- Colours: D7, `dev.cupr.weather.palette.Palette`, and the tests that guard it (`ColorLiteralTest`, `WeatherThemeTest`, `WindowTest`, `AppIdentityTest`).
+- Colours: D7 and the KDoc of `dev.cupr.weather.palette.Palette`.
 
 ## Machine notes
 
