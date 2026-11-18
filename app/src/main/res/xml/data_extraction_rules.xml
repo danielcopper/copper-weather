@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Nothing is backed up or moved to a new device: what the app will keep,
-     the sign-in and the snapshot, belongs to this phone and is fetched anew
-     after signing in. -->
+<!-- Nothing is backed up or moved to a new device, from either storage,
+     credential-encrypted or device-encrypted: what the app will keep, the
+     sign-in and the snapshot, belongs to this phone, and the snapshot is
+     fetched anew after signing in again. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="." />
@@ -9,6 +10,10 @@
         <exclude domain="database" path="." />
         <exclude domain="sharedpref" path="." />
         <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
     </cloud-backup>
     <device-transfer>
         <exclude domain="root" path="." />
@@ -16,5 +21,9 @@
         <exclude domain="database" path="." />
         <exclude domain="sharedpref" path="." />
         <exclude domain="external" path="." />
+        <exclude domain="device_root" path="." />
+        <exclude domain="device_file" path="." />
+        <exclude domain="device_database" path="." />
+        <exclude domain="device_sharedpref" path="." />
     </device-transfer>
 </data-extraction-rules>
