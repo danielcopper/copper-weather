@@ -1,42 +1,51 @@
 package dev.cupr.weather.app
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.activity.SystemBarStyle
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import dev.cupr.weather.palette.Palette
 
-/** The app's screens in the palette's colours (D7), light or dark with the system. */
+// The palette turned into the platform's colours (D7): Material's colour scheme and the system bars' style, each for
+// night mode when `dark`, which both read from the configuration's isNightModeActive.
+
+/** The app's screens in the palette's colours, light or dark with the system. */
 @Composable
 fun WeatherTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = colorScheme(isSystemInDarkTheme()), content = content)
+    MaterialTheme(colorScheme = colorScheme(LocalConfiguration.current.isNightModeActive), content = content)
+}
+
+/** The system bars' scrims are the screen's ground, so the system draws no colour of its own there. */
+fun systemBarStyle(dark: Boolean): SystemBarStyle {
+    val ground = Palette.of(dark).surfaceBackground
+    return if (dark) SystemBarStyle.dark(ground) else SystemBarStyle.light(ground, ground)
 }
 
 /**
- * Material's colour scheme for night mode when [dark], else outside it, every role from the palette (D7), until the
- * shared colour scheme brings a Material 3 scheme of its own:
- * - primary, secondary and tertiary, their containers and fixed variants: the accent, with the text on it;
- * - error and its container: the warning, with the accent's text colour on it, until the palette has an error role;
- * - background and surface: the ground; the containers from the ground (lowest, dim) over the card (low, middle) to
- *   what is raised on it (high, highest, bright, variant);
+ * Material's colour scheme, every role from the palette. Why some roles take what they take:
+ * - the containers take the card colour, the higher ones the raised colour where it differs from the ground, so a
+ *   default card or filled field stands out from the ground as the dashboard's cards do;
  * - the surface tint is the ground, so a Surface's tonal elevation mixes in no other colour;
- * - outlines: the border; the inverse surface: the text colour with the card's colour on it;
- * - the scrim behind dialogs: the mode's darkest colour, the ground in night mode and the text colour outside it.
+ * - error is the warning until the palette has an error role, and the text on it is whichever text colour reaches
+ *   the higher contrast;
+ * - the scrim behind dialogs is the mode's darkest colour.
  */
 fun colorScheme(dark: Boolean): ColorScheme {
     val palette = Palette.of(dark)
     val ground = Color(palette.surfaceBackground)
     val card = Color(palette.surfaceCard)
-    val raised = Color(palette.surfaceRaised)
+    val raised = if (palette.surfaceRaised != palette.surfaceBackground) Color(palette.surfaceRaised) else card
     val border = Color(palette.surfaceBorder)
     val text = Color(palette.textPrimary)
-    val onAccent = Color(palette.onAccentSolid)
     val warning = Color(palette.warningSolid)
+    val onWarning = listOf(text, Color(palette.onAccentSolid)).maxBy { contrast(it, warning) }
     return (if (dark) darkColorScheme() else lightColorScheme())
-        .withAccent(Color(palette.accentSolid), onAccent)
+        .withAccent(Color(palette.accentSolid), Color(palette.onAccentSolid))
         .copy(
             background = ground,
             onBackground = text,
@@ -48,9 +57,9 @@ fun colorScheme(dark: Boolean): ColorScheme {
             inverseSurface = text,
             inverseOnSurface = card,
             error = warning,
-            onError = onAccent,
+            onError = onWarning,
             errorContainer = warning,
-            onErrorContainer = onAccent,
+            onErrorContainer = onWarning,
             outline = border,
             outlineVariant = border,
             scrim = if (dark) ground else text,
@@ -64,7 +73,17 @@ fun colorScheme(dark: Boolean): ColorScheme {
         )
 }
 
-/** Primary, secondary and tertiary, their containers and fixed variants: [accent], with [onAccent] on it. */
+/** WCAG's contrast ratio of two colours. */
+private fun contrast(
+    a: Color,
+    b: Color,
+): Float {
+    val (light, dark) = listOf(a.luminance(), b.luminance()).sortedDescending()
+    return (light + CONTRAST_OFFSET) / (dark + CONTRAST_OFFSET)
+}
+
+private const val CONTRAST_OFFSET = 0.05f
+
 private fun ColorScheme.withAccent(
     accent: Color,
     onAccent: Color,

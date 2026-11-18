@@ -15,8 +15,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Until Compose draws, the app's window and its splash screen show the palette's ground, and the scrims behind the
- * system bars are that ground too (D7).
+ * Until Compose draws, the app's window and its splash screen show the palette's ground, and the system bars' scrims
+ * are that ground too, on Android 15 and later and before it (D7).
  */
 @RunWith(RobolectricTestRunner::class)
 class WindowTest {
@@ -40,6 +40,33 @@ class WindowTest {
     @Config(qualifiers = "+night")
     fun `the system bars' scrims are the palette's ground in night mode`() {
         assertBars(dark = true)
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    fun `before Android 15 the system bars are the palette's ground outside night mode`() {
+        assertBarColors(dark = false)
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE], qualifiers = "+night")
+    fun `before Android 15 the system bars are the palette's ground in night mode`() {
+        assertBarColors(dark = true)
+    }
+
+    /** Before Android 15, edge-to-edge sets the scrims as the window's status and navigation bar colours. */
+    @Suppress("DEPRECATION") // The bar colours are what Android 14 and older draw; this case runs on Android 14.
+    private fun assertBarColors(dark: Boolean) {
+        val window =
+            Robolectric
+                .buildActivity(MainActivity::class.java)
+                .setup()
+                .get()
+                .window
+        val ground = Integer.toHexString(Palette.of(dark).surfaceBackground)
+
+        assertEquals("status bar", ground, Integer.toHexString(window.statusBarColor))
+        assertEquals("navigation bar", ground, Integer.toHexString(window.navigationBarColor))
     }
 
     /**

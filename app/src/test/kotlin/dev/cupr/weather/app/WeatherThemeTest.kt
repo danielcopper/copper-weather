@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.toArgb
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.palette.colors
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,7 +23,7 @@ class WeatherThemeTest {
     }
 
     @Test
-    fun `the screen's ground and text come from the palette's ground and text roles`() {
+    fun `the scheme's ground, text, accent and border are the palette's roles of that name`() {
         for (dark in listOf(false, true)) {
             val palette = Palette.of(dark)
 
@@ -35,6 +36,29 @@ class WeatherThemeTest {
             assertEquals("onSurfaceVariant", palette.textSecondary, scheme.onSurfaceVariant.toArgb())
             assertEquals("primary", palette.accentSolid, scheme.primary.toArgb())
             assertEquals("outline", palette.surfaceBorder, scheme.outline.toArgb())
+        }
+    }
+
+    @Test
+    fun `a card or filled field stands out from the ground in both modes`() {
+        for (dark in listOf(false, true)) {
+            val scheme = colorScheme(dark)
+
+            assertNotEquals("highest container, dark=$dark", scheme.background, scheme.surfaceContainerHighest)
+            assertNotEquals("container, dark=$dark", scheme.background, scheme.surfaceContainer)
+        }
+    }
+
+    @Test
+    fun `text on the accent and on the error reaches WCAG's 4,5 to 1 in both modes`() {
+        for (dark in listOf(false, true)) {
+            val scheme = colorScheme(dark)
+
+            val onPrimary = contrast(scheme.onPrimary.toArgb(), scheme.primary.toArgb())
+            val onError = contrast(scheme.onError.toArgb(), scheme.error.toArgb())
+
+            assertTrue("onPrimary $onPrimary:1, dark=$dark", onPrimary >= MINIMUM_CONTRAST)
+            assertTrue("onError $onError:1, dark=$dark", onError >= MINIMUM_CONTRAST)
         }
     }
 
@@ -54,6 +78,28 @@ class WeatherThemeTest {
     }
 
     private companion object {
+        /** WCAG 2's minimum contrast for normal text (AA). */
+        const val MINIMUM_CONTRAST = 4.5
+
+        /** WCAG 2's contrast ratio of two opaque sRGB colours, computed here rather than through Compose. */
+        fun contrast(
+            a: Int,
+            b: Int,
+        ): Double {
+            val (light, dark) = listOf(luminance(a), luminance(b)).sortedDescending()
+            return (light + 0.05) / (dark + 0.05)
+        }
+
+        /** WCAG 2's relative luminance. */
+        fun luminance(argb: Int): Double {
+            fun linear(channel: Int): Double {
+                val c = channel / 255.0
+                return if (c <= 0.04045) c / 12.92 else Math.pow((c + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * linear(argb shr 16 and 0xFF) + 0.7152 * linear(argb shr 8 and 0xFF) +
+                0.0722 * linear(argb and 0xFF)
+        }
+
         /** Material 3 has had more colour roles than this since its first release. */
         const val MATERIAL_BASELINE_ROLES = 25
 
