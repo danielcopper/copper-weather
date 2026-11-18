@@ -1,0 +1,23 @@
+# Decisions
+
+## To decide
+
+- [ ] Widget content per size in detail
+- [ ] Colours: the interim values (D7) and the final ones from the shared colour scheme "copper"
+- [ ] App and widget names, and the launcher icon
+- [ ] Whether the setting for still images (D6) is one for the app or one per widget
+- [ ] A push path for warnings
+- [ ] The attribution text shown in the app
+
+## Decisions
+
+- D1 (2026-11-18): The app is its own standalone Android app with home-screen widgets and a small app; not a fork of an existing weather app, and not part of the Home Assistant app.
+- D2 (2026-11-18): The app reads only from Home Assistant and keeps the last good answer as a local snapshot; the widgets draw from that snapshot.
+- D3 (2026-11-18): Home Assistant delivers one sensor made for the app, the app sensor, with a versioned data format: its `schema_version` stays the same for additions and goes up for a field renamed or removed or a change of meaning. The app reads only that sensor, signed in as a normal (non-admin) user. The logic stays in Home Assistant; the app draws.
+- D4 (2026-11-18): The first version has one widget whose content follows its size: small shows now and today's high and low; wide adds the next hours; tall adds the next days. A banner shows official warnings, and "Stand …" shows when the data is old. The app signs in and sets the fetch interval. A weather view of its own in the app comes later.
+- D5 (2026-11-18): The widgets are RemoteViews, with drawn parts where text views cannot do it, as in copper-calendar; not Glance, which has no custom fonts and no canvas in Glance 1.2. Breezy Weather draws its trend widgets the same way.
+- D6 (2026-11-18): Weather icons are animated in the widget and in the app, taken from the dashboard's icons and translated to AnimatedVectorDrawables. In a widget the icon is the indeterminate drawable of a ProgressBar: it runs endlessly while the widget is seen, and the platform stops it when it is not (another home page, an app on top, the screen off; measured on a Pixel 10 Pro with Android 17: 0 frames, 0 CPU). A setting switches the widgets to still images. While the widget is seen the animation costs about +130 mA for the whole phone; accepted. A frame-by-frame ViewFlipper was tried and dropped, as it looks like a morph. A widget cannot cap its frame rate, since `View.setRequestedFrameRate` is not remotable.
+- D7 (2026-11-18): Every colour lives in one place in the app, the palette, by role; later its values come from the shared colour scheme "copper". Until then they are interim values from the dashboard theme the weather card uses.
+- D8 (2026-11-18): Code shared with copper-calendar (sign-in, Home Assistant client, fetch, snapshot, widget basics) is copied and trimmed. A shared library is considered once both apps show which parts stay the same.
+- D9 (2026-11-18): Minimum Android 12 (API 31), target the current API level (37), as copper-calendar, for the same two phones.
+- D10 (2026-11-18): The tooling is copper-calendar's: tasks through mise, Gradle dependency verification and lock files, CI on GitHub Actions with Android Lint, ktlint and detekt with warnings as errors, SonarQube Cloud, CodeQL, a check of the PR title and Dependabot. release-please adds versions and the changelog.
