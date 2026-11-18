@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every other check stays on, its warnings as errors (build.gradle.kts). -->
+<lint>
+    <!-- These two look up the newest Android Gradle plugin, Gradle and library versions online, so they fail on a
+         release day; Dependabot proposes updates (D10). -->
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+</lint>

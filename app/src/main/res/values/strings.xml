@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A name, English and not translated; a placeholder until the name is decided. -->
+    <string name="app_name" translatable="false">Copper Weather</string>
+    <!-- The app's screen until signing in exists. -->
+    <string name="not_set_up">Die App ist noch nicht eingerichtet.</string>
+</resources>
