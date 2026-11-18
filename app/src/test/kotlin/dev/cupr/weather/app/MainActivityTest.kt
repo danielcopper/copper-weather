@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import dev.cupr.weather.palette.Palette
-import dev.cupr.weather.palette.PaletteToken
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +44,6 @@ class MainActivityTest {
         // The bottom-right corner, away from the text.
         val ground = screen.getPixel(screen.width - 1, screen.height - 1)
 
-        assertEquals(Integer.toHexString(Palette.color(PaletteToken.Surface, dark)), Integer.toHexString(ground))
+        assertEquals(Integer.toHexString(Palette.of(dark).surface), Integer.toHexString(ground))
     }
 }

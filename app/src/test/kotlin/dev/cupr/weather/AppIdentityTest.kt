@@ -8,7 +8,6 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.palette.Palette
-import dev.cupr.weather.palette.PaletteToken
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,15 +16,16 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * What the launcher shows of the app: its name and its icon, a sun behind a cloud in the palette's sun on its
- * surface (D7). The icon's layers are drawn at one pixel per unit of the adaptive icon's 108-unit viewport and
+ * What the launcher shows of the app: its name and the icon its manifest names, a sun behind a cloud in the
+ * palette's sun on its surface (D7). The icon's layers are drawn at one pixel per unit of the adaptive icon's 108-unit viewport and
  * probed inside its shapes: the sun, a ray, the cloud, and the gap between sun and cloud.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class AppIdentityTest {
     private val application = ApplicationProvider.getApplicationContext<Application>()
-    private val icon get() = application.getDrawable(R.mipmap.ic_launcher) as AdaptiveIconDrawable
+    private val icon
+        get() = application.applicationInfo.loadIcon(application.packageManager) as AdaptiveIconDrawable
 
     @Test
     fun `the app is Copper Weather`() {
@@ -54,8 +54,8 @@ class AppIdentityTest {
     }
 
     private fun assertIcon(dark: Boolean) {
-        val surface = Palette.color(PaletteToken.Surface, dark)
-        val sun = Palette.color(PaletteToken.Sun, dark)
+        val surface = Palette.of(dark).surface
+        val sun = Palette.of(dark).sun
         val icon = icon
 
         assertEquals("background", surface, drawn(icon.background).getPixel(GAP_X, GAP_Y))
