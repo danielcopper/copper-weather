@@ -1,6 +1,8 @@
 package dev.cupr.weather.app
 
+import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -11,8 +13,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import dev.cupr.weather.palette.Palette
 
-// The palette turned into the platform's colours (D7): Material's colour scheme and the system bars' style, each for
-// night mode when `dark`, which both read from the configuration's isNightModeActive.
+// The palette turned into the platform's colours (D7): Material's colour scheme and the system bars' style. The two
+// entry points below read the mode from the configuration's isNightModeActive, the only place the app reads it.
 
 /** The app's screens in the palette's colours, light or dark with the system. */
 @Composable
@@ -20,16 +22,20 @@ fun WeatherTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colorScheme(LocalConfiguration.current.isNightModeActive), content = content)
 }
 
-/** The system bars' scrims are the screen's ground, so the system draws no colour of its own there. */
-fun systemBarStyle(dark: Boolean): SystemBarStyle {
+/** Edge to edge, with the system bars' scrims the screen's ground, so the system draws no colour of its own there. */
+fun ComponentActivity.enableEdgeToEdgeFromPalette() {
+    val dark = resources.configuration.isNightModeActive
     val ground = Palette.of(dark).surfaceBackground
-    return if (dark) SystemBarStyle.dark(ground) else SystemBarStyle.light(ground, ground)
+    val bars = if (dark) SystemBarStyle.dark(ground) else SystemBarStyle.light(ground, ground)
+    enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
 }
 
 /**
  * Material's colour scheme, every role from the palette. Why some roles take what they take:
- * - the containers take the card colour, the higher ones the raised colour where it differs from the ground, so a
- *   default card or filled field stands out from the ground as the dashboard's cards do;
+ * - the low and middle containers take the card colour, and the high ones, the bright surface and the surface variant
+ *   the raised colour where it differs from the ground, else the card colour, so a default card or filled field
+ *   stands out from the ground as the dashboard's cards do; the lowest container and the dim surface stay the ground
+ *   on purpose, as the bottom of the scale;
  * - the surface tint is the ground, so a Surface's tonal elevation mixes in no other colour;
  * - error is the warning until the palette has an error role, and the text on it is whichever text colour reaches
  *   the higher contrast;

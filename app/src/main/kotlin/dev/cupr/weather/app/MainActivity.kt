@@ -3,7 +3,6 @@ package dev.cupr.weather.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +21,7 @@ import dev.cupr.weather.R
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val bars = systemBarStyle(resources.configuration.isNightModeActive)
-        enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+        enableEdgeToEdgeFromPalette()
         setContent { WeatherTheme { NotSetUpScreen() } }
     }
 }
