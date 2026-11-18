@@ -76,7 +76,7 @@ android {
                 // ColorLiteralTest reads the app's sources and VersionTest reads version.txt, so a change to
                 // either runs the tests again rather than taking their result from the build cache.
                 test.inputs
-                    .dir("src/main")
+                    .dir("src")
                     .withPathSensitivity(PathSensitivity.RELATIVE)
                     .withPropertyName("mainSources")
                 test.inputs
