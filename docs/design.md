@@ -5,51 +5,39 @@ what is still open is listed under "To decide" there.
 
 ## Widget
 
-One widget in the first version (D4), drawn as RemoteViews with drawn parts where text views cannot do it (D5). Its
-content follows its size:
+One widget in the first version, drawn as RemoteViews (D4, D5). What it shows by size bucket:
 
-| Size | Content |
+| Size bucket | Content |
 |---|---|
-| small | now, and today's high and low |
-| wide | as small, plus the next hours |
-| tall | as small, plus the next days |
+| small | now, today's high and low |
+| wide | plus the next hours |
+| tall | plus the next days (D4) |
 
-A banner shows official warnings, and "Stand …" shows when the data is old (D4).
-
-To fill: the content per size in detail.
+On top of that the warnings banner and "Stand …" (D4).
 
 ## Weather icons
 
-Animated in the widget and in the app, translated from the dashboard's icons to AnimatedVectorDrawables (D6). In a
-widget the icon is the indeterminate drawable of a ProgressBar, which the platform stops while the widget is not seen.
-A setting switches the widgets to still images (D6).
-
-To fill: whether that setting is one for the app or one per widget.
+AnimatedVectorDrawables translated from the dashboard's icons; in a widget, the indeterminate drawable of a
+ProgressBar (D6).
 
 ## Data
 
-The app reads only the app sensor and draws the snapshot of its last good answer (D2, D3).
+The snapshot of the app sensor's last good answer (D2, D3).
 
 To fill: the sensor's data format.
 
 ## App
 
-The app signs in with Home Assistant and sets the fetch interval (D4). Until signing in exists, its screen says that it
-is not set up yet. A weather view of its own comes later.
+Sign-in and the fetch interval (D4); until signing in exists, a screen that says the app is not set up yet.
 
-To fill: the screens, and the attribution text the app shows.
+To fill: the screens.
 
 ## Colours
 
-Every colour comes from the palette, by role, light and dark (D7): surface, text, muted text, rain, the intensity
-scale in five steps, water in three, and the sun. The values are interim, from the dashboard theme the weather card
-uses.
-
-To fill: the final values from the shared colour scheme "copper".
+The roles and their interim values live in the palette (`dev.cupr.weather.palette.Palette`); the Material colour
+scheme is mapped from it (D7).
 
 ## Launcher icon
 
-A placeholder: a sun with four rays behind a cloud, in the palette's sun on its surface, light and dark, with a
-monochrome layer for themed icons.
-
-To fill: the icon, and the names of the app and the widget.
+A placeholder: a sun with four rays behind a cloud, in the palette's sun on its card surface, light and dark; the same
+drawable is the monochrome layer for themed icons.

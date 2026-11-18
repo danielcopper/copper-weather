@@ -4,10 +4,11 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 
 ## Build and checks
 
-- **Gate**: `mise run gate` (build, unit tests with coverage, Android Lint, ktlint, detekt): what CI checks, less the SonarQube Cloud gate, CodeQL, the check of the lock files and checksums, and the PR title. On a fresh machine `mise run setup` first.
+- **Gate**: `mise run gate`; its description in `mise.toml` says what it covers. On a fresh machine `mise run setup` first.
 - **Lint only**: `mise run lint`; ktlint, detekt and Android Lint run on the whole module, not on single files. Warnings are errors in all three and in the Kotlin compiler.
-- **Dependency change**: `mise run deps-refresh` rewrites the lock files (`*.lockfile`) and `gradle/verification-metadata.xml`, which every build checks; commit them with the change after reading the diff. Versions live in `gradle/libs.versions.toml`, with the reason beside any version held back.
-- **Version**: release-please writes it into `version.txt`; `app/build.gradle.kts` reads it and derives the version code. Never edit `version.txt` or `CHANGELOG.md` by hand.
+- **Dependency change**: `mise run deps-refresh` rewrites the lock files (`*.lockfile`) and `gradle/verification-metadata.xml`, which every build checks; commit them with the change after reading the diff.
+- **Versions of the tools**: libraries and Gradle plugins in `gradle/libs.versions.toml`, Gradle in `gradle/wrapper/gradle-wrapper.properties`, the JDK in `mise.toml` and CI's `JAVA_VERSION`; the reason for a version held back stands beside it.
+- **App version**: `version.txt`, kept by release-please (`.github/workflows/release.yml`); the version code follows from it (`app/build.gradle.kts`). Never edit `version.txt` or `CHANGELOG.md` by hand.
 
 ## Tests
 
@@ -18,7 +19,7 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - Conventional Commits, lowercase, imperative.
 - Code, comments and docs in English; the app's visible texts are German Android string resources, except its name.
 - Comments name the decision behind a rule (`D7`), from `docs/decisions.md`.
-- Every colour lives in `dev.cupr.weather.palette.Palette`, by `PaletteToken`, light and dark (D7). No other source holds a colour literal; `ColorLiteralTest` fails on one. The launcher icon's colours in `values/colors.xml` and `values-night/colors.xml` mirror palette tokens, and a test keeps them equal.
+- Colours: D7, `dev.cupr.weather.palette.Palette`, and the tests that guard it (`ColorLiteralTest`, `WeatherThemeTest`, `WindowTest`, `AppIdentityTest`).
 
 ## Machine notes
 
@@ -28,4 +29,3 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - Absolute paths in every command (`git -C <worktree>`); the shell's working directory resets between calls.
 - Scratch files go in the agent's scratchpad, never inside the worktree.
 - Clean up only your own processes, by PID; stop the Gradle daemon with `./gradlew --stop`, never with `pkill -f`.
-- `homelab` is read only: the dashboard and theme the app follows live there, and this repository never writes into it.

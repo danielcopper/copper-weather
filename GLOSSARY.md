@@ -17,8 +17,7 @@ version has one widget, whose content follows its **size bucket** (D4).
 ### Size bucket
 
 The size class of a widget that decides what it shows: small (**now** and today's high and low), wide (plus the
-**hours**) and tall (plus the **days**) (D4). The widget's size in cells falls into exactly one bucket; where one ends
-and the next begins is still to be decided.
+**hours**) and tall (plus the **days**) (D4). Where one bucket ends and the next begins is still to be decided.
 
 ### Snapshot
 
@@ -27,8 +26,8 @@ Home Assistant's last good answer, kept on the phone; the widgets draw from it (
 ### App sensor
 
 The one Home Assistant sensor made for the app, and the only thing the app reads from Home Assistant (D3). It carries
-the weather in the shape the widgets need, so the logic stays in Home Assistant and the app draws. Its entity id is not
-decided yet; documents call it "the app sensor".
+the weather in the shape the widgets need, so the logic stays in Home Assistant and the app draws. Documents call it
+"the app sensor".
 
 ### Schema version
 
@@ -48,9 +47,7 @@ The three parts of the weather the widget shows (D4): **now** is the weather of 
 
 ### Rain hint
 
-The short note that rain is falling or about to fall, as the dashboard shows it from the radar: "Regen jetzt" while it
-rains, "Regen in 25 min" before rain that is due within two hours, otherwise nothing. Its colour is the palette's
-`Rain`.
+A short note that rain is falling or due soon. Its colour is the palette's `rain`.
 
 ### Warning
 
@@ -58,18 +55,17 @@ An official weather warning for the place the weather is for, shown as a banner 
 
 ### Twilight
 
-The transition around sunset and sunrise, from the sun at +6° above the horizon down to −12° below it in the evening,
-and back in the morning. A sensor in Home Assistant states it as `day`, `sunset`, `night` or `sunrise`, and the
-dashboard's icon of the moment shows the day picture, the night picture or the transition between them.
+The transition between day and night around sunrise and sunset, as the app sensor reports it.
 
 ### Still image / animated icon
 
 The two forms of a weather icon (D6). The **animated icon** is an AnimatedVectorDrawable that runs endlessly while the
 widget is seen; the platform stops it when the widget is not seen. The **still image** is the same icon without
-motion, which a setting switches the widgets to.
+motion, which a setting per widget switches it to.
 
 ### Palette token
 
-The name of a colour by its role in the app and its widgets, such as `Surface`, `Text`, `Rain` or `Scale1`
-(`dev.cupr.weather.palette.PaletteToken`). The palette gives every token one colour for light and one for dark, and
-is the only place in the app that holds colours (D7).
+The name of a colour by its role, such as `surfaceCard`, `textPrimary`, `accentSolid`, `rain` or `scale1`: a field of
+`dev.cupr.weather.palette.Palette`. The names follow the shared colour scheme "copper"; `rain` and `sun` are the app's
+own weather roles. The palette gives every token one colour for light and one for dark, and every colour the app
+shows comes from it, the Material colour scheme included (D7).
