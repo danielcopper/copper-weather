@@ -9,13 +9,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 /** Nothing the app keeps leaves the phone by backup or device transfer, from either storage. */
 class BackupRulesTest {
     @Test
+    fun `the manifest turns backup off and names the rules`() {
+        val application = parsed("src/main/AndroidManifest.xml").getElementsByTagName("application").item(0) as Element
+
+        assertEquals("false", application.getAttribute("android:allowBackup"))
+        assertEquals("@xml/data_extraction_rules", application.getAttribute("android:dataExtractionRules"))
+    }
+
+    @Test
     fun `cloud backup and device transfer exclude every domain`() {
-        val rules =
-            DocumentBuilderFactory
-                .newInstance()
-                .newDocumentBuilder()
-                .parse(File("src/main/res/xml/data_extraction_rules.xml"))
-                .documentElement
+        val rules = parsed("src/main/res/xml/data_extraction_rules.xml")
 
         for (section in listOf("cloud-backup", "device-transfer")) {
             val excludes = (rules.getElementsByTagName(section).item(0) as Element).getElementsByTagName("exclude")
@@ -29,6 +32,13 @@ class BackupRulesTest {
             assertEquals(section, DOMAINS, excluded)
         }
     }
+
+    private fun parsed(path: String): Element =
+        DocumentBuilderFactory
+            .newInstance()
+            .newDocumentBuilder()
+            .parse(File(path))
+            .documentElement
 
     private companion object {
         val DOMAINS =

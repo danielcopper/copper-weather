@@ -18,8 +18,8 @@ val appVersion =
 
 /**
  * The version code of a "major.minor.patch" version: major × 1,000,000 + minor × 1,000 + patch, so a later release
- * always has a larger code while minor and patch stay below 1,000, which this checks. The rule's one home; VersionTest
- * checks the built app against it.
+ * always has a larger code while minor and patch stay below 1,000, which this checks. VersionTest restates the rule
+ * to check the built app against it.
  */
 fun versionCodeOf(version: String): Int {
     val parts = version.split(".").map { it.toIntOrNull() ?: -1 }
@@ -74,12 +74,13 @@ android {
                 test.maxHeapSize = "1536m"
                 // Robolectric sets up API 37's shared memory through JDK internals.
                 test.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
-                // ColorLiteralTest reads the app's sources and VersionTest reads version.txt, so a change to
-                // either runs the tests again rather than taking their result from the build cache.
+                // Some tests read files rather than what the build makes of them: the module's sources and
+                // version.txt. Declared as inputs, a change to them runs the tests again rather than taking their
+                // result from the build cache.
                 test.inputs
                     .dir("src")
                     .withPathSensitivity(PathSensitivity.RELATIVE)
-                    .withPropertyName("mainSources")
+                    .withPropertyName("sources")
                 test.inputs
                     .file(rootProject.layout.projectDirectory.file("version.txt"))
                     .withPathSensitivity(PathSensitivity.RELATIVE)
