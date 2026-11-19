@@ -3,9 +3,9 @@ package dev.cupr.weather.palette
 import androidx.annotation.ColorInt
 
 /**
- * The palette of D7: one field per role, in a light and a dark instance. The general roles, [bg] to [warning], carry
- * the general role names of the shared colour scheme "copper"; the domain colours, [rain], the intensity scale
- * ([scale1] to [scale5]), the water steps ([water1] to [water3]) and [sun], are the app's own names. ARGB, opaque.
+ * The palette of D7: one field per role, in a light and a dark instance. The general roles are [bg] to [warning]; the
+ * domain colours are [rain], the intensity scale ([scale1] to [scale5]), the water steps ([water1] to [water3]) and
+ * [sun]. D7 says where the names come from. ARGB, opaque.
  *
  * Only [LIGHT] and [DARK] exist: the constructor is private, and so is `copy()`, which Kotlin 2.4 makes public unless
  * the class says otherwise. What keeps colours out of the app's other sources: ColorLiteralTest.
@@ -14,7 +14,10 @@ import androidx.annotation.ColorInt
 data class Palette private constructor(
     /** The ground of a screen and of the window; `primary-background-color`. */
     @param:ColorInt val bg: Int,
-    /** A card on the ground, and a widget's card; `card-background-color`. */
+    /**
+     * A card on [bg], and a widget's card; `card-background-color`. Not Material's `surface`: how the two names
+     * meet is in [dev.cupr.weather.app.colorScheme].
+     */
     @param:ColorInt val surface: Int,
     /** Something raised on a card, such as a button. */
     @param:ColorInt val surfaceRaised: Int,

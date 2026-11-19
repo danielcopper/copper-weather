@@ -11,9 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, the main roles are
- * the palette's roles of that name, the containers differ from the ground, and text on the accent and on the warning
- * is readable.
+ * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, each role the
+ * mapping fixes is the palette's role it names, the containers differ from the palette's `bg`, and text on the accent
+ * and on the warning is readable.
  */
 class WeatherThemeTest {
     @Test
@@ -27,25 +27,44 @@ class WeatherThemeTest {
     }
 
     @Test
-    fun `the scheme's ground, text, accent and border are the palette's roles of that name`() {
+    fun `the scheme's roles are the palette's bg, surface, text, textMuted, accent, onAccent, border and warning`() {
         for (dark in listOf(false, true)) {
             val palette = Palette.of(dark)
 
             val scheme = colorScheme(dark)
 
-            assertEquals("background", palette.bg, scheme.background.toArgb())
-            assertEquals("surface", palette.bg, scheme.surface.toArgb())
-            assertEquals("onBackground", palette.text, scheme.onBackground.toArgb())
-            assertEquals("onSurface", palette.text, scheme.onSurface.toArgb())
-            assertEquals("onSurfaceVariant", palette.textMuted, scheme.onSurfaceVariant.toArgb())
-            assertEquals("primary", palette.accent, scheme.primary.toArgb())
-            assertEquals("outline", palette.border, scheme.outline.toArgb())
+            val expected =
+                mapOf(
+                    "background" to (palette.bg to scheme.background),
+                    "surface" to (palette.bg to scheme.surface),
+                    "surfaceTint" to (palette.bg to scheme.surfaceTint),
+                    "surfaceDim" to (palette.bg to scheme.surfaceDim),
+                    "surfaceContainerLowest" to (palette.bg to scheme.surfaceContainerLowest),
+                    "surfaceContainer" to (palette.surface to scheme.surfaceContainer),
+                    "surfaceContainerLow" to (palette.surface to scheme.surfaceContainerLow),
+                    "inverseOnSurface" to (palette.surface to scheme.inverseOnSurface),
+                    "onBackground" to (palette.text to scheme.onBackground),
+                    "onSurface" to (palette.text to scheme.onSurface),
+                    "inverseSurface" to (palette.text to scheme.inverseSurface),
+                    "onSurfaceVariant" to (palette.textMuted to scheme.onSurfaceVariant),
+                    "primary" to (palette.accent to scheme.primary),
+                    "onPrimary" to (palette.onAccent to scheme.onPrimary),
+                    "outline" to (palette.border to scheme.outline),
+                    "error" to (palette.warning to scheme.error),
+                    "errorContainer" to (palette.warning to scheme.errorContainer),
+                    "scrim" to ((if (dark) palette.bg else palette.text) to scheme.scrim),
+                )
+
+            for ((role, colors) in expected) {
+                assertEquals("$role, dark=$dark", Integer.toHexString(colors.first), hex(colors.second))
+            }
         }
     }
 
     @Test
-    fun `the containers, the bright surface and the surface variant differ from the ground in both modes`() {
+    fun `the containers, the bright surface and the surface variant differ from the palette's bg in both modes`() {
         for (dark in listOf(false, true)) {
+            val bg = Color(Palette.of(dark).bg)
             val scheme = colorScheme(dark)
             val containers =
                 mapOf(
@@ -57,7 +76,7 @@ class WeatherThemeTest {
                     "surfaceVariant" to scheme.surfaceVariant,
                 )
 
-            for ((role, color) in containers) assertNotEquals("$role, dark=$dark", scheme.background, color)
+            for ((role, color) in containers) assertNotEquals("$role, dark=$dark", bg, color)
         }
     }
 
@@ -95,6 +114,9 @@ class WeatherThemeTest {
     }
 
     private companion object {
+        /** A colour of the scheme as the hex digits `Integer.toHexString` gives a palette colour. */
+        fun hex(color: Color): String = Integer.toHexString(color.toArgb())
+
         /** WCAG 2's minimum contrast for normal text (AA). */
         const val MINIMUM_CONTRAST = 4.5
 

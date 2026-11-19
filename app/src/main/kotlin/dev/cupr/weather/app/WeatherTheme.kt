@@ -23,7 +23,7 @@ fun WeatherTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colorScheme(LocalConfiguration.current.isNightModeActive), content = content)
 }
 
-/** Edge to edge, with the system bars' scrims the screen's ground, so the system draws no colour of its own there. */
+/** Edge to edge, with the system bars' scrims the palette's `bg`, so the system draws no colour of its own there. */
 fun ComponentActivity.enableEdgeToEdgeFromPalette() {
     val dark = resources.configuration.isNightModeActive
     val bg = Palette.of(dark).bg
@@ -32,11 +32,14 @@ fun ComponentActivity.enableEdgeToEdgeFromPalette() {
 }
 
 /**
- * Material's colour scheme, every role from the palette. Why some roles take what they take:
+ * Material's colour scheme, every role from the palette. The two share the word surface for different things:
+ * Material's `surface` is the palette's `bg`, and the palette's `surface` is Material's `surfaceContainer` and
+ * `surfaceContainerLow`; the palette's colours below carry the prefix `palette` for that reason. Why some roles take
+ * what they take:
  * - the low and middle containers take the palette's `surface`, and the high ones, the bright surface and the surface
  *   variant its `surfaceRaised` where that differs from `bg`, else `surface`, so a default card or filled field
- *   stands out from the ground as the dashboard's cards do; the lowest container and the dim surface stay `bg` on
- *   purpose, as the bottom of the scale;
+ *   stands out from `bg` as the dashboard's cards do; the lowest container and the dim surface stay `bg` on purpose,
+ *   as the bottom of the scale;
  * - the surface tint is `bg`, so a Surface's tonal elevation mixes in no other colour;
  * - error is `warning` until the palette has an `error` role, and the text on it is whichever of `text` and
  *   `onAccent` reaches the higher contrast;
@@ -44,39 +47,39 @@ fun ComponentActivity.enableEdgeToEdgeFromPalette() {
  */
 fun colorScheme(dark: Boolean): ColorScheme {
     val palette = Palette.of(dark)
-    val bg = Color(palette.bg)
-    val surface = Color(palette.surface)
-    val raised = if (palette.surfaceRaised != palette.bg) Color(palette.surfaceRaised) else surface
-    val border = Color(palette.border)
-    val text = Color(palette.text)
-    val warning = Color(palette.warning)
-    val onWarning = listOf(text, Color(palette.onAccent)).maxBy { contrast(it, warning) }
+    val paletteBg = Color(palette.bg)
+    val paletteSurface = Color(palette.surface)
+    val paletteRaised = if (palette.surfaceRaised != palette.bg) Color(palette.surfaceRaised) else paletteSurface
+    val paletteBorder = Color(palette.border)
+    val paletteText = Color(palette.text)
+    val paletteWarning = Color(palette.warning)
+    val onWarning = listOf(paletteText, Color(palette.onAccent)).maxBy { contrast(it, paletteWarning) }
     return (if (dark) darkColorScheme() else lightColorScheme())
         .withAccent(Color(palette.accent), Color(palette.onAccent))
         .copy(
-            background = bg,
-            onBackground = text,
-            surface = bg,
-            onSurface = text,
-            surfaceVariant = raised,
+            background = paletteBg,
+            onBackground = paletteText,
+            surface = paletteBg,
+            onSurface = paletteText,
+            surfaceVariant = paletteRaised,
             onSurfaceVariant = Color(palette.textMuted),
-            surfaceTint = bg,
-            inverseSurface = text,
-            inverseOnSurface = surface,
-            error = warning,
+            surfaceTint = paletteBg,
+            inverseSurface = paletteText,
+            inverseOnSurface = paletteSurface,
+            error = paletteWarning,
             onError = onWarning,
-            errorContainer = warning,
+            errorContainer = paletteWarning,
             onErrorContainer = onWarning,
-            outline = border,
-            outlineVariant = border,
-            scrim = if (dark) bg else text,
-            surfaceBright = raised,
-            surfaceContainer = surface,
-            surfaceContainerHigh = raised,
-            surfaceContainerHighest = raised,
-            surfaceContainerLow = surface,
-            surfaceContainerLowest = bg,
-            surfaceDim = bg,
+            outline = paletteBorder,
+            outlineVariant = paletteBorder,
+            scrim = if (dark) paletteBg else paletteText,
+            surfaceBright = paletteRaised,
+            surfaceContainer = paletteSurface,
+            surfaceContainerHigh = paletteRaised,
+            surfaceContainerHighest = paletteRaised,
+            surfaceContainerLow = paletteSurface,
+            surfaceContainerLowest = paletteBg,
+            surfaceDim = paletteBg,
         )
 }
 

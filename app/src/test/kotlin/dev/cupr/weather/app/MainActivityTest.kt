@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** The app's screen until signing in exists: its name and that it is not set up yet, on the palette's ground. */
+/** The app's screen until signing in exists: its name and that it is not set up yet, on the palette's `bg`. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainActivityTest {
@@ -28,22 +28,22 @@ class MainActivityTest {
     }
 
     @Test
-    fun `the screen's ground is the palette's ground outside night mode`() {
-        assertGround(dark = false)
+    fun `the screen's background is the palette's bg outside night mode`() {
+        assertBg(dark = false)
     }
 
     @Test
     @Config(qualifiers = "+night")
-    fun `the screen's ground is the palette's ground in night mode`() {
-        assertGround(dark = true)
+    fun `the screen's background is the palette's bg in night mode`() {
+        assertBg(dark = true)
     }
 
-    private fun assertGround(dark: Boolean) {
+    private fun assertBg(dark: Boolean) {
         val screen = compose.onRoot().captureToImage().asAndroidBitmap()
 
         // The bottom-right corner, away from the text.
-        val ground = screen.getPixel(screen.width - 1, screen.height - 1)
+        val corner = screen.getPixel(screen.width - 1, screen.height - 1)
 
-        assertEquals(Integer.toHexString(Palette.of(dark).bg), Integer.toHexString(ground))
+        assertEquals(Integer.toHexString(Palette.of(dark).bg), Integer.toHexString(corner))
     }
 }

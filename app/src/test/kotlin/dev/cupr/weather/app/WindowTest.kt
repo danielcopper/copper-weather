@@ -15,42 +15,42 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Until Compose draws, the app's window and its splash screen show the palette's ground, and the system bars' scrims
- * are that ground too, on Android 15 and later and before it (D7).
+ * Until Compose draws, the app's window and its splash screen show the palette's `bg`, and the system bars' scrims
+ * are `bg` too, on Android 15 and later and before it (D7).
  */
 @RunWith(RobolectricTestRunner::class)
 class WindowTest {
     @Test
-    fun `the window and the splash screen are the palette's ground outside night mode`() {
+    fun `the window and the splash screen are the palette's bg outside night mode`() {
         assertWindow(dark = false)
     }
 
     @Test
     @Config(qualifiers = "+night")
-    fun `the window and the splash screen are the palette's ground in night mode`() {
+    fun `the window and the splash screen are the palette's bg in night mode`() {
         assertWindow(dark = true)
     }
 
     @Test
-    fun `the system bars' scrims are the palette's ground outside night mode`() {
+    fun `the system bars' scrims are the palette's bg outside night mode`() {
         assertBars(dark = false)
     }
 
     @Test
     @Config(qualifiers = "+night")
-    fun `the system bars' scrims are the palette's ground in night mode`() {
+    fun `the system bars' scrims are the palette's bg in night mode`() {
         assertBars(dark = true)
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
-    fun `before Android 15 the system bars are the palette's ground outside night mode`() {
+    fun `before Android 15 the system bars are the palette's bg outside night mode`() {
         assertBarColors(dark = false)
     }
 
     @Test
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE], qualifiers = "+night")
-    fun `before Android 15 the system bars are the palette's ground in night mode`() {
+    fun `before Android 15 the system bars are the palette's bg in night mode`() {
         assertBarColors(dark = true)
     }
 
@@ -58,10 +58,10 @@ class WindowTest {
     @Suppress("DEPRECATION") // The bar colours are what Android 14 and older draw; this case runs on Android 14.
     private fun assertBarColors(dark: Boolean) {
         val window = started().window
-        val ground = groundHex(dark)
+        val bg = bgHex(dark)
 
-        assertEquals("status bar", ground, Integer.toHexString(window.statusBarColor))
-        assertEquals("navigation bar", ground, Integer.toHexString(window.navigationBarColor))
+        assertEquals("status bar", bg, Integer.toHexString(window.statusBarColor))
+        assertEquals("navigation bar", bg, Integer.toHexString(window.navigationBarColor))
     }
 
     /**
@@ -72,7 +72,7 @@ class WindowTest {
         val api = Build.VERSION.SDK_INT
         assertTrue("Robolectric runs API $api", api >= Build.VERSION_CODES.VANILLA_ICE_CREAM)
         val activity = started()
-        val ground = groundHex(dark)
+        val bg = bgHex(dark)
 
         val scrims =
             (activity.window.decorView as ViewGroup)
@@ -83,12 +83,12 @@ class WindowTest {
                 .toList()
 
         assertEquals("one scrim per side", SIDES, scrims.size)
-        for (scrim in scrims) assertEquals("side ${scrim.side}", ground, Integer.toHexString(scrim.color))
+        for (scrim in scrims) assertEquals("side ${scrim.side}", bg, Integer.toHexString(scrim.color))
     }
 
     private fun assertWindow(dark: Boolean) {
         val activity = started()
-        val ground = groundHex(dark)
+        val bg = bgHex(dark)
 
         val attributes =
             activity.theme.obtainStyledAttributes(
@@ -96,14 +96,14 @@ class WindowTest {
             )
 
         attributes.use {
-            assertEquals("window", ground, Integer.toHexString(it.colorAt(0)))
-            assertEquals("splash screen", ground, Integer.toHexString(it.colorAt(1)))
+            assertEquals("window", bg, Integer.toHexString(it.colorAt(0)))
+            assertEquals("splash screen", bg, Integer.toHexString(it.colorAt(1)))
         }
     }
 
     private fun started(): MainActivity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
 
-    private fun groundHex(dark: Boolean): String = Integer.toHexString(Palette.of(dark).bg)
+    private fun bgHex(dark: Boolean): String = Integer.toHexString(Palette.of(dark).bg)
 
     private fun TypedArray.colorAt(index: Int): Int = getColor(index, 0)
 

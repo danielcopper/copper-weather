@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The window of the app's screen, light or dark with the system, until
-         Compose draws it: the palette's ground as its own and that of the
-         splash screen. -->
+         Compose draws it: the palette's bg as its own and that of the splash
+         screen. -->
     <style name="Theme.CopperWeather" parent="android:Theme.DeviceDefault.DayNight">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
