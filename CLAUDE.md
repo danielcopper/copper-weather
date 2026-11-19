@@ -29,3 +29,10 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - Absolute paths in every command (`git -C <worktree>`); the shell's working directory resets between calls.
 - Scratch files go in the agent's scratchpad, never inside the worktree.
 - Clean up only your own processes, by PID; stop the Gradle daemon with `./gradlew --stop`, never with `pkill -f`.
+
+## Pipeline
+
+- **Gate**: `mise run gate`; see "Build and checks".
+- **Review checks**: `mise run lint`, on the whole module (see "Build and checks").
+- **Worktree task**: `mise run worktree-new`
+- **Agent rules**: "Machine notes" above; a dependency change as "Build and checks" says.
