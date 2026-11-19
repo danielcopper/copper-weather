@@ -17,7 +17,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * What the launcher shows of the app: its name and the icon its manifest names, a sun behind a cloud in the
- * palette's sun on its card colour (D7). The icon's layers are drawn at one pixel per unit of the adaptive icon's
+ * palette's sun on its surface colour (D7). The icon's layers are drawn at one pixel per unit of the adaptive icon's
  * 108-unit viewport and probed inside its shapes: the sun, a ray, the cloud, and the gap between sun and cloud.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -33,13 +33,13 @@ class AppIdentityTest {
     }
 
     @Test
-    fun `the launcher icon is the palette's sun on its card colour outside night mode`() {
+    fun `the launcher icon is the palette's sun on its surface colour outside night mode`() {
         assertIcon(dark = false)
     }
 
     @Test
     @Config(qualifiers = "+night")
-    fun `the launcher icon is the palette's sun on its card colour in night mode`() {
+    fun `the launcher icon is the palette's sun on its surface colour in night mode`() {
         assertIcon(dark = true)
     }
 
@@ -54,7 +54,7 @@ class AppIdentityTest {
     }
 
     private fun assertIcon(dark: Boolean) {
-        val surface = Palette.of(dark).surfaceCard
+        val surface = Palette.of(dark).surface
         val sun = Palette.of(dark).sun
         val icon = icon
 

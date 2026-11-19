@@ -64,5 +64,6 @@ motion, which a setting per widget switches it to.
 
 ### Palette role
 
-What a colour is for, such as `surfaceCard`, `textPrimary`, `accentSolid`, `rain` or `scale1`: a field of
-`dev.cupr.weather.palette.Palette`, which gives every role one colour for light and one for dark (D7).
+What a colour is for, such as `surface`, `text`, `accent`, `rain` or `scale1`: a field of
+`dev.cupr.weather.palette.Palette`, which gives every role one colour for light and one for dark. Where the role names
+come from: D7.

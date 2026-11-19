@@ -52,7 +52,7 @@ class ColorLiteralTest {
     }
 
     @Test
-    fun `the resources' only colours are the palette's ground, card and sun`() {
+    fun `the resources' only colours are the palette's bg, surface and sun`() {
         for (path in resourceColors) {
             val names =
                 COLOR_NAME
@@ -60,7 +60,7 @@ class ColorLiteralTest {
                     .map { it.groupValues[1] }
                     .toSet()
 
-            assertEquals(path, setOf("palette_surface_background", "palette_surface_card", "palette_sun"), names)
+            assertEquals(path, setOf("palette_bg", "palette_surface", "palette_sun"), names)
         }
     }
 
@@ -113,8 +113,8 @@ class ColorLiteralTest {
         for (text in resources) assertTrue(text, resourceLiterals.any { it.containsMatchIn(text) })
         val notColours =
             listOf(
-                "Color(Palette.of(dark).surfaceBackground)",
-                "Color(\n    palette.surfaceCard,\n)",
+                "Color(Palette.of(dark).bg)",
+                "Color(\n    palette.surface,\n)",
                 "// see #123",
                 "val issue = \"#1234 is open\"",
                 "val bits = 0x1234567",

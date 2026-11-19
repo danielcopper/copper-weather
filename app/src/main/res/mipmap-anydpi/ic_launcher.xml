@@ -2,7 +2,7 @@
 <!-- The monochrome layer for themed icons is the foreground itself: the
      launcher tints it, so only its shapes count. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/palette_surface_card" />
+    <background android:drawable="@color/palette_surface" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_foreground" />
 </adaptive-icon>

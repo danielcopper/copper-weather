@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The palette's dark fields (values/colors.xml says where they show). -->
 <resources>
-    <color name="palette_surface_background">#FF101317</color>
-    <color name="palette_surface_card">#FF1A1F25</color>
+    <color name="palette_bg">#FF101317</color>
+    <color name="palette_surface">#FF1A1F25</color>
     <color name="palette_sun">#FFF5C451</color>
 </resources>

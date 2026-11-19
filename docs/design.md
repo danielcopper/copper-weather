@@ -26,5 +26,5 @@ scheme in `app/src/main/kotlin/dev/cupr/weather/app/WeatherTheme.kt`.
 
 ## Launcher icon
 
-A placeholder: a sun with four rays behind a cloud, in the palette's sun on its card colour, light and dark; the same
-drawable is the monochrome layer for themed icons.
+A placeholder: a sun with four rays behind a cloud, in the palette's sun on its surface colour, light and dark; the
+same drawable is the monochrome layer for themed icons.
