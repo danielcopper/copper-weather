@@ -5,7 +5,8 @@ A skeleton that grows as the design does. What is decided stands in [decisions.m
 
 ## Widget
 
-Its content by size bucket, the warnings banner and "Stand …": D4. How it is drawn: D5. Weather icons: D6.
+Its content by size bucket, the warning band, "Stand …" and a tap: D4, D11–D17. How it is drawn: D5.
+Weather icons: D6.
 
 ## Data
 
@@ -15,7 +16,7 @@ To fill: the sensor's data format.
 
 ## App
 
-What the app does: D4.
+What the app does: D4, D18, D20.
 
 To fill: the screens.
 
