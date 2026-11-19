@@ -33,9 +33,8 @@ fun ComponentActivity.enableEdgeToEdgeFromPalette() {
 
 /**
  * Material's colour scheme, every role from the palette. The two share the word surface for different things:
- * Material's `surface` is the palette's `bg`, and the palette's `surface` is Material's `surfaceContainer` and
- * `surfaceContainerLow`; the palette's colours below carry the prefix `palette` for that reason. Why some roles take
- * what they take:
+ * Material's `surface` is the palette's `bg`. So the locals below that hold a palette role carry the prefix `palette`;
+ * `onWarning`, the better-contrast pick of two of them, does not. Why some roles take what they take:
  * - the low and middle containers take the palette's `surface`, and the high ones, the bright surface and the surface
  *   variant its `surfaceRaised` where that differs from `bg`, else `surface`, so a default card or filled field
  *   stands out from `bg` as the dashboard's cards do; the lowest container and the dim surface stay `bg` on purpose,
@@ -49,7 +48,7 @@ fun colorScheme(dark: Boolean): ColorScheme {
     val palette = Palette.of(dark)
     val paletteBg = Color(palette.bg)
     val paletteSurface = Color(palette.surface)
-    val paletteRaised = if (palette.surfaceRaised != palette.bg) Color(palette.surfaceRaised) else paletteSurface
+    val paletteSurfaceRaised = if (palette.surfaceRaised != palette.bg) Color(palette.surfaceRaised) else paletteSurface
     val paletteBorder = Color(palette.border)
     val paletteText = Color(palette.text)
     val paletteWarning = Color(palette.warning)
@@ -61,7 +60,7 @@ fun colorScheme(dark: Boolean): ColorScheme {
             onBackground = paletteText,
             surface = paletteBg,
             onSurface = paletteText,
-            surfaceVariant = paletteRaised,
+            surfaceVariant = paletteSurfaceRaised,
             onSurfaceVariant = Color(palette.textMuted),
             surfaceTint = paletteBg,
             inverseSurface = paletteText,
@@ -73,10 +72,10 @@ fun colorScheme(dark: Boolean): ColorScheme {
             outline = paletteBorder,
             outlineVariant = paletteBorder,
             scrim = if (dark) paletteBg else paletteText,
-            surfaceBright = paletteRaised,
+            surfaceBright = paletteSurfaceRaised,
             surfaceContainer = paletteSurface,
-            surfaceContainerHigh = paletteRaised,
-            surfaceContainerHighest = paletteRaised,
+            surfaceContainerHigh = paletteSurfaceRaised,
+            surfaceContainerHighest = paletteSurfaceRaised,
             surfaceContainerLow = paletteSurface,
             surfaceContainerLowest = paletteBg,
             surfaceDim = paletteBg,

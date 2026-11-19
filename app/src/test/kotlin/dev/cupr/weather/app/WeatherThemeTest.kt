@@ -11,9 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, each role the
- * mapping fixes is the palette's role it names, the containers differ from the palette's `bg`, and text on the accent
- * and on the warning is readable.
+ * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, the scheme's
+ * backgrounds, surfaces, text, primary, outline, error and scrim are the palette's roles the mapping gives them, the
+ * containers differ from the palette's `bg`, and text on the accent and on the warning is readable.
  */
 class WeatherThemeTest {
     @Test
@@ -27,7 +27,7 @@ class WeatherThemeTest {
     }
 
     @Test
-    fun `the scheme's roles are the palette's bg, surface, text, textMuted, accent, onAccent, border and warning`() {
+    fun `backgrounds, surfaces, text, primary, outline, error and scrim are palette roles the mapping gives them`() {
         for (dark in listOf(false, true)) {
             val palette = Palette.of(dark)
 
