@@ -3,8 +3,9 @@ package dev.cupr.weather.palette
 import androidx.annotation.ColorInt
 
 /**
- * The palette of D7: one field per role, in a light and a dark instance; [rain] and [sun] are the app's own weather
- * roles. ARGB, opaque.
+ * The palette of D7: one field per role, in a light and a dark instance. The general roles, [bg] to [warning], carry
+ * the general role names of the shared colour scheme "copper"; the domain colours, [rain], the intensity scale
+ * ([scale1] to [scale5]), the water steps ([water1] to [water3]) and [sun], are the app's own names. ARGB, opaque.
  *
  * Only [LIGHT] and [DARK] exist: the constructor is private, and so is `copy()`, which Kotlin 2.4 makes public unless
  * the class says otherwise. What keeps colours out of the app's other sources: ColorLiteralTest.
@@ -12,23 +13,23 @@ import androidx.annotation.ColorInt
 @ConsistentCopyVisibility
 data class Palette private constructor(
     /** The ground of a screen and of the window; `primary-background-color`. */
-    @param:ColorInt val surfaceBackground: Int,
+    @param:ColorInt val bg: Int,
     /** A card on the ground, and a widget's card; `card-background-color`. */
-    @param:ColorInt val surfaceCard: Int,
+    @param:ColorInt val surface: Int,
     /** Something raised on a card, such as a button. */
     @param:ColorInt val surfaceRaised: Int,
     /** The border of a card and lines between parts; `ha-card-border-color`. */
-    @param:ColorInt val surfaceBorder: Int,
+    @param:ColorInt val border: Int,
     /** Text and icons; `primary-text-color`. */
-    @param:ColorInt val textPrimary: Int,
+    @param:ColorInt val text: Int,
     /** Text that steps back: labels, notes, how old the data is; `secondary-text-color`. */
-    @param:ColorInt val textSecondary: Int,
+    @param:ColorInt val textMuted: Int,
     /** The accent, filled: what is active or chosen; `primary-color`. */
-    @param:ColorInt val accentSolid: Int,
-    /** Text and icons on [accentSolid]; `text-primary-color`. */
-    @param:ColorInt val onAccentSolid: Int,
+    @param:ColorInt val accent: Int,
+    /** Text and icons on [accent]; `text-primary-color`. */
+    @param:ColorInt val onAccent: Int,
     /** A warning, filled; `warning-color`. */
-    @param:ColorInt val warningSolid: Int,
+    @param:ColorInt val warning: Int,
     /** Rain amounts and the rain hint. */
     @param:ColorInt val rain: Int,
     /** The first step of the intensity scale: comfortable. */
@@ -54,15 +55,15 @@ data class Palette private constructor(
         /** The colours outside night mode. */
         val LIGHT =
             Palette(
-                surfaceBackground = 0xFFEEF1F5.toInt(),
-                surfaceCard = 0xFFFFFFFF.toInt(),
+                bg = 0xFFEEF1F5.toInt(),
+                surface = 0xFFFFFFFF.toInt(),
                 surfaceRaised = 0xFFEEF1F5.toInt(),
-                surfaceBorder = 0xFFDDE2E9.toInt(),
-                textPrimary = 0xFF161B22.toInt(),
-                textSecondary = 0xFF5B6573.toInt(),
-                accentSolid = 0xFF1F6FD6.toInt(),
-                onAccentSolid = 0xFFFFFFFF.toInt(),
-                warningSolid = 0xFFD4612C.toInt(),
+                border = 0xFFDDE2E9.toInt(),
+                text = 0xFF161B22.toInt(),
+                textMuted = 0xFF5B6573.toInt(),
+                accent = 0xFF1F6FD6.toInt(),
+                onAccent = 0xFFFFFFFF.toInt(),
+                warning = 0xFFD4612C.toInt(),
                 rain = 0xFF1A66C9.toInt(),
                 scale1 = 0xFF1A7040.toInt(),
                 scale2 = 0xFF806000.toInt(),
@@ -78,15 +79,15 @@ data class Palette private constructor(
         /** The colours in night mode. */
         val DARK =
             Palette(
-                surfaceBackground = 0xFF101317.toInt(),
-                surfaceCard = 0xFF1A1F25.toInt(),
+                bg = 0xFF101317.toInt(),
+                surface = 0xFF1A1F25.toInt(),
                 surfaceRaised = 0xFF262C34.toInt(),
-                surfaceBorder = 0xFF262C34.toInt(),
-                textPrimary = 0xFFECEEF1.toInt(),
-                textSecondary = 0xFFA3ACB7.toInt(),
-                accentSolid = 0xFF6FB1FF.toInt(),
-                onAccentSolid = 0xFF0D1A2A.toInt(),
-                warningSolid = 0xFFFF9A6B.toInt(),
+                border = 0xFF262C34.toInt(),
+                text = 0xFFECEEF1.toInt(),
+                textMuted = 0xFFA3ACB7.toInt(),
+                accent = 0xFF6FB1FF.toInt(),
+                onAccent = 0xFF0D1A2A.toInt(),
+                warning = 0xFFFF9A6B.toInt(),
                 rain = 0xFF8FC2FF.toInt(),
                 scale1 = 0xFF7ED6A0.toInt(),
                 scale2 = 0xFFF5C451.toInt(),

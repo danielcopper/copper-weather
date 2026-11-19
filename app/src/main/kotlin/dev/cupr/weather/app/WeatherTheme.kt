@@ -26,57 +26,57 @@ fun WeatherTheme(content: @Composable () -> Unit) {
 /** Edge to edge, with the system bars' scrims the screen's ground, so the system draws no colour of its own there. */
 fun ComponentActivity.enableEdgeToEdgeFromPalette() {
     val dark = resources.configuration.isNightModeActive
-    val ground = Palette.of(dark).surfaceBackground
-    val bars = if (dark) SystemBarStyle.dark(ground) else SystemBarStyle.light(ground, ground)
+    val bg = Palette.of(dark).bg
+    val bars = if (dark) SystemBarStyle.dark(bg) else SystemBarStyle.light(bg, bg)
     enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
 }
 
 /**
  * Material's colour scheme, every role from the palette. Why some roles take what they take:
- * - the low and middle containers take the card colour, and the high ones, the bright surface and the surface variant
- *   the raised colour where it differs from the ground, else the card colour, so a default card or filled field
- *   stands out from the ground as the dashboard's cards do; the lowest container and the dim surface stay the ground
- *   on purpose, as the bottom of the scale;
- * - the surface tint is the ground, so a Surface's tonal elevation mixes in no other colour;
- * - error is the warning until the palette has an error role, and the text on it is whichever text colour reaches
- *   the higher contrast;
+ * - the low and middle containers take the palette's `surface`, and the high ones, the bright surface and the surface
+ *   variant its `surfaceRaised` where that differs from `bg`, else `surface`, so a default card or filled field
+ *   stands out from the ground as the dashboard's cards do; the lowest container and the dim surface stay `bg` on
+ *   purpose, as the bottom of the scale;
+ * - the surface tint is `bg`, so a Surface's tonal elevation mixes in no other colour;
+ * - error is `warning` until the palette has an `error` role, and the text on it is whichever of `text` and
+ *   `onAccent` reaches the higher contrast;
  * - the scrim behind dialogs is the mode's darkest colour.
  */
 fun colorScheme(dark: Boolean): ColorScheme {
     val palette = Palette.of(dark)
-    val ground = Color(palette.surfaceBackground)
-    val card = Color(palette.surfaceCard)
-    val raised = if (palette.surfaceRaised != palette.surfaceBackground) Color(palette.surfaceRaised) else card
-    val border = Color(palette.surfaceBorder)
-    val text = Color(palette.textPrimary)
-    val warning = Color(palette.warningSolid)
-    val onWarning = listOf(text, Color(palette.onAccentSolid)).maxBy { contrast(it, warning) }
+    val bg = Color(palette.bg)
+    val surface = Color(palette.surface)
+    val raised = if (palette.surfaceRaised != palette.bg) Color(palette.surfaceRaised) else surface
+    val border = Color(palette.border)
+    val text = Color(palette.text)
+    val warning = Color(palette.warning)
+    val onWarning = listOf(text, Color(palette.onAccent)).maxBy { contrast(it, warning) }
     return (if (dark) darkColorScheme() else lightColorScheme())
-        .withAccent(Color(palette.accentSolid), Color(palette.onAccentSolid))
+        .withAccent(Color(palette.accent), Color(palette.onAccent))
         .copy(
-            background = ground,
+            background = bg,
             onBackground = text,
-            surface = ground,
+            surface = bg,
             onSurface = text,
             surfaceVariant = raised,
-            onSurfaceVariant = Color(palette.textSecondary),
-            surfaceTint = ground,
+            onSurfaceVariant = Color(palette.textMuted),
+            surfaceTint = bg,
             inverseSurface = text,
-            inverseOnSurface = card,
+            inverseOnSurface = surface,
             error = warning,
             onError = onWarning,
             errorContainer = warning,
             onErrorContainer = onWarning,
             outline = border,
             outlineVariant = border,
-            scrim = if (dark) ground else text,
+            scrim = if (dark) bg else text,
             surfaceBright = raised,
-            surfaceContainer = card,
+            surfaceContainer = surface,
             surfaceContainerHigh = raised,
             surfaceContainerHighest = raised,
-            surfaceContainerLow = card,
-            surfaceContainerLowest = ground,
-            surfaceDim = ground,
+            surfaceContainerLow = surface,
+            surfaceContainerLowest = bg,
+            surfaceDim = bg,
         )
 }
 

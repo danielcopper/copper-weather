@@ -103,7 +103,7 @@ class WindowTest {
 
     private fun started(): MainActivity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
 
-    private fun groundHex(dark: Boolean): String = Integer.toHexString(Palette.of(dark).surfaceBackground)
+    private fun groundHex(dark: Boolean): String = Integer.toHexString(Palette.of(dark).bg)
 
     private fun TypedArray.colorAt(index: Int): Int = getColor(index, 0)
 

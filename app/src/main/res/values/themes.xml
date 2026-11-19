@@ -6,7 +6,7 @@
     <style name="Theme.CopperWeather" parent="android:Theme.DeviceDefault.DayNight">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@color/palette_surface_background</item>
-        <item name="android:windowSplashScreenBackground">@color/palette_surface_background</item>
+        <item name="android:windowBackground">@color/palette_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/palette_bg</item>
     </style>
 </resources>

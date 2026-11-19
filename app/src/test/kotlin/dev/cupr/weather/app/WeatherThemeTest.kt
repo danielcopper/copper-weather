@@ -33,13 +33,13 @@ class WeatherThemeTest {
 
             val scheme = colorScheme(dark)
 
-            assertEquals("background", palette.surfaceBackground, scheme.background.toArgb())
-            assertEquals("surface", palette.surfaceBackground, scheme.surface.toArgb())
-            assertEquals("onBackground", palette.textPrimary, scheme.onBackground.toArgb())
-            assertEquals("onSurface", palette.textPrimary, scheme.onSurface.toArgb())
-            assertEquals("onSurfaceVariant", palette.textSecondary, scheme.onSurfaceVariant.toArgb())
-            assertEquals("primary", palette.accentSolid, scheme.primary.toArgb())
-            assertEquals("outline", palette.surfaceBorder, scheme.outline.toArgb())
+            assertEquals("background", palette.bg, scheme.background.toArgb())
+            assertEquals("surface", palette.bg, scheme.surface.toArgb())
+            assertEquals("onBackground", palette.text, scheme.onBackground.toArgb())
+            assertEquals("onSurface", palette.text, scheme.onSurface.toArgb())
+            assertEquals("onSurfaceVariant", palette.textMuted, scheme.onSurfaceVariant.toArgb())
+            assertEquals("primary", palette.accent, scheme.primary.toArgb())
+            assertEquals("outline", palette.border, scheme.outline.toArgb())
         }
     }
 

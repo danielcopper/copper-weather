@@ -44,6 +44,6 @@ class MainActivityTest {
         // The bottom-right corner, away from the text.
         val ground = screen.getPixel(screen.width - 1, screen.height - 1)
 
-        assertEquals(Integer.toHexString(Palette.of(dark).surfaceBackground), Integer.toHexString(ground))
+        assertEquals(Integer.toHexString(Palette.of(dark).bg), Integer.toHexString(ground))
     }
 }
