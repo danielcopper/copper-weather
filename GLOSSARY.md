@@ -65,8 +65,5 @@ motion, which a setting per widget switches it to.
 ### Palette role
 
 What a colour is for, such as `surface`, `text`, `accent`, `rain` or `scale1`: a field of
-`dev.cupr.weather.palette.Palette`, which gives every role one colour for light and one for dark (D7). The general
-roles (`bg`, `surface`, `surfaceRaised`, `border`, `text`, `textMuted`, `accent`, `onAccent`, `warning`) carry the
-general role names of the shared colour scheme "copper"; the domain colours (the weather scale `scale1` to `scale5`,
-the water steps `water1` to `water3`, `rain` and `sun`) are the app's own names, which later point at the scheme's
-named colours.
+`dev.cupr.weather.palette.Palette`, which gives every role one colour for light and one for dark. Where the role names
+come from: D7.
