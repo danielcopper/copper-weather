@@ -1,6 +1,7 @@
 package dev.cupr.weather.signin
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.app.Services
@@ -11,6 +12,7 @@ import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.AesGcmCipher
 import dev.cupr.weather.store.TokenCipher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -100,6 +102,24 @@ class SignInFlowTest {
 
         val logs = ShadowLog.getLogsForTag(SIGN_IN_TAG).joinToString { it.msg }
         assertTrue(logs, logs.contains("A sign-in or sign-out is under way; another was not started"))
+    }
+
+    @Test(timeout = 10_000)
+    fun `a run that throws ends, says the sign-in failed and logs the exception's class`() {
+        Services.cipher = { throw IllegalStateException("broken") }
+        val io = Services.io
+        // The run and the handling of its exception happen at once, so the log is there when the call returns.
+        Services.io = Dispatchers.Unconfined
+        try {
+            assertTrue(SignInFlow.signOut(context))
+        } finally {
+            Services.io = io
+        }
+
+        assertFalse(SignInFlow.state.value.busy)
+        assertEquals(Problem.FAILED, SignInFlow.state.value.problem)
+        val errors = ShadowLog.getLogsForTag(SIGN_IN_TAG).filter { it.type == Log.ERROR }.map { it.msg }
+        assertEquals(listOf("A sign-in or sign-out failed: IllegalStateException"), errors)
     }
 
     @Test

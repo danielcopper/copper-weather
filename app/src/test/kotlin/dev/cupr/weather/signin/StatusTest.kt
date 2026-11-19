@@ -6,7 +6,6 @@ import dev.cupr.weather.R
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.store.Account
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -31,7 +30,7 @@ class StatusTest {
     fun `the status reads the state and the address without its slash, or none before one is entered`() {
         assertEquals(Status(Account.State.SIGNED_OUT, ""), Status.read(context))
 
-        Services.account(context).rememberAddress(HaAddress("https://home.example/".toHttpUrl()))
+        Services.account(context).rememberAddress(checkNotNull(HaAddress.stored("https://home.example/")))
 
         assertEquals(Status(Account.State.SIGNED_OUT, "https://home.example"), Status.read(context))
     }

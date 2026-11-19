@@ -10,19 +10,25 @@ import java.io.IOException
 /**
  * Home Assistant's token endpoints (`components/auth/__init__.py` at Core 2026.11.1): `/auth/token` for the
  * authorization code and for a refresh, `/auth/revoke` to end a refresh token. Requests are form-encoded, as Home
- * Assistant reads them.
+ * Assistant reads them. Redirects are not followed, so a form with a token or the verifier goes to no other address.
  *
  * Nothing secret leaves this class in a result's text: a failure names the HTTP status, Home Assistant's error code or
  * the exception's class, never a token, the code or the address.
  */
 class TokenClient(
-    private val http: OkHttpClient,
+    http: OkHttpClient,
     private val address: HaAddress,
 ) {
+    private val http = http.newBuilder().followRedirects(false).build()
+
     sealed interface Exchange {
-        /** The refresh token of the new sign-in; the access token that comes with it is not used (D26). */
+        /**
+         * The refresh token of the new sign-in and the `client_id` it was issued to (D23); the access token that comes
+         * with it is not used (D26).
+         */
         data class Signed(
             val refreshToken: RefreshToken,
+            val clientId: String,
         ) : Exchange
 
         data class Failed(
@@ -60,13 +66,17 @@ class TokenClient(
         ) : Revoke
     }
 
-    /** Trades the code [request]'s redirect carried for tokens, with its verifier. */
+    /**
+     * Trades the code [request]'s redirect carried for tokens, with its verifier, at the address of [request]'s login
+     * page, so the verifier goes only to the instance that issued the code.
+     */
     fun exchange(
         code: AuthorizationCode,
         request: SignInRequest,
     ): Exchange =
         try {
             post(
+                request.address,
                 "auth/token",
                 "grant_type" to "authorization_code",
                 "code" to code.value,
@@ -76,7 +86,7 @@ class TokenClient(
                 val body = body(response)
                 val refresh = body?.string("refresh_token")
                 if (response.isSuccessful && refresh != null) {
-                    Exchange.Signed(RefreshToken(refresh))
+                    Exchange.Signed(RefreshToken(refresh), SignInRequest.CLIENT_ID)
                 } else {
                     Exchange.Failed(describe(response, body))
                 }
@@ -92,6 +102,7 @@ class TokenClient(
     ): Refresh =
         try {
             post(
+                address,
                 "auth/token",
                 "grant_type" to "refresh_token",
                 "refresh_token" to refreshToken.value,
@@ -114,7 +125,7 @@ class TokenClient(
     /** Asks Home Assistant to end [refreshToken] and every access token issued with it. */
     fun revoke(refreshToken: RefreshToken): Revoke =
         try {
-            post("auth/revoke", "token" to refreshToken.value).use { response ->
+            post(address, "auth/revoke", "token" to refreshToken.value).use { response ->
                 if (response.isSuccessful) Revoke.Ended else Revoke.Failed("HTTP ${response.code}")
             }
         } catch (e: IOException) {
@@ -122,6 +133,7 @@ class TokenClient(
         }
 
     private fun post(
+        at: HaAddress,
         path: String,
         vararg fields: Pair<String, String>,
     ): Response {
@@ -130,7 +142,7 @@ class TokenClient(
         val request =
             Request
                 .Builder()
-                .url(address.resolve(path))
+                .url(at.resolve(path))
                 .post(form.build())
                 .build()
         return http.newCall(request).execute()

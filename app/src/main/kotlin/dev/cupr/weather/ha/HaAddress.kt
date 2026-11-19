@@ -7,11 +7,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  * The address of the Home Assistant instance, the root of an https URL (D24): what [parse] makes of the text typed on
  * the sign-in screen, or what [stored] makes of the form the account and a pending sign-in keep. The rest of the app
  * takes the address only in this form, so every path is resolved below the instance's root.
- *
- * The constructor is internal, not private, for the tests' fake Home Assistant on plain http, which [parse] refuses.
  */
 @JvmInline
-value class HaAddress internal constructor(
+value class HaAddress private constructor(
     val url: HttpUrl,
 ) {
     /** [path] below the root, such as `auth/token`. */
@@ -20,7 +18,7 @@ value class HaAddress internal constructor(
     companion object {
         /**
          * The address the account or a pending sign-in stored, which [parse] made, cut to its root again; plain http,
-         * which only the tests' fake stores, is accepted too.
+         * which only the tests' fake Home Assistant uses, is accepted too.
          */
         internal fun stored(text: String): HaAddress? = text.toHttpUrlOrNull()?.let { HaAddress(root(it)) }
 

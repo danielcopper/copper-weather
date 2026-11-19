@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        // The fetch on opening the screen (D20) goes here.
         starts++
     }
 }
