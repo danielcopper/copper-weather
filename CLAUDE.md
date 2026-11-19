@@ -32,7 +32,6 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 
 ## Pipeline
 
-- **Gate**: `mise run gate`; see "Build and checks".
-- **Review checks**: `mise run lint`, on the whole module (see "Build and checks").
-- **Worktree task**: `mise run worktree-new`
-- **Agent rules**: "Machine notes" above; a dependency change as "Build and checks" says.
+- **Gate**: `mise run gate`; see CLAUDE.md's "Build and checks".
+- **Review checks**: `mise run lint`, on the whole module (see CLAUDE.md's "Build and checks").
+- **Agent rules**: CLAUDE.md's "Machine notes"; after a dependency change, `mise run deps-refresh` as CLAUDE.md's "Build and checks" says.
