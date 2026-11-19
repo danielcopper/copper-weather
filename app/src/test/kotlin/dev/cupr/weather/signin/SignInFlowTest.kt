@@ -48,10 +48,14 @@ class SignInFlowTest {
     @After
     fun tearDown() {
         home.tokenGate?.countDown()
-        awaitIdle()
-        Services.cipher = keystoreCipher
-        home.close()
-        SignInFlow.clearProblem()
+        // The test's cipher goes even when a run never ends, so it cannot fail the tests after this one.
+        try {
+            awaitIdle()
+        } finally {
+            Services.cipher = keystoreCipher
+            home.close()
+            SignInFlow.clearProblem()
+        }
     }
 
     private fun awaitIdle() = runBlocking { withTimeout(5_000) { SignInFlow.state.first { !it.busy } } }
