@@ -2,11 +2,11 @@
 
 ## To decide
 
-- [ ] Widget content per size in detail
+- [x] Widget content per size in detail → D11–D14
 - [ ] Colours: the interim values (D7) and the final ones from the shared colour scheme "copper"
-- [ ] App and widget names, and the launcher icon
-- [ ] A push path for warnings
-- [ ] The attribution text shown in the app
+- [ ] App and widget names, and the launcher icon (names for the prototype: D19)
+- [ ] A push path for warnings (none in the prototype, D20)
+- [x] The attribution text shown in the app → D18
 
 ## Decisions
 
@@ -21,3 +21,14 @@
 - D8 (2026-11-18): Code shared with copper-calendar (sign-in, Home Assistant client, fetch, snapshot, widget basics) is copied and trimmed. A shared library is considered once both apps show which parts stay the same.
 - D9 (2026-11-18): Minimum Android 12 (API 31), target the current API level (37), as copper-calendar: the app runs on phones that shipped with Android 12.
 - D10 (2026-11-18): The setup follows copper-calendar: tasks through mise, Gradle dependency verification and lock files, CI on GitHub Actions with Android Lint, ktlint and detekt with warnings as errors, SonarQube Cloud, CodeQL, a check of the PR title and Dependabot. release-please for versions and the changelog follows romm-tender and emu-atlas.
+- D11 (2026-11-19): The widget's size buckets, in launcher cells: small from 2 × 2, its least size; wide from 4 cells wide and 2 high; tall from 4 wide and 3 high. A widget 3 cells wide or less stays small however high it is. It is added at 4 × 2, wide.
+- D12 (2026-11-19): "Now", the part every size bucket shows: the weather icon, animated unless the widget is set to still images (D6), the temperature, today's high and low, and one line below that is the rain hint while rain falls or is due within the next two hours (the app works the minutes out from the app sensor's rain start), else the condition as a German word. Felt temperature, wind, humidity and UV stay out of the widget.
+- D13 (2026-11-19): The hours, shown from the wide size bucket on: a strip of as many of the next hours as fit the width, each with its time, a small still image of its condition (the night form at night), its temperature, and its rain amount when above 0. Only the large icon of "now" can be animated.
+- D14 (2026-11-19): The days, shown in the tall size bucket: from tomorrow on, as many days as fit the height, each with its weekday, a still image of its condition in the day form, its high and low, and its rain amount when above 0.
+- D15 (2026-11-19): A warning shows as a band above everything while it applies (its start has passed and its end has not; one without a start applies at once, one without an end until the app sensor no longer carries it): the official headline unchanged, in the colour of its level; with several, the highest level and "+N".
+- D16 (2026-11-19): While the last successful fetch is older than one hour, the widget says when it was, small: "Stand 14:30".
+- D17 (2026-11-19): A tap on the widget opens the dashboard's weather pop-up in the Home Assistant app, as copper-calendar opens its targets; while no one is signed in, it opens the sign-in.
+- D18 (2026-11-19): The attribution the app sensor carries is shown on the app's screen, not in the widget, where room is short.
+- D19 (2026-11-19): For the prototype, the app is called "Copper Weather" and its widget "Wetter"; the launcher icon stays a placeholder.
+- D20 (2026-11-19): The app fetches at an interval set in the app (15, 30 or 60 minutes, 15 by default), and at once after signing in and each time its screen opens, as copper-calendar does; the prototype has no push.
+- D21 (2026-11-19): The first version is a prototype, built in four slices: sign-in, fetch and snapshot from copper-calendar with a plain text widget; the drawn widget with its three size buckets; the animated icon and its still setting per widget; the warning band and "Stand …". What follows is decided once the prototype has run on the phone.

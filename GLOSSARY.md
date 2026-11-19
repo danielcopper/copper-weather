@@ -16,8 +16,8 @@ version has one widget, whose content follows its **size bucket** (D4).
 
 ### Size bucket
 
-The size class of a widget that decides what it shows: small (**now** and today's high and low), wide (plus the
-**hours**) and tall (plus the **days**) (D4). Where one bucket ends and the next begins is still to be decided.
+The size class of a widget that decides what it shows: small (**now**), wide (plus the **hours**) and tall
+(plus the **days**) (D4); where each begins: D11.
 
 ### Snapshot
 
@@ -50,7 +50,17 @@ A short note that rain is falling or due soon. Its colour is the palette's `rain
 
 ### Warning
 
-An official weather warning for the place the weather is for, shown as a banner on the widget while it applies (D4).
+An official weather warning for the place the weather is for, shown as the **warning band** on the widget while it
+applies (D15).
+
+### Warning band
+
+The band across the top of the widget that shows the warnings (D15).
+_Avoid_: banner
+
+### Prototype
+
+The first version of the app, built in slices (D21).
 
 ### Twilight
 
