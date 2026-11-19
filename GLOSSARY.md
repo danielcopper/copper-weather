@@ -55,7 +55,7 @@ applies (D15).
 
 ### Warning band
 
-The band across the top of the widget that shows the warning which applies now (D15).
+The band across the top of the widget that shows the warnings (D15).
 _Avoid_: banner
 
 ### Prototype
