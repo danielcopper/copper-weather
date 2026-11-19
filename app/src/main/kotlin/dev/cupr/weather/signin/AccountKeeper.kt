@@ -12,9 +12,9 @@ import okhttp3.OkHttpClient
 /**
  * The sign-in's start and end with Home Assistant: keeping a new sign-in (D22, D26) and signing out (D27).
  *
- * Once the app fetches (D20), signing out stops the fetches too (D27). copper-calendar also runs its sign-in and
- * sign-out under its fetch's lock and clears what the fetches kept; whether this app does the same is the fetch's to
- * decide.
+ * Once the app fetches (D20), signing out stops the fetches too (D27). copper-calendar keeps a new sign-in and forgets
+ * a signed-out one under its fetch's lock, and clears what the fetches kept; whether this app does the same is the
+ * fetch's to decide.
  *
  * The log names what failed, never a token, the code or the address.
  */
