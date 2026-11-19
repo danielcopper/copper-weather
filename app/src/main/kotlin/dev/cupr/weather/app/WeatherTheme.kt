@@ -34,7 +34,7 @@ fun ComponentActivity.enableEdgeToEdgeFromPalette() {
 /**
  * Material's colour scheme, every role from the palette. The two share the word surface for different things:
  * Material's `surface` is the palette's `bg`. So the locals below that hold a palette role carry the prefix `palette`;
- * `onWarning`, the better-contrast pick of two of them, does not. Why some roles take what they take:
+ * `onWarning`, the better-contrast pick of `text` and `onAccent`, does not. Why some roles take what they take:
  * - the low and middle containers take the palette's `surface`, and the high ones, the bright surface and the surface
  *   variant its `surfaceRaised` where that differs from `bg`, else `surface`, so a default card or filled field
  *   stands out from `bg` as the dashboard's cards do; the lowest container and the dim surface stay `bg` on purpose,

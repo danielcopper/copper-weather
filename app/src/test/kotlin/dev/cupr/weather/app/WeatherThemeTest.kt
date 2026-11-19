@@ -12,8 +12,8 @@ import org.junit.Test
 
 /**
  * Material's colour scheme from the palette (D7): every colour is one of the palette of its mode, the scheme's
- * backgrounds, surfaces, text, primary, outline, error and scrim are the palette's roles the mapping gives them, the
- * containers differ from the palette's `bg`, and text on the accent and on the warning is readable.
+ * backgrounds, low surfaces, text, primary, outline, error and scrim are the palette's roles the mapping gives them,
+ * the containers differ from the palette's `bg`, and text on the accent and on the warning is readable.
  */
 class WeatherThemeTest {
     @Test
@@ -27,7 +27,7 @@ class WeatherThemeTest {
     }
 
     @Test
-    fun `backgrounds, surfaces, text, primary, outline, error and scrim are palette roles the mapping gives them`() {
+    fun `backgrounds, low surfaces, text, primary, outline, error and scrim are the mapping's palette roles`() {
         for (dark in listOf(false, true)) {
             val palette = Palette.of(dark)
 
