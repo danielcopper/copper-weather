@@ -16,9 +16,9 @@ To fill: the sensor's data format.
 
 ## App
 
-What the app does: D4, D18, D20.
+What the app does: D4, D18, D20. The sign-in screen: D22–D27.
 
-To fill: the screens.
+To fill: the screens still to come.
 
 ## Colours
 

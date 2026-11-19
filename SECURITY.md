@@ -40,4 +40,5 @@ D3 in [docs/decisions.md](docs/decisions.md)). It handles:
   the app's data); after a new install the user signs in again.
 - The app has no account or server of its own: it talks only to the user's Home Assistant.
 
-The current version is a scaffold: it does not sign in yet and holds no token.
+The current version signs in and keeps the refresh token, sealed under a key in the Android Keystore (D26); it
+fetches nothing yet and keeps no snapshot.

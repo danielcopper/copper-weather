@@ -25,9 +25,8 @@ value class HaAddress internal constructor(
         internal fun stored(text: String): HaAddress? = text.toHttpUrlOrNull()?.let { HaAddress(root(it)) }
 
         /**
-         * The address typed on the sign-in screen: only https, since Android refuses cleartext and the app reaches
-         * Home Assistant at one address at home and away (D24); without a scheme https is assumed. A path, query or
-         * fragment typed after the host is dropped.
+         * The address typed on the sign-in screen (D24): only https, and without a scheme https is assumed. A path,
+         * query or fragment typed after the host is dropped.
          */
         fun parse(input: String): HaAddress? {
             val text = input.trim()

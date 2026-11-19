@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Nothing is backed up or moved to a new device, from either storage,
-     credential-encrypted or device-encrypted: what the app will keep, the
-     sign-in and the snapshot, belongs to this phone, and the snapshot is
-     fetched anew after signing in again. -->
+     credential-encrypted or device-encrypted: what the app keeps, the
+     sign-in and later the snapshot, belongs to this phone, and the snapshot
+     is fetched anew after signing in again. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="." />

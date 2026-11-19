@@ -71,14 +71,10 @@ class SignInRequest internal constructor(
     override fun toString() = "SignInRequest(…)"
 
     companion object {
-        /**
-         * The app's `client_id`, kept with the refresh token in exactly this form, since a refresh needs the same
-         * string (D23). Its port is the app's own, not copper-calendar's, so the two apps stand apart in Home
-         * Assistant's list of tokens.
-         */
+        /** The app's `client_id`, on a port of its own, kept with the refresh token in exactly this form (D23). */
         const val CLIENT_ID = "http://127.0.0.1:47124/"
 
-        /** On the client's scheme, host and port, which Home Assistant accepts without fetching anything (D23). */
+        /** On the client's scheme, host and port (D23). */
         const val REDIRECT_URI = CLIENT_ID + "callback"
 
         private val REDIRECT = REDIRECT_URI.toHttpUrl()

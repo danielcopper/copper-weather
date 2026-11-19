@@ -4,7 +4,7 @@
     <string name="app_name" translatable="false">Copper Weather</string>
     <!-- The sign-in screen (D24, D25, D27): the address field, the button that opens Home Assistant's login, why a sign-in did not come about, the line while signed in, and signing out. -->
     <string name="sign_in_address">Home-Assistant-Adresse</string>
-    <string name="sign_in_address_example" translatable="false">https://….ui.nabu.casa</string>
+    <string name="sign_in_address_example" translatable="false">https://…</string>
     <string name="sign_in_address_invalid">Bitte die https-Adresse von Home Assistant eingeben</string>
     <string name="sign_in">Mit Home Assistant anmelden</string>
     <string name="sign_in_failed">Anmeldung fehlgeschlagen – bitte noch einmal versuchen</string>

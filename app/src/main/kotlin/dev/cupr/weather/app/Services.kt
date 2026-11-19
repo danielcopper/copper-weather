@@ -19,7 +19,10 @@ object Services {
     private const val ACCOUNT = "account"
     private const val CALL_TIMEOUT_SECONDS = 30L
 
-    /** The client every call to Home Assistant goes through; tests replace it to reach their fake Home Assistant. */
+    /**
+     * The client of every HTTP call the app itself makes (the login page's WebView loads on its own); tests replace it
+     * to reach their fake Home Assistant.
+     */
     @set:VisibleForTesting
     var http: OkHttpClient = OkHttpClient.Builder().callTimeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS).build()
 
@@ -35,17 +38,14 @@ object Services {
 
     private fun keeper(context: Context) = AccountKeeper(account(context), http)
 
-    /** Keeps a new sign-in; true when signed in. The first fetch at once after it (D20) comes with the fetch. */
+    /** Keeps a new sign-in; true when signed in. The fetch at once after signing in (D20) goes here. */
     fun signIn(
         context: Context,
         request: SignInRequest,
         code: AuthorizationCode,
     ): Boolean = keeper(context).signIn(request, code) == AccountKeeper.SignIn.SignedIn
 
-    /**
-     * Signs out (D27). Nothing else runs on the sign-in yet: once the app fetches (D20), the fetches stop here, before
-     * the sign-out and once more after it, so one scheduled meanwhile does not outlive the sign-in.
-     */
+    /** Signs out (D27). Stopping the fetches (D20, D27) goes here. */
     fun signOut(context: Context) {
         keeper(context).signOut()
     }

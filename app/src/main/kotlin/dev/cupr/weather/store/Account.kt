@@ -38,12 +38,15 @@ class Account(
             val session: Session,
         ) : Opened
 
-        /** Signed in, but the stored sign-in cannot be read: incomplete, not Base64, or not sealed with this key. */
+        /**
+         * Signed in, but the stored sign-in cannot be read: incomplete, not Base64, or not sealed with this key; it
+         * counts as lost (D26).
+         */
         data class Unreadable(
             val reason: String,
         ) : Opened
 
-        /** The Keystore or the cipher failed; the stored sign-in may open next time. */
+        /** The Keystore or the cipher failed; the stored sign-in may open next time (D26). */
         data class Unavailable(
             val reason: String,
         ) : Opened
