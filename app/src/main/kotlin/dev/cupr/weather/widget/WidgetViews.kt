@@ -9,14 +9,13 @@ import androidx.annotation.DimenRes
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.tap.Taps
-import java.text.NumberFormat
-import java.util.Locale
 import kotlin.math.floor
 
 /**
- * The views of the widget "Wetter" at one size (D12–D14, D35): "now" in every size bucket, the hours in the wide and
- * the tall one, the days in the tall one, as many of each as fit; or a plain text. Every text in its palette role for
- * light and for dark (D7); the images are the conditions' still images ([WeatherIcons]).
+ * The views of the widget "Wetter" at one size (D11–D14, D35, D36): "now" in every size bucket, the hours in the
+ * flat one from 4 cells wide and in the wide and the tall one, the days in the tall one, as many of each as fit; or a
+ * plain text. The flat bucket has a layout of its own, "now" and the hours side by side. Every text in its palette role
+ * for light and for dark (D7); the images are the conditions' still images ([WeatherIcons]).
  */
 internal object WidgetViews {
     /** The views of [content] for a widget [size] dp large. */
@@ -25,33 +24,34 @@ internal object WidgetViews {
         content: WidgetContent,
         size: SizeF,
     ): RemoteViews {
-        val views = RemoteViews(context.packageName, R.layout.widget_weather)
+        val bucket = SizeBucket.of(size)
+        val flat = bucket == SizeBucket.FLAT
+        val views =
+            RemoteViews(context.packageName, if (flat) R.layout.widget_weather_flat else R.layout.widget_weather)
         // Every part is set either way, since a launcher applies an update onto the views of the one before when their
         // layout is the same.
         views.removeAllViews(R.id.hours)
-        views.removeAllViews(R.id.days)
+        if (!flat) views.removeAllViews(R.id.days)
         when (content) {
-            is WidgetContent.Plain -> plain(context, views, content)
-            is WidgetContent.Weather -> weather(context, views, content, size)
+            is WidgetContent.Plain -> plain(context, views, content, flat)
+            is WidgetContent.Weather if flat -> flat(context, views, content, size)
+            is WidgetContent.Weather -> weather(context, views, content, size, bucket)
         }
         return views
     }
+
+    /** The parts of each layout a plain text hides: all of the flat one's, or all of the other one's. */
+    private val flatParts = intArrayOf(R.id.now_column, R.id.hours)
+    private val parts =
+        intArrayOf(R.id.now, R.id.now_today_below, R.id.now_line, R.id.widget_notice, R.id.hours, R.id.days)
 
     private fun plain(
         context: Context,
         views: RemoteViews,
         content: WidgetContent.Plain,
+        flat: Boolean,
     ) {
-        for (id in intArrayOf(
-            R.id.now,
-            R.id.now_today_below,
-            R.id.now_line,
-            R.id.widget_notice,
-            R.id.hours,
-            R.id.days,
-        )) {
-            views.setViewVisibility(id, View.GONE)
-        }
+        for (id in if (flat) flatParts else parts) views.setViewVisibility(id, View.GONE)
         views.show(R.id.widget_plain, context.getString(content.text), Palette::text)
         views.setOnClickPendingIntent(R.id.widget, Taps.app(context))
     }
@@ -61,9 +61,25 @@ internal object WidgetViews {
         views: RemoteViews,
         content: WidgetContent.Weather,
         size: SizeF,
+        bucket: SizeBucket,
     ) {
-        val bucket = SizeBucket.of(size)
-        now(context, views, content.now, small = bucket == SizeBucket.SMALL)
+        now(views, content.now, small = bucket == SizeBucket.SMALL)
+        views.today(
+            R.id.now_today,
+            R.id.now_high,
+            R.id.now_low,
+            content.now.today.takeUnless {
+                bucket ==
+                    SizeBucket.SMALL
+            },
+        )
+        views.today(
+            R.id.now_today_below,
+            R.id.now_high_below,
+            R.id.now_low_below,
+            content.now.today.takeIf { bucket == SizeBucket.SMALL },
+        )
+        line(context, views, content.now.line)
         val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
         views.show(R.id.widget_notice, again, Palette::accent)
         views.show(R.id.widget_plain, null, Palette::text)
@@ -71,23 +87,47 @@ internal object WidgetViews {
         val room = Room(context.resources, size, content.signInAgain)
         val hours = if (bucket == SizeBucket.SMALL) emptyList() else content.hours.take(room.hours())
         views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
-        hours.forEach { views.addView(R.id.hours, hour(context, it)) }
+        hours.forEach { views.addView(R.id.hours, WidgetRows.hour(context, it)) }
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
         views.setViewVisibility(R.id.days, if (days.isEmpty()) View.GONE else View.VISIBLE)
-        days.forEach { views.addView(R.id.days, day(context, it)) }
+        days.forEach { views.addView(R.id.days, WidgetRows.day(context, it)) }
 
-        views.setOnClickPendingIntent(
-            R.id.widget,
-            if (content.signInAgain) Taps.app(context) else Taps.weather(context),
-        )
+        views.setOnClickPendingIntent(R.id.widget, tap(context, content))
     }
 
     /**
-     * "Now" (D36): in the [small] bucket a lower row with a smaller image, and today's high and low in a row below it;
-     * otherwise the high and low beside the temperature.
+     * The flat bucket (D36): "now" as in the small bucket without today's high and low, "Neu anmelden" in its line's
+     * place while it shows, and beside it as many hours as fit, from 4 cells wide.
      */
-    private fun now(
+    private fun flat(
         context: Context,
+        views: RemoteViews,
+        content: WidgetContent.Weather,
+        size: SizeF,
+    ) {
+        views.setViewVisibility(R.id.now_column, View.VISIBLE)
+        now(views, content.now, small = true)
+        val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
+        if (again == null) line(context, views, content.now.line) else views.show(R.id.now_line, null, Palette::text)
+        views.show(R.id.widget_notice, again, Palette::accent)
+        views.show(R.id.widget_plain, null, Palette::text)
+
+        val room = Room(context.resources, size, content.signInAgain)
+        val hours = if (SizeBucket.wide(size)) content.hours.take(room.flatHours()) else emptyList()
+        views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
+        hours.forEach { views.addView(R.id.hours, WidgetRows.hour(context, it)) }
+
+        views.setOnClickPendingIntent(R.id.widget, tap(context, content))
+    }
+
+    /** The app's screen while the sign-in asks to be done again, else the weather pop-up (D39). */
+    private fun tap(
+        context: Context,
+        content: WidgetContent.Weather,
+    ) = if (content.signInAgain) Taps.app(context) else Taps.weather(context)
+
+    /** "Now"'s row (D36): in the [small] and the flat bucket lower, with a smaller image. */
+    private fun now(
         views: RemoteViews,
         now: WidgetContent.Now,
         small: Boolean,
@@ -102,9 +142,15 @@ internal object WidgetViews {
         views.setViewLayoutWidthDimen(R.id.now_icon, icon)
         views.setViewLayoutHeightDimen(R.id.now_icon, icon)
         views.show(R.id.now_temperature, now.temperature, Palette::text)
-        views.today(R.id.now_today, R.id.now_high, R.id.now_low, now.today.takeUnless { small })
-        views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, now.today.takeIf { small })
-        when (val line = now.line) {
+    }
+
+    /** The line below "now": the rain hint in the palette's `rain`, else the condition's word, else nothing (D36). */
+    private fun line(
+        context: Context,
+        views: RemoteViews,
+        line: WidgetContent.Line?,
+    ) {
+        when (line) {
             null -> views.show(R.id.now_line, null, Palette::text)
             WidgetContent.Line.RainNow -> views.show(R.id.now_line, context.getString(R.string.rain_now), Palette::rain)
             is WidgetContent.Line.RainIn -> views.show(R.id.now_line, context.rainIn(line.minutes), Palette::rain)
@@ -127,71 +173,10 @@ internal object WidgetViews {
 
     private fun Context.rainIn(minutes: Long): String = getString(R.string.rain_in, minutes)
 
-    /** [rain] as the dashboard writes it (D37): "2,5 mm", "3 mm", "< 0,1 mm"; none without rain. */
-    internal fun Context.rainText(rain: WidgetContent.Rain?): String? =
-        when (rain) {
-            null -> {
-                null
-            }
-
-            WidgetContent.Rain.Trace -> {
-                getString(R.string.rain_trace)
-            }
-
-            is WidgetContent.Rain.Amount -> {
-                val millimetres = NumberFormat.getNumberInstance(Locale.GERMAN).apply { maximumFractionDigits = 1 }
-                getString(R.string.rain_amount, millimetres.format(rain.millimetres))
-            }
-        }
-
-    private fun hour(
-        context: Context,
-        hour: WidgetContent.Hour,
-    ): RemoteViews {
-        val views = RemoteViews(context.packageName, R.layout.widget_hour)
-        views.show(R.id.hour_time, hour.time, Palette::textMuted)
-        views.setImageViewResource(R.id.hour_icon, hour.icon)
-        views.show(R.id.hour_temperature, hour.temperature, Palette::text)
-        views.show(R.id.hour_rain, context.rainText(hour.rain), Palette::rain)
-        return views
-    }
-
-    private fun day(
-        context: Context,
-        day: WidgetContent.Day,
-    ): RemoteViews {
-        val views = RemoteViews(context.packageName, R.layout.widget_day)
-        val weekdays = context.resources.getStringArray(R.array.weekdays_short)
-        views.show(R.id.day_weekday, weekdays[day.weekday.value - 1], Palette::text)
-        views.setImageViewResource(R.id.day_icon, day.icon)
-        // The rain keeps its room without an amount, so the highs and lows of all days stand in one column.
-        views.show(R.id.day_rain, context.rainText(day.rain), Palette::rain, hidden = View.INVISIBLE)
-        views.show(R.id.day_high, day.highLow.high, Palette::text)
-        views.show(R.id.day_low, day.highLow.low, Palette::textMuted)
-        return views
-    }
-
-    /**
-     * Shows [text] in [id], in [role]'s colour for light and for dark, or hides [id] ([hidden]) without a text.
-     */
-    private fun RemoteViews.show(
-        id: Int,
-        text: String?,
-        role: (Palette) -> Int,
-        hidden: Int = View.GONE,
-    ) {
-        if (text == null) {
-            setViewVisibility(id, hidden)
-            return
-        }
-        setTextViewText(id, text)
-        setColorInt(id, "setTextColor", role(Palette.LIGHT), role(Palette.DARK))
-        setViewVisibility(id, View.VISIBLE)
-    }
-
     /**
      * The room a widget [size] dp large has for the hours and the days (D35), from the fixed sizes of its parts
-     * (`dimens.xml`): below the card's padding, "now" and its line, and "Neu anmelden" while it shows ([notice]).
+     * (`dimens.xml`): within the card's padding, beside "now" in the flat bucket; below "now" and its line, and "Neu
+     * anmelden" while it shows ([notice]), in the others.
      */
     private class Room(
         resources: Resources,
@@ -205,6 +190,10 @@ internal object WidgetViews {
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(size.width - 2 * padding, R.dimen.widget_hour_width)
+
+        /** The hours that fit beside "now" in the flat bucket. */
+        fun flatHours(): Int =
+            fit(size.width - 2 * padding - dimen(R.dimen.widget_flat_now_width) - gap, R.dimen.widget_hour_width)
 
         /** The days that fit the height below "now" and, when they show ([withHours]), the hours. */
         fun days(withHours: Boolean): Int {

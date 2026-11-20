@@ -86,7 +86,7 @@ class WidgetPreviewTest {
     @Test
     fun `every part of the preview takes its looks from a style the widget's own layouts use, and adds none`() {
         val preview = elements("widget_weather_preview.xml")
-        val widget = listOf("widget_weather.xml", "widget_hour.xml").flatMap(::elements)
+        val widget = listOf("widget_weather.xml", "widget_weather_flat.xml", "widget_hour.xml").flatMap(::elements)
         val shared = preview.map { it.getAttribute("style") }.toSet()
 
         assertTrue(preview.isNotEmpty())
@@ -125,13 +125,16 @@ class WidgetPreviewTest {
     }
 
     private companion object {
-        /** A preview part's own attributes: its sample, and that an image says nothing to accessibility. */
-        val PREVIEW_OWN = setOf("android:text", "android:textColor", "android:src", "android:importantForAccessibility")
-
         /**
-         * A widget part's own attributes: its id for WidgetViews, its visibility before WidgetViews shows it, and that
-         * an image says nothing to accessibility, which Android Lint reads only on the element.
+         * What Android Lint reads only on the element, not from its style: that an image says nothing to
+         * accessibility, and "now"'s image's scale type, without which Lint takes its row for a compound drawable.
          */
-        val WIDGET_OWN = setOf("android:id", "android:visibility", "android:importantForAccessibility")
+        val LINT_OWN = setOf("android:importantForAccessibility", "android:scaleType")
+
+        /** A preview part's own attributes: its sample, and [LINT_OWN]. */
+        val PREVIEW_OWN = setOf("android:text", "android:textColor", "android:src") + LINT_OWN
+
+        /** A widget part's own attributes: its id, its visibility before WidgetViews shows it, and [LINT_OWN]. */
+        val WIDGET_OWN = setOf("android:id", "android:visibility") + LINT_OWN
     }
 }

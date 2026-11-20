@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter" (D19): added at 4 x 2 cells, down to 2 x 2, its
-     least size (D11). Sizes in dp by D35: 2 x 2 is 129 x 116, 4 x 2
+<!-- The widget "Wetter" (D19): added at 4 x 2 cells, down to 2 x 1, its
+     least size (D11). Sizes in dp by D35: 2 x 1 is 129 x 50, 4 x 2
      275 x 116. updatePeriodMillis 0: the app updates it (D33). The picker
      shows previewLayout (D40); previewImage stands in where a launcher shows
      no layout. -->
@@ -10,7 +10,7 @@
     android:minWidth="275dp"
     android:minHeight="116dp"
     android:minResizeWidth="129dp"
-    android:minResizeHeight="116dp"
+    android:minResizeHeight="50dp"
     android:previewImage="@drawable/widget_preview"
     android:previewLayout="@layout/widget_weather_preview"
     android:resizeMode="horizontal|vertical"

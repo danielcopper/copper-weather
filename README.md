@@ -8,8 +8,8 @@ answer and draws it.
 
 The app signs in to Home Assistant on its one screen, fetches the app sensor at the interval set there and keeps its
 last good answer; the widget "Wetter" shows it by its size: "now" with today's high and low and the rain hint, the next
-hours from 4 × 2 cells, the next days from 4 × 3, with still weather icons; a tap opens the dashboard's weather pop-up
-in the Home Assistant app. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
+hours from 4 × 2 cells, the next days from 4 × 3, or one row high "now" with the next hours beside it, with still
+weather icons; a tap opens the dashboard's weather pop-up in the Home Assistant app. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
 [docs/design.md](docs/design.md), the terms in [GLOSSARY.md](GLOSSARY.md).
 
 ## Build and run

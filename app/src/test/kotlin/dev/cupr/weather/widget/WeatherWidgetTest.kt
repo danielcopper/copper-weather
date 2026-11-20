@@ -153,6 +153,91 @@ class WeatherWidgetTest {
     }
 
     @Test
+    fun `a widget 5 cells wide and 1 high shows now without today's high and low, and the hours that fit beside it`() {
+        signIn()
+        written(SampleWeather.full())
+
+        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
+
+        assertEquals(
+            listOf("7°", "Teilweise bewölkt", "13", "7°", "14", "6°", "15", "5°", "0,4\u00A0mm"),
+            widget.shown(),
+        )
+        assertEquals(3, WidgetHost.hours(widget).size)
+        assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
+        val density = application.resources.displayMetrics.density
+        assertEquals((40 * density).toInt(), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
+        // A strip across a phone's five columns, a little lower than the guidance's row.
+        assertEquals(5, WidgetHost.hours(placed(SizeF(410f, 95f))).size)
+    }
+
+    @Test
+    fun `a widget 2 cells wide and 1 high shows only now`() {
+        signIn()
+        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
+
+        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
+
+        assertEquals(listOf("7°", "Regen in 25 min"), widget.shown())
+        assertEquals(emptyList<List<String>>(), WidgetHost.hours(widget))
+        // 3 cells wide on a phone with wider cells, room for two hours beside "now": still only "now" (D11).
+        assertEquals(listOf("7°", "Regen in 25 min"), placed(SizeF(272f, 100f)).shown())
+    }
+
+    @Test
+    fun `every colour a flat widget shows is one of the palette's outside night mode`() {
+        assertFlatColours(dark = false)
+    }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun `every colour a flat widget shows is one of the palette's in night mode`() {
+        assertFlatColours(dark = true)
+    }
+
+    private fun assertFlatColours(dark: Boolean) {
+        signIn()
+        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
+
+        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
+
+        val palette = Palette.of(dark)
+        val texts = WidgetHost.texts(widget).filter { WidgetHost.visible(it, widget) }
+        assertTrue(texts.size > 5)
+        val colours = palette.colors().values.toSet()
+        for (text in texts) assertTrue("${text.text}", text.currentTextColor in colours)
+        assertEquals(palette.text, widget.text(R.id.now_temperature).currentTextColor)
+        assertEquals(palette.rain, widget.text(R.id.now_line).currentTextColor)
+    }
+
+    @Test
+    fun `a flat widget shows the plain texts, and Neu anmelden in the line's place`() {
+        for (size in listOf(SizeBucket.sizeOf(columns = 5, rows = 1), SizeBucket.sizeOf(columns = 2, rows = 1))) {
+            Services.account(application).signOut()
+            Services.snapshots(application).clear()
+            val signedOut = placed(size)
+            assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), signedOut.shown())
+            assertEquals(Palette.LIGHT.text, signedOut.text(R.id.widget_plain).currentTextColor)
+            assertEquals(MainActivity::class.java.name, signedOut.tapped().component?.className)
+
+            signIn()
+            assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), placed(size).shown())
+
+            written(SampleWeather.full())
+            Services.account(application).reject()
+            val refused = placed(size)
+            assertEquals(listOf("7°", "Neu anmelden"), refused.shown().take(2))
+            assertEquals(Palette.LIGHT.accent, refused.text(R.id.widget_notice).currentTextColor)
+            assertEquals(MainActivity::class.java.name, refused.tapped().component?.className)
+
+            Services.account(application).signOut()
+            Services.snapshots(application).clear()
+            Widgets.update(application)
+            assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), refused.shown())
+        }
+    }
+
+    @Test
     fun `the views for several sizes show at each size what fits it`() {
         signIn()
         written(SampleWeather.full())
@@ -182,7 +267,7 @@ class WeatherWidgetTest {
                 WidgetContent.Rain.Amount(1),
                 WidgetContent.Rain.Trace,
                 null,
-            ).map { with(WidgetViews) { application.rainText(it) } }
+            ).map { with(WidgetRows) { application.rainText(it) } }
 
         assertEquals(
             listOf("2,5\u00A0mm", "3\u00A0mm", "12,3\u00A0mm", "0,1\u00A0mm", "<\u00A00,1\u00A0mm", null),
@@ -533,18 +618,34 @@ class WeatherWidgetTest {
     }
 
     @Test
-    fun `the size buckets follow the cells, a widget 3 cells wide or less staying small`() {
+    fun `the size buckets follow the cells, one row flat, a widget 3 cells wide or less staying small above that`() {
         val buckets =
-            listOf(2 to 2, 3 to 2, 3 to 4, 3 to 5, 4 to 1, 4 to 2, 5 to 2, 4 to 3, 4 to 5, 5 to 4)
-                .associateWith { (columns, rows) -> SizeBucket.of(SizeBucket.sizeOf(columns, rows)) }
+            listOf(
+                2 to 1,
+                3 to 1,
+                4 to 1,
+                5 to 1,
+                2 to 2,
+                3 to 2,
+                3 to 4,
+                3 to 5,
+                4 to 2,
+                5 to 2,
+                4 to 3,
+                4 to 5,
+                5 to 4,
+            ).associateWith { (columns, rows) -> SizeBucket.of(SizeBucket.sizeOf(columns, rows)) }
 
         assertEquals(
             mapOf(
+                (2 to 1) to SizeBucket.FLAT,
+                (3 to 1) to SizeBucket.FLAT,
+                (4 to 1) to SizeBucket.FLAT,
+                (5 to 1) to SizeBucket.FLAT,
                 (2 to 2) to SizeBucket.SMALL,
                 (3 to 2) to SizeBucket.SMALL,
                 (3 to 4) to SizeBucket.SMALL,
                 (3 to 5) to SizeBucket.SMALL,
-                (4 to 1) to SizeBucket.SMALL,
                 (4 to 2) to SizeBucket.WIDE,
                 (5 to 2) to SizeBucket.WIDE,
                 (4 to 3) to SizeBucket.TALL,
@@ -557,14 +658,20 @@ class WeatherWidgetTest {
         assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(276f, 220f)))
         assertEquals(SizeBucket.TALL, SizeBucket.of(SizeF(349f, 337f)))
         assertEquals(SizeBucket.TALL, SizeBucket.of(SizeF(349f, 455f)))
-        // Clearly below 4 cells wide, or 2 or 3 high.
+        // Clearly below 4 cells wide, or 3 high.
         assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(260f, 455f)))
-        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(300f, 200f)))
         assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(300f, 320f)))
+        // One row against two: 2 rows less the slack are 218 dp.
+        assertEquals(SizeBucket.FLAT, SizeBucket.of(SizeF(300f, 217f)))
+        assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(300f, 218f)))
+        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(130f, 218f)))
+        // Lower than a row, as a launcher with more rows has them, and the least size, 2 x 1 by the landscape rule.
+        assertEquals(SizeBucket.FLAT, SizeBucket.of(SizeF(410f, 90f)))
+        assertEquals(SizeBucket.FLAT, SizeBucket.of(SizeF(129f, 50f)))
     }
 
     @Test
-    fun `the widget is named Wetter, added at 4 x 2 cells, down to 2 x 2, with a preview`() {
+    fun `the widget is named Wetter, added at 4 x 2 cells, down to 2 x 1, with a preview`() {
         val receiver =
             application.packageManager.getReceiverInfo(
                 ComponentName(application, WeatherWidgetProvider::class.java),
@@ -579,7 +686,7 @@ class WeatherWidgetTest {
         assertEquals("275.0dip", attributes["minWidth"])
         assertEquals("116.0dip", attributes["minHeight"])
         assertEquals("129.0dip", attributes["minResizeWidth"])
-        assertEquals("116.0dip", attributes["minResizeHeight"])
+        assertEquals("50.0dip", attributes["minResizeHeight"])
         assertEquals("@${R.drawable.widget_preview}", attributes["previewImage"])
         assertEquals("@${R.layout.widget_weather_preview}", attributes["previewLayout"])
         assertEquals("@${R.layout.widget_weather}", attributes["initialLayout"])

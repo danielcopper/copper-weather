@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The looks of the widget's parts: the card, "now", the hours and the
-     days, used by widget_weather.xml, widget_hour.xml and widget_day.xml.
-     The picker's preview (widget_weather_preview.xml, D40) uses the same
-     styles for the card, "now" and the hours, and WidgetPreviewTest keeps
-     both layouts from adding looks of their own beside them; WidgetViews
-     sets "now"'s row and image sizes by bucket (D36). The sizes are in dimens.xml (D35); the
-     colours come from the palette, set by WidgetViews or, in the preview,
-     from colors.xml (D7). -->
+     days, used by widget_weather.xml, widget_weather_flat.xml,
+     widget_hour.xml and widget_day.xml. The picker's preview
+     (widget_weather_preview.xml, D40) uses the same styles for the card,
+     "now" and the hours, and WidgetPreviewTest keeps the preview and the
+     widget's layouts from adding looks of their own beside them; WidgetViews
+     sets "now"'s row and image sizes by bucket (D36). The sizes are in
+     dimens.xml (D35); the colours come from the palette, set by WidgetViews
+     or, in the preview, from colors.xml (D7). -->
 <resources>
     <!-- The parent the dotted names below imply; it sets nothing. -->
     <style name="WeatherWidget" />
@@ -29,10 +30,10 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
+    <!-- Its scale type stands on each element, where Android Lint reads it. -->
     <style name="WeatherWidget.NowIcon">
         <item name="android:layout_width">@dimen/widget_now_icon</item>
         <item name="android:layout_height">@dimen/widget_now_icon</item>
-        <item name="android:scaleType">fitCenter</item>
     </style>
 
     <style name="WeatherWidget.NowTemperature">
@@ -125,6 +126,34 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">11sp</item>
+    </style>
+
+    <!-- The flat bucket: "now" and the hours side by side in one row. -->
+    <style name="WeatherWidget.FlatCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@drawable/widget_card</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">@dimen/widget_padding</item>
+        <item name="android:paddingEnd">@dimen/widget_padding</item>
+        <item name="android:paddingTop">@dimen/widget_flat_padding</item>
+        <item name="android:paddingBottom">@dimen/widget_flat_padding</item>
+    </style>
+
+    <style name="WeatherWidget.FlatNow">
+        <item name="android:layout_width">@dimen/widget_flat_now_width</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WeatherWidget.FlatHours">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/widget_hour_height</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">@dimen/widget_gap</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:orientation">horizontal</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

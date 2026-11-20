@@ -72,8 +72,7 @@ internal object WidgetHost {
         widget: View,
         id: Int,
     ): List<List<String>> {
-        val parent = widget.findViewById<ViewGroup>(id)
-        if (!visible(parent, widget)) return emptyList()
+        val parent = widget.findViewById<ViewGroup>(id)?.takeIf { visible(it, widget) } ?: return emptyList()
         return (0 until parent.childCount).map { index -> shown(parent.getChildAt(index)) }
     }
 }

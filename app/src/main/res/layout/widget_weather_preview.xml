@@ -11,6 +11,7 @@
         <ImageView
             style="@style/WeatherWidget.NowIcon"
             android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
             android:src="@drawable/weather_partlycloudy_day" />
 
         <TextView

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" (its
+     still image and the temperature, below them the rain hint or the
+     condition, or "Neu anmelden" in that line's place while the sign-in is no
+     longer usable) and beside it as many hours as fit, or a plain text
+     instead, on the card. Every part starts hidden; WidgetViews shows the
+     ones it fills, adds the hours, and sets the texts' colours from the
+     palette, light and dark (D7). "Now"'s row, image, temperature and line
+     take their looks from styles.xml, as in widget_weather.xml; the plain text
+     and "Neu anmelden" carry their own. The whole card is one tap. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget"
+    style="@style/WeatherWidget.FlatCard">
+
+    <LinearLayout
+        android:id="@+id/now_column"
+        style="@style/WeatherWidget.FlatNow"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/now"
+            style="@style/WeatherWidget.NowRow">
+
+            <ImageView
+                android:id="@+id/now_icon"
+                style="@style/WeatherWidget.NowIcon"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/now_temperature"
+                style="@style/WeatherWidget.NowTemperature"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/now_line"
+            style="@style/WeatherWidget.Line"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_notice"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/widget_line_height"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="13sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/hours"
+        style="@style/WeatherWidget.FlatHours"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_plain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

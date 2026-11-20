@@ -14,6 +14,11 @@
     <dimen name="widget_now_height_small">40dp</dimen>
     <dimen name="widget_now_icon_small">40dp</dimen>
     <dimen name="widget_today_height">18dp</dimen>
+    <!-- The flat bucket (D36): "now" in a column of its own width beside
+         the hours, and the card's padding above and below, less than its
+         sides', so an hour fits one row. -->
+    <dimen name="widget_flat_now_width">128dp</dimen>
+    <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_line_height">20dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <!-- An hour of the hours: its least width and its height. -->

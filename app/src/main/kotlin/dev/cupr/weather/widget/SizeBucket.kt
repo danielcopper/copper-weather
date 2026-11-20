@@ -4,11 +4,13 @@ import android.util.SizeF
 import kotlin.math.floor
 
 /**
- * The size buckets of D11, read from a widget's size in dp (D35): small shows "now"; wide, from 4 cells wide and 2
- * high, adds the hours; tall, from 4 wide and 3 high, adds the days. A widget 3 cells wide or less stays small however
- * high it is.
+ * The size buckets of D11, read from a widget's size in dp (D35): flat, one row high, shows "now" without today's high
+ * and low and, from 4 cells wide, the hours beside it; small, from 2 rows high, shows "now"; wide, from 4 cells wide
+ * and 2 high, adds the hours; tall, from 4 wide and 3 high, adds the days. A widget 3 cells wide or less and 2 rows or
+ * more high stays small however high it is.
  */
 enum class SizeBucket {
+    FLAT,
     SMALL,
     WIDE,
     TALL,
@@ -34,11 +36,15 @@ enum class SizeBucket {
         fun of(size: SizeF): SizeBucket {
             val rows = cells(size.height, CELL_HEIGHT)
             return when {
-                cells(size.width, CELL_WIDTH) < WIDE_CELLS || rows < WIDE_ROWS -> SMALL
+                rows < WIDE_ROWS -> FLAT
+                !wide(size) -> SMALL
                 rows < TALL_ROWS -> WIDE
                 else -> TALL
             }
         }
+
+        /** Whether a widget [size] dp large is 4 cells wide or more, which adds the hours (D11). */
+        fun wide(size: SizeF): Boolean = cells(size.width, CELL_WIDTH) >= WIDE_CELLS
 
         /** The cells [dp] spans: the most n whose n cells, less the margin and the [SLACK], fit into it. */
         private fun cells(

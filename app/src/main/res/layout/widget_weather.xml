@@ -21,7 +21,8 @@
         <ImageView
             android:id="@+id/now_icon"
             style="@style/WeatherWidget.NowIcon"
-            android:importantForAccessibility="no" />
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter" />
 
         <TextView
             android:id="@+id/now_temperature"
