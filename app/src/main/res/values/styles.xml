@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The looks of the widget's parts: the card, "now", the hours and the
-     days, used by widget_weather.xml, widget_weather_flat.xml,
+<!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
+     plain text, the hours and the days, used by widget_weather.xml,
+     widget_weather_flat.xml,
      widget_hour.xml and widget_day.xml. The picker's preview
      (widget_weather_preview.xml, D40) uses the same styles for the card,
      "now" and the hours, and WidgetPreviewTest keeps the preview and the

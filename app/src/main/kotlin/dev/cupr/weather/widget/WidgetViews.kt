@@ -82,7 +82,7 @@ internal object WidgetViews {
     /**
      * The flat bucket (D36): "now" as in the small bucket without today's high and low, "Neu anmelden" in its line's
      * place while it shows, and beside it as many hours as fit, from 4 cells wide; without hours "now" takes the card's
-     * width, so its line ends in "…" inside the card's padding.
+     * width.
      */
     private fun flatWeather(
         context: Context,
@@ -92,7 +92,6 @@ internal object WidgetViews {
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
         now(views, content.now, compact = true)
-        // "Neu anmelden" takes the line's place while it shows.
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
         } else {
@@ -143,10 +142,10 @@ internal object WidgetViews {
         views.setViewVisibility(R.id.now, View.VISIBLE)
         views.setViewLayoutHeightDimen(
             R.id.now,
-            if (compact) R.dimen.widget_now_height_small else R.dimen.widget_now_height,
+            if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height,
         )
         views.setImageViewResource(R.id.now_icon, now.icon)
-        val icon = if (compact) R.dimen.widget_now_icon_small else R.dimen.widget_now_icon
+        val icon = if (compact) R.dimen.widget_now_icon_compact else R.dimen.widget_now_icon
         views.setViewLayoutWidthDimen(R.id.now_icon, icon)
         views.setViewLayoutHeightDimen(R.id.now_icon, icon)
         views.show(R.id.now_temperature, now.temperature, Palette::text)

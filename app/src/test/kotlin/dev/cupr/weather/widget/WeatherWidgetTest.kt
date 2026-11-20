@@ -1,6 +1,5 @@
 package dev.cupr.weather.widget
 
-import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -11,98 +10,31 @@ import android.util.SizeF
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.RemoteViews
-import android.widget.TextView
-import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.R
 import dev.cupr.weather.app.MainActivity
 import dev.cupr.weather.app.Services
-import dev.cupr.weather.ha.HaAddress
-import dev.cupr.weather.ha.RefreshToken
-import dev.cupr.weather.ha.SensorData
-import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.palette.Palette
-import dev.cupr.weather.palette.colors
-import dev.cupr.weather.store.AesGcmCipher
-import dev.cupr.weather.store.Snapshot
-import dev.cupr.weather.store.TokenCipher
 import dev.cupr.weather.tap.TapActivity
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import java.time.Clock
 import java.time.Duration
-import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.crypto.KeyGenerator
 
 /**
  * The widget "Wetter" on a widget host, from the sign-in and the snapshot the app keeps, at a fixed time and size: what
  * it shows in each size bucket, in which colours, and where a tap goes (D11–D14, D33–D37, D39).
  */
 @RunWith(RobolectricTestRunner::class)
-class WeatherWidgetTest {
-    private val application = ApplicationProvider.getApplicationContext<Application>()
-    private val key = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
-    private val address = checkNotNull(HaAddress.stored("https://home.example/"))
-    private lateinit var keystoreCipher: () -> TokenCipher
-    private lateinit var clock: () -> Clock
-
-    @Before
-    fun setUp() {
-        keystoreCipher = Services.cipher
-        Services.cipher = { AesGcmCipher { key } }
-        clock = WeatherWidgetProvider.clock
-        WeatherWidgetProvider.clock = { SampleWeather.CLOCK }
-    }
-
-    @After
-    fun tearDown() {
-        Services.cipher = keystoreCipher
-        WeatherWidgetProvider.clock = clock
-    }
-
-    private fun signIn() = Services.account(application).signIn(address, SignInRequest.CLIENT_ID, RefreshToken("r"))
-
-    private fun snapshot(now: String = """{"condition":"partlycloudy","temperature":7.4}""") =
-        written("""{"schema_version":1,"now":$now}""")
-
-    private fun written(data: String) =
-        Services
-            .snapshots(application)
-            .write(Snapshot(Instant.EPOCH, SensorData.read(Json.parseToJsonElement(data).jsonObject).readable()))
-
-    private fun SensorData.Read.readable() = (this as SensorData.Read.Readable).data
-
-    private fun placed(size: SizeF? = null): View = WidgetHost.placed(application, size)
-
-    private fun View.text(id: Int): TextView = findViewById(id)
-
-    private fun View.shown(): List<String> = WidgetHost.shown(this)
-
-    /** The drawable resource an image view shows. */
-    private fun View.image(id: Int): Int = shadowOf(findViewById<ImageView>(id).drawable).createdFromResId
-
-    /** The activity a tap on the widget starts. */
-    private fun View.tapped(): Intent {
-        findViewById<View>(R.id.widget).performClick()
-        return checkNotNull(shadowOf(application).nextStartedActivity) { "The tap started nothing" }
-    }
-
+class WeatherWidgetTest : WidgetTestBase() {
     @Test
     fun `a small widget shows the icon, the temperature, today's high and low, and the condition`() {
         signIn()
@@ -151,98 +83,6 @@ class WeatherWidgetTest {
         Services.snapshots(application).clear()
         Widgets.update(application)
         assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), widget.shown())
-    }
-
-    @Test
-    fun `a widget 5 cells wide and 1 high shows now without today's high and low, and the hours that fit beside it`() {
-        signIn()
-        written(SampleWeather.full())
-
-        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
-
-        assertEquals(
-            listOf("7°", "Teilweise bewölkt", "13", "7°", "14", "6°", "15", "5°", "0,4\u00A0mm"),
-            widget.shown(),
-        )
-        assertEquals(3, WidgetHost.hours(widget).size)
-        assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
-        val density = application.resources.displayMetrics.density
-        assertEquals((40 * density).toInt(), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
-        // "Now" in its column and the hours side by side on the card.
-        assertEquals(LinearLayout.HORIZONTAL, (widget as LinearLayout).orientation)
-        assertEquals(widget, widget.findViewById<View>(R.id.now_column).parent)
-        assertEquals(widget, widget.findViewById<View>(R.id.hours).parent)
-        assertEquals((128 * density).toInt(), widget.findViewById<View>(R.id.now_column).layoutParams.width)
-        assertEquals(TapActivity::class.java.name, widget.tapped().component?.className)
-        // A strip across a phone's five columns, a little lower than the guidance's row.
-        assertEquals(5, WidgetHost.hours(placed(SizeF(410f, 95f))).size)
-    }
-
-    @Test
-    fun `a widget 2 cells wide and 1 high shows only now`() {
-        signIn()
-        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
-
-        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
-
-        assertEquals(listOf("7°", "Regen in 25 min"), widget.shown())
-        assertEquals(emptyList<List<String>>(), WidgetHost.hours(widget))
-        // Without hours "now" takes the card's width, so its line ends in "…" inside the padding.
-        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.now_column).layoutParams.width)
-        // 3 cells wide on a phone with wider cells, room for two hours beside "now": still only "now" (D11).
-        assertEquals(listOf("7°", "Regen in 25 min"), placed(SizeF(272f, 100f)).shown())
-    }
-
-    @Test
-    fun `every colour a flat widget shows is one of the palette's outside night mode`() {
-        assertColours(dark = false, SizeBucket.sizeOf(columns = 5, rows = 1), refuse = false, fewest = FLAT_TEXTS)
-    }
-
-    @Test
-    @Config(qualifiers = "+night")
-    fun `every colour a flat widget shows is one of the palette's in night mode`() {
-        assertColours(dark = true, SizeBucket.sizeOf(columns = 5, rows = 1), refuse = false, fewest = FLAT_TEXTS)
-    }
-
-    @Test
-    fun `on a redraw of a flat widget, Neu anmelden takes the line's place`() {
-        signIn()
-        written(SampleWeather.full())
-        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
-        assertEquals(listOf("7°", "Teilweise bewölkt"), widget.shown().take(2))
-
-        Services.account(application).reject()
-        Widgets.update(application)
-
-        assertEquals(listOf("7°", "Neu anmelden"), widget.shown().take(2))
-        assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line), widget))
-    }
-
-    @Test
-    fun `a flat widget shows the plain texts, and Neu anmelden in the line's place`() {
-        for (size in listOf(SizeBucket.sizeOf(columns = 5, rows = 1), SizeBucket.sizeOf(columns = 2, rows = 1))) {
-            Services.account(application).signOut()
-            Services.snapshots(application).clear()
-            val signedOut = placed(size)
-            assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), signedOut.shown())
-            assertEquals(Palette.LIGHT.text, signedOut.text(R.id.widget_plain).currentTextColor)
-            assertEquals(MainActivity::class.java.name, signedOut.tapped().component?.className)
-
-            signIn()
-            assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), placed(size).shown())
-
-            written(SampleWeather.full())
-            Services.account(application).reject()
-            val refused = placed(size)
-            assertEquals(listOf("7°", "Neu anmelden"), refused.shown().take(2))
-            assertEquals(Palette.LIGHT.accent, refused.text(R.id.widget_notice).currentTextColor)
-            assertEquals(MainActivity::class.java.name, refused.tapped().component?.className)
-
-            Services.account(application).signOut()
-            Services.snapshots(application).clear()
-            Widgets.update(application)
-            assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), refused.shown())
-        }
     }
 
     @Test
@@ -434,35 +274,6 @@ class WeatherWidgetTest {
     private val tallColours = { widget: View, palette: Palette ->
         assertEquals(palette.textMuted, widget.text(R.id.now_low).currentTextColor)
         assertEquals(palette.accent, widget.text(R.id.widget_notice).currentTextColor)
-    }
-
-    /**
-     * Every text a widget [size] dp large shows with rain due, and the sign-in refused when [refuse], more than
-     * [fewest] of them, is a colour of the palette of night mode when [dark], else of the other: the temperature
-     * `text`, the rain hint `rain`, and [more].
-     */
-    private fun assertColours(
-        dark: Boolean,
-        size: SizeF,
-        refuse: Boolean,
-        fewest: Int,
-        more: (View, Palette) -> Unit = { _, _ -> },
-    ) {
-        signIn()
-        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
-        if (refuse) Services.account(application).reject()
-
-        val widget = placed(size)
-
-        val palette = Palette.of(dark)
-        val texts = WidgetHost.texts(widget).filter { WidgetHost.visible(it, widget) }
-        assertTrue("${texts.size} texts", texts.size > fewest)
-        val colours = palette.colors().values.toSet()
-        for (text in texts) assertTrue("${text.text}", text.currentTextColor in colours)
-        assertEquals(palette.text, widget.text(R.id.now_temperature).currentTextColor)
-        assertEquals(palette.rain, widget.text(R.id.now_line).currentTextColor)
-        assertEquals(palette.surface, application.getColor(R.color.palette_surface))
-        more(widget, palette)
     }
 
     @Test
@@ -764,9 +575,8 @@ class WeatherWidgetTest {
     }
 
     private companion object {
-        /** Fewer texts than a tall widget and a flat one show in the colour tests. */
+        /** Fewer texts than a tall widget shows in the colour tests. */
         const val TALL_TEXTS = 20
-        const val FLAT_TEXTS = 5
 
         /** Long enough for the second update to reach the lock, were there none. */
         const val SETTLE_MILLIS = 300L

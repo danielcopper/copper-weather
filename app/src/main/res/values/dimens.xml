@@ -9,10 +9,11 @@
          line below it, and "Neu anmelden" below that while it shows. -->
     <dimen name="widget_now_height">48dp</dimen>
     <dimen name="widget_now_icon">48dp</dimen>
-    <!-- "Now" in the small bucket (D36): a lower row with a smaller image,
-         and today's high and low in a row below it. -->
-    <dimen name="widget_now_height_small">40dp</dimen>
-    <dimen name="widget_now_icon_small">40dp</dimen>
+    <!-- "Now" in the small and the flat bucket (D36): a lower row with a
+         smaller image. -->
+    <dimen name="widget_now_height_compact">40dp</dimen>
+    <dimen name="widget_now_icon_compact">40dp</dimen>
+    <!-- Today's high and low in a row below "now", in the small bucket. -->
     <dimen name="widget_today_height">18dp</dimen>
     <!-- The flat bucket (D36): "now" in a column of its own width beside
          the hours, and the card's padding above and below, less than its

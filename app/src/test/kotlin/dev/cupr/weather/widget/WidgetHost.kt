@@ -19,22 +19,43 @@ internal object WidgetHost {
     fun placed(
         context: Context,
         size: SizeF? = null,
-    ): View {
-        val manager = AppWidgetManager.getInstance(context)
-        val shadow = shadowOf(manager)
-        val id = shadow.createWidget(WeatherWidgetProvider::class.java, R.layout.widget_weather)
-        if (size != null) {
-            val options =
-                Bundle().apply {
-                    putParcelableArrayList(
-                        AppWidgetManager.OPTION_APPWIDGET_SIZES,
-                        arrayListOf(size),
-                    )
-                }
-            manager.updateAppWidgetOptions(id, options)
-        }
-        return shadow.getViewFor(id)
+    ): View = view(context, place(context, size))
+
+    /** Places a widget as [placed] does; its id. */
+    fun place(
+        context: Context,
+        size: SizeF? = null,
+    ): Int {
+        val id =
+            shadowOf(
+                AppWidgetManager.getInstance(context),
+            ).createWidget(WeatherWidgetProvider::class.java, R.layout.widget_weather)
+        if (size != null) resize(context, id, size)
+        return id
     }
+
+    /** The widget [id] resized to [size]: the launcher reports that one size, and the provider draws it anew. */
+    fun resize(
+        context: Context,
+        id: Int,
+        size: SizeF,
+    ): View {
+        val options =
+            Bundle().apply {
+                putParcelableArrayList(
+                    AppWidgetManager.OPTION_APPWIDGET_SIZES,
+                    arrayListOf(size),
+                )
+            }
+        AppWidgetManager.getInstance(context).updateAppWidgetOptions(id, options)
+        return view(context, id)
+    }
+
+    /** The widget [id] as the launcher shows it now. */
+    fun view(
+        context: Context,
+        id: Int,
+    ): View = shadowOf(AppWidgetManager.getInstance(context)).getViewFor(id)
 
     /** The texts [widget] shows, from the top, each part's in order: "now", the hours, the days, a plain text. */
     fun shown(widget: View): List<String> = texts(widget).filter { visible(it, widget) }.map { it.text.toString() }
