@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A day of the days (D14): its weekday, its still image in the day form,
+     its rain when it has, its high and its low; WidgetViews fills it and adds
+     as many as fit the height. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/widget_day_height"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/day_weekday"
+        android:layout_width="32dp"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/day_icon"
+        android:layout_width="@dimen/widget_small_icon"
+        android:layout_height="@dimen/widget_small_icon"
+        android:importantForAccessibility="no"
+        android:scaleType="fitCenter" />
+
+    <TextView
+        android:id="@+id/day_rain"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:maxLines="1"
+        android:textSize="12sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/day_high"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/day_low"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textSize="14sp" />
+</LinearLayout>

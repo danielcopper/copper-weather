@@ -5,6 +5,8 @@ import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
 
 /** The app sensor's data and the fields of it the app shows (D3, D30). */
 class SensorDataTest {
@@ -40,6 +42,56 @@ class SensorDataTest {
             assertNull(number, data("""{"now":{"temperature":$number}}""").temperature)
         }
         assertEquals(-1.0e300, data("""{"now":{"temperature":-1e300}}""").temperature)
+    }
+
+    @Test
+    fun `the hours read their start, condition, temperature, rain and night, and an hour without a time is left out`() {
+        val data =
+            data(
+                """{"hours":[{"datetime":"2026-11-20T14:00:00+00:00","condition":"rainy","temperature":6.5,""" +
+                    """"precipitation":0.4,"night":true},{"condition":"sunny"},{"datetime":"14:00"},""" +
+                    """{"datetime":"2026-11-20T15:00:00Z","night":"true"},3]}""",
+            )
+
+        assertEquals(
+            listOf(
+                SensorData.Hour(Instant.parse("2026-11-20T14:00:00Z"), "rainy", 6.5, 0.4, night = true),
+                SensorData.Hour(Instant.parse("2026-11-20T15:00:00Z"), null, null, null, night = false),
+            ),
+            data.hours,
+        )
+        assertEquals(emptyList<SensorData.Hour>(), data("""{"hours":{}}""").hours)
+        assertEquals(emptyList<SensorData.Hour>(), data("{}").hours)
+    }
+
+    @Test
+    fun `the days read their date as written, condition, high, low and rain, and a day without a date is left out`() {
+        val data =
+            data(
+                """{"days":[{"datetime":"2026-11-21T00:00:00+01:00","condition":"sunny","temperature":10,""" +
+                    """"templow":-1.5,"precipitation":0},{"datetime":"2026-11-22T00:00:00"},{"datetime":"morgen"},""" +
+                    """{"temperature":3}]}""",
+            )
+
+        assertEquals(
+            listOf(
+                SensorData.Day(LocalDate.of(2026, 11, 21), "sunny", 10.0, -1.5, 0.0),
+                SensorData.Day(LocalDate.of(2026, 11, 22), null, null, null, null),
+            ),
+            data.days,
+        )
+    }
+
+    @Test
+    fun `rain_at and twilight read as sent, a rain start without an offset as absent`() {
+        assertEquals(
+            Instant.parse("2026-11-20T12:05:00Z"),
+            data("""{"rain_at":"2026-11-20T13:05:00+01:00","twilight":"sunset"}""").rainAt,
+        )
+        assertEquals("sunset", data("""{"twilight":"sunset"}""").twilight)
+        assertNull(data("""{"rain_at":"2026-11-20T13:05:00"}""").rainAt)
+        assertNull(data("""{"rain_at":5}""").rainAt)
+        assertNull(data("{}").twilight)
     }
 
     @Test

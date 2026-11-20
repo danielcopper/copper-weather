@@ -82,6 +82,12 @@ rm -f gradle/verification-metadata.xml
   dependencies :app:dependencies buildEnvironment {{ vars.gate_tasks }}
 """
 
+[tasks.icons]
+description = "Write the weather icons' VectorDrawables from the dashboard's still SVGs in icons/weather (D38)"
+# Any python3 with its standard library; WeatherIconsTest runs the same
+# script with --check, so the drawables in the repository stay its output.
+run = "python3 scripts/weather_icons.py"
+
 [tasks.install]
 description = "Build the debug APK and install it on the device adb is connected to"
 # Connect the phone first, as README.md describes; this task does not.

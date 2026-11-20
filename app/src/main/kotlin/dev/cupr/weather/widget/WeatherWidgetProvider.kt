@@ -1,22 +1,22 @@
 package dev.cupr.weather.widget
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.view.View
+import android.os.Bundle
+import android.util.Log
+import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.annotation.VisibleForTesting
-import dev.cupr.weather.R
-import dev.cupr.weather.app.MainActivity
-import dev.cupr.weather.palette.Palette
+import androidx.core.os.BundleCompat
+import java.time.Clock
 
 /**
- * The widget "Wetter" (D19), a plain text stand-in (D33): the snapshot's temperature and condition, or why there is
- * none, on a card in the palette's colours, light and dark with the system (D7). A tap opens the app's screen. Its
- * views are built anew on each update; the launcher's own updates read what to show as the app's do ([Widgets]).
+ * The widget "Wetter" (D19): the snapshot's weather by its size bucket (D11–D14), or why there is none, on a card in
+ * the palette's colours, light and dark with the system (D7). Its views are built anew on each update and whenever the
+ * launcher reports new sizes, one set of views for each size the launcher shows it at (D35); the launcher's own
+ * updates read what to show as the app's do ([Widgets]).
  */
 class WeatherWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -27,24 +27,43 @@ class WeatherWidgetProvider : AppWidgetProvider() {
         Widgets.withContent(context) { content -> update(context, appWidgetManager, appWidgetIds, content) }
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        Widgets.withContent(context) { content -> update(context, appWidgetManager, intArrayOf(appWidgetId), content) }
+    }
+
     companion object {
+        private const val TAG = "WeatherWidget"
+
+        /** The most views a RemoteViews takes for its sizes (RemoteViews' `MAX_INIT_VIEW_COUNT`). */
+        private const val MOST_SIZES = 16
+
         /**
          * What the widget shows now ([WidgetContent.read]), read once per update; tests replace it to make the update
          * fail.
          */
         @VisibleForTesting
-        internal var content: (Context) -> WidgetContent = { WidgetContent.read(it) }
+        internal var content: (Context) -> WidgetContent = { WidgetContent.read(it, clock()) }
 
-        /** Hands the widgets [ids] the views of [content]. */
+        /** The clock and zone the widget's times are read in; tests set their own. */
+        @VisibleForTesting
+        internal var clock: () -> Clock = { Clock.systemDefaultZone() }
+
+        /** Hands each of the widgets [ids] the views of [content] for the sizes the launcher shows it at. */
         internal fun update(
             context: Context,
             manager: AppWidgetManager,
             ids: IntArray,
             content: WidgetContent,
         ) {
-            if (ids.isEmpty()) return
-            val views = views(context, content)
-            ids.forEach { manager.updateAppWidget(it, views) }
+            ids.forEach { id ->
+                val sizes = sizes(manager.getAppWidgetOptions(id), id)
+                manager.updateAppWidget(id, RemoteViews(sizes.associateWith { WidgetViews.of(context, content, it) }))
+            }
         }
 
         /** This app's widgets on the home screen. */
@@ -53,54 +72,40 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             manager: AppWidgetManager,
         ): IntArray = manager.getAppWidgetIds(ComponentName(context, WeatherWidgetProvider::class.java))
 
-        /** The views of [content], each text in its palette role for light and for dark, the whole widget a tap. */
-        internal fun views(
-            context: Context,
-            content: WidgetContent,
-        ): RemoteViews {
-            val views = RemoteViews(context.packageName, R.layout.widget_weather)
-            val weather = content as? WidgetContent.Weather
-            val plain = (content as? WidgetContent.Plain)?.let { context.getString(it.text) }
-            val again = context.getString(R.string.widget_sign_in_again).takeIf { weather?.signInAgain == true }
-            views.show(R.id.widget_temperature, weather?.temperature, Palette::text)
-            views.show(R.id.widget_condition, weather?.condition?.let(context::getString), Palette::text)
-            views.show(R.id.widget_notice, again, Palette::accent)
-            views.show(R.id.widget_plain, plain, Palette::text)
-            views.setOnClickPendingIntent(R.id.widget, open(context))
-            return views
-        }
-
         /**
-         * Shows [text] in [id], in [role]'s colour, or hides [id] without a text. Each view is set either way, since a
-         * launcher applies an update onto the views of the one before when their layout is the same.
+         * The sizes in dp a widget is shown at (D35): those the launcher reports (`OPTION_APPWIDGET_SIZES`, one for
+         * portrait and one for landscape on a phone); without them its width in portrait and its height in portrait
+         * (its least width and greatest height); without those either, 4 × 2 cells, the size it is added at (D11), and
+         * the log says so.
          */
-        private fun RemoteViews.show(
+        internal fun sizes(
+            options: Bundle?,
             id: Int,
-            text: String?,
-            role: (Palette) -> Int,
-        ) {
-            if (text == null) {
-                setViewVisibility(id, View.GONE)
-                return
-            }
-            setTextViewText(id, text)
-            setColorInt(id, "setTextColor", role(Palette.LIGHT), role(Palette.DARK))
-            setViewVisibility(id, View.VISIBLE)
-        }
+        ): List<SizeF> {
+            val key = AppWidgetManager.OPTION_APPWIDGET_SIZES
+            val reported =
+                options
+                    ?.let { BundleCompat.getParcelableArrayList(it, key, SizeF::class.java) }
+                    .orEmpty()
+                    .filter { it.width > 0 && it.height > 0 }
+                    .distinct()
+                    .take(MOST_SIZES)
+            val width = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) ?: 0
+            val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: 0
+            return when {
+                reported.isNotEmpty() -> {
+                    reported
+                }
 
-        /**
-         * The app's screen, started as the app's icon starts it, so a screen already open comes to the front instead
-         * of a second one.
-         */
-        private fun open(context: Context): PendingIntent =
-            PendingIntent.getActivity(
-                context,
-                0,
-                Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_LAUNCHER)
-                    .setClass(context, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
+                width > 0 && height > 0 -> {
+                    listOf(SizeF(width.toFloat(), height.toFloat()))
+                }
+
+                else -> {
+                    Log.w(TAG, "Widget $id: the launcher reports no size, so it is drawn for 4 x 2 cells")
+                    listOf(SizeBucket.sizeOf(columns = 4, rows = 2))
+                }
+            }
+        }
     }
 }

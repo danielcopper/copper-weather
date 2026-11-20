@@ -1,0 +1,87 @@
+package dev.cupr.weather.widget
+
+import android.app.Application
+import android.view.LayoutInflater
+import android.widget.RemoteViews
+import android.widget.TextView
+import androidx.test.core.app.ApplicationProvider
+import dev.cupr.weather.R
+import dev.cupr.weather.palette.Palette
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/** The widget picker's preview (D40): sample weather, wide, in the palette's colours, light and dark. */
+@RunWith(RobolectricTestRunner::class)
+class WidgetPreviewTest {
+    private val application = ApplicationProvider.getApplicationContext<Application>()
+
+    @Test
+    fun `the preview shows now and five hours of sample weather in the palette's colours outside night mode`() {
+        assertPreview(Palette.LIGHT)
+    }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun `the preview shows now and five hours of sample weather in the palette's colours in night mode`() {
+        assertPreview(Palette.DARK)
+    }
+
+    private fun assertPreview(palette: Palette) {
+        val preview = LayoutInflater.from(application).inflate(R.layout.widget_weather_preview, null)
+
+        val texts = WidgetHost.texts(preview)
+        assertEquals(
+            listOf(
+                "7°",
+                "9°",
+                "3°",
+                "Teilweise bewölkt",
+                "14",
+                "8°",
+                "15",
+                "8°",
+                "16",
+                "7°",
+                "17",
+                "6°",
+                "0,4\u00A0mm",
+                "18",
+                "6°",
+            ),
+            texts.map { it.text.toString() },
+        )
+        val roles = mapOf(palette.text to "text", palette.textMuted to "textMuted", palette.rain to "rain")
+        assertEquals(
+            listOf(
+                "text",
+                "text",
+                "textMuted",
+                "text",
+                "textMuted",
+                "text",
+                "textMuted",
+                "text",
+                "textMuted",
+                "text",
+                "textMuted",
+                "text",
+                "rain",
+                "textMuted",
+                "text",
+            ),
+            texts
+                .map(
+                    TextView::getCurrentTextColor,
+                ).map { roles[it] ?: "not the palette's: ${Integer.toHexString(it)}" },
+        )
+    }
+
+    @Test
+    fun `the preview is a layout a widget can show`() {
+        // The picker inflates it as a widget's views, which take only the views RemoteViews allows.
+        RemoteViews(application.packageName, R.layout.widget_weather_preview).apply(application, null)
+    }
+}

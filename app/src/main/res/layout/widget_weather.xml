@@ -1,44 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter", a plain text stand-in (D33): the temperature, the
-     condition and "Neu anmelden" below them, or a plain text instead, on the
-     card. Every text starts hidden; WeatherWidgetProvider shows the ones it
-     fills and sets their colours from the palette, light and dark (D7). The
-     whole card is one tap. -->
+<!-- The widget "Wetter" (D12-D14, D33): "now" (its still image, the
+     temperature, today's high and low, below them the rain hint or the
+     condition, and "Neu anmelden" while the sign-in is no longer usable),
+     the hours and the days as the size bucket shows them, or a plain text
+     instead, on the card. Every part starts hidden; WidgetViews shows the
+     ones it fills, adds the hours and days, and sets the texts' colours
+     from the palette, light and dark (D7). The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_card"
-    android:gravity="center"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="@dimen/widget_padding">
+
+    <LinearLayout
+        android:id="@+id/now"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_now_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/now_icon"
+            android:layout_width="@dimen/widget_now_icon"
+            android:layout_height="@dimen/widget_now_icon"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/now_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textSize="30sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/now_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/now_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/widget_temperature"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="40sp"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/widget_condition"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="16sp"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/widget_notice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:id="@+id/now_line"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_line_height"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
         android:textSize="14sp"
         android:visibility="gone" />
 
     <TextView
-        android:id="@+id/widget_plain"
-        android:layout_width="wrap_content"
+        android:id="@+id/widget_notice"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_notice_height"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/hours"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_hour_height"
+        android:layout_marginTop="@dimen/widget_gap"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/days"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/widget_gap"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_plain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="14sp"
         android:visibility="gone" />

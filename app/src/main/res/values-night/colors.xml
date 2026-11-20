@@ -3,5 +3,8 @@
 <resources>
     <color name="palette_bg">#FF101317</color>
     <color name="palette_surface">#FF1A1F25</color>
+    <color name="palette_text">#FFECEEF1</color>
+    <color name="palette_text_muted">#FFA3ACB7</color>
+    <color name="palette_rain">#FF8FC2FF</color>
     <color name="palette_sun">#FFF5C451</color>
 </resources>

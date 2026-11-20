@@ -9,6 +9,35 @@
     <string name="widget_signed_out">Nicht angemeldet – zum Anmelden tippen</string>
     <string name="widget_no_data">Noch keine Daten – zum Öffnen tippen</string>
     <string name="widget_sign_in_again">Neu anmelden</string>
+    <!-- The widget picker's preview (D40): sample weather, not the user's. -->
+    <string name="preview_temperature" translatable="false">7°</string>
+    <string name="preview_high" translatable="false">9°</string>
+    <string name="preview_low" translatable="false">3°</string>
+    <string name="preview_hour_1" translatable="false">14</string>
+    <string name="preview_hour_2" translatable="false">15</string>
+    <string name="preview_hour_3" translatable="false">16</string>
+    <string name="preview_hour_4" translatable="false">17</string>
+    <string name="preview_hour_5" translatable="false">18</string>
+    <string name="preview_degrees_8" translatable="false">8°</string>
+    <string name="preview_degrees_7" translatable="false">7°</string>
+    <string name="preview_degrees_6" translatable="false">6°</string>
+    <string name="preview_rain" translatable="false">0,4\u00A0mm</string>
+    <!-- The rain hint below "now" (D36): rain falls, or is due in so many minutes (1 to 120). -->
+    <string name="rain_now">Regen jetzt</string>
+    <string name="rain_in">Regen in %1$d min</string>
+    <!-- The days' weekdays, Monday first, as the dashboard names them (D37). -->
+    <string-array name="weekdays_short">
+        <item>Mo</item>
+        <item>Di</item>
+        <item>Mi</item>
+        <item>Do</item>
+        <item>Fr</item>
+        <item>Sa</item>
+        <item>So</item>
+    </string-array>
+    <!-- A tap's target cannot be opened (D39): no app handles the weather pop-up, which the Home Assistant app would open; any other case, also one this app may not start. -->
+    <string name="target_home_assistant_missing">Home-Assistant-App nicht gefunden</string>
+    <string name="target_not_openable">Ziel lässt sich nicht öffnen</string>
     <!-- Home Assistant's conditions in German, its own translation (D34). -->
     <string name="condition_clear_night">Klare Nacht</string>
     <string name="condition_cloudy">Bewölkt</string>

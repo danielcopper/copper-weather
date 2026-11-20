@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget picker's preview of "Wetter" (D40): the widget as it is
+     added, 4 x 2 cells, wide, with sample weather: "now" and five hours, as
+     widget_weather.xml, widget_hour.xml and WidgetViews lay them out, in the
+     palette's colours, light and dark (values-night). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_card"
+    android:orientation="vertical"
+    android:padding="@dimen/widget_padding">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_now_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="@dimen/widget_now_icon"
+            android:layout_height="@dimen/widget_now_icon"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/weather_partlycloudy_day" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="@string/preview_temperature"
+            android:textColor="@color/palette_text"
+            android:textSize="30sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_high"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_low"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_line_height"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:text="@string/condition_partlycloudy"
+        android:textColor="@color/palette_text"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/widget_hour_height"
+        android:layout_marginTop="@dimen/widget_gap"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/widget_hour_height"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_hour_1"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="@dimen/widget_small_icon"
+                android:layout_height="@dimen/widget_small_icon"
+                android:layout_marginVertical="2dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/weather_sunny_day" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_degrees_8"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/widget_hour_height"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_hour_2"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="@dimen/widget_small_icon"
+                android:layout_height="@dimen/widget_small_icon"
+                android:layout_marginVertical="2dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/weather_partlycloudy_day" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_degrees_8"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/widget_hour_height"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_hour_3"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="@dimen/widget_small_icon"
+                android:layout_height="@dimen/widget_small_icon"
+                android:layout_marginVertical="2dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/weather_cloudy_day" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_degrees_7"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/widget_hour_height"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_hour_4"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="@dimen/widget_small_icon"
+                android:layout_height="@dimen/widget_small_icon"
+                android:layout_marginVertical="2dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/weather_rainy_night" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_degrees_6"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_rain"
+                android:textColor="@color/palette_rain"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="@dimen/widget_hour_height"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_hour_5"
+                android:textColor="@color/palette_text_muted"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="@dimen/widget_small_icon"
+                android:layout_height="@dimen/widget_small_icon"
+                android:layout_marginVertical="2dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter"
+                android:src="@drawable/weather_cloudy_night" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="@string/preview_degrees_6"
+                android:textColor="@color/palette_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

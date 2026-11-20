@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's parts (widget_weather.xml, widget_hour.xml, widget_day.xml)
+     at fixed sizes, so WidgetViews can work out how many hours fit the width
+     and how many days the height (D35). -->
+<resources>
+    <dimen name="widget_padding">12dp</dimen>
+    <dimen name="widget_gap">8dp</dimen>
+    <!-- "Now": the row of its image, temperature and today's high and low, the
+         line below it, and "Neu anmelden" below that while it shows. -->
+    <dimen name="widget_now_height">48dp</dimen>
+    <dimen name="widget_now_icon">48dp</dimen>
+    <dimen name="widget_line_height">20dp</dimen>
+    <dimen name="widget_notice_height">18dp</dimen>
+    <!-- An hour of the hours: its least width and its height. -->
+    <dimen name="widget_hour_width">48dp</dimen>
+    <dimen name="widget_hour_height">76dp</dimen>
+    <!-- A day of the days. -->
+    <dimen name="widget_day_height">28dp</dimen>
+    <dimen name="widget_small_icon">24dp</dimen>
+</resources>
