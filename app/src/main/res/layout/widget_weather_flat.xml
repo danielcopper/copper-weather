@@ -40,6 +40,11 @@
             android:visibility="gone" />
 
         <TextView
+            android:id="@+id/now_line_long"
+            style="@style/WeatherWidget.LineLong"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/widget_notice"
             style="@style/WeatherWidget.Notice"
             android:layout_height="@dimen/widget_line_height"

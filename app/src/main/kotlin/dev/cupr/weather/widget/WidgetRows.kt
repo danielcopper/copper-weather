@@ -6,6 +6,7 @@ import android.widget.RemoteViews
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import java.text.NumberFormat
+import java.time.DayOfWeek
 import java.util.Locale
 
 /**
@@ -30,6 +31,9 @@ internal object WidgetRows {
             }
         }
 
+    /** The short German name of [day] as the dashboard names it ("Mo" … "So", D37). */
+    fun Context.weekday(day: DayOfWeek): String = resources.getStringArray(R.array.weekdays_short)[day.value - 1]
+
     /** An hour of the hours: its time, still image, temperature and rain. */
     fun hour(
         context: Context,
@@ -49,8 +53,7 @@ internal object WidgetRows {
         day: WidgetContent.Day,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_day)
-        val weekdays = context.resources.getStringArray(R.array.weekdays_short)
-        views.show(R.id.day_weekday, weekdays[day.weekday.value - 1], Palette::text)
+        views.show(R.id.day_weekday, context.weekday(day.weekday), Palette::text)
         views.setImageViewResource(R.id.day_icon, day.icon)
         // The rain keeps its room without an amount, so the highs and lows of all days stand in one column.
         views.show(R.id.day_rain, context.rainText(day.rain), Palette::rain, hidden = View.INVISIBLE)
@@ -68,8 +71,7 @@ internal object WidgetRows {
         day: WidgetContent.Day,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_flat_day)
-        val weekdays = context.resources.getStringArray(R.array.weekdays_short)
-        views.show(R.id.flat_day_weekday, weekdays[day.weekday.value - 1], Palette::textMuted)
+        views.show(R.id.flat_day_weekday, context.weekday(day.weekday), Palette::textMuted)
         views.setImageViewResource(R.id.flat_day_icon, day.icon)
         views.show(R.id.flat_day_high, day.highLow.high, Palette::text)
         views.show(R.id.flat_day_low, day.highLow.low, Palette::textMuted)
@@ -79,11 +81,21 @@ internal object WidgetRows {
         } else {
             views.show(
                 R.id.flat_day_note,
-                day.word?.let(context::getString),
+                day.short?.let(context::getString),
                 Palette::textMuted,
                 hidden = View.INVISIBLE,
             )
         }
         return views
     }
+}
+
+/** Shows the list [id] with a row for each of [items], made by [row], or hides it without any. */
+internal fun <T> RemoteViews.rows(
+    id: Int,
+    items: List<T>,
+    row: (T) -> RemoteViews,
+) {
+    setViewVisibility(id, if (items.isEmpty()) View.GONE else View.VISIBLE)
+    items.forEach { addView(id, row(it)) }
 }

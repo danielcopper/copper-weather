@@ -24,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -83,6 +84,23 @@ class WeatherWidgetTest : WidgetTestBase() {
         Services.snapshots(application).clear()
         Widgets.update(application)
         assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), widget.shown())
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `in the small bucket a text too long for one line takes the two-line form, in the wide bucket it does not`() {
+        signIn()
+        written(SampleWeather.data().replace("partlycloudy", "lightning-rainy"))
+
+        val small = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
+        assertTrue(WidgetHost.visible(small.findViewById(R.id.now_line_long), small))
+        assertFalse(WidgetHost.visible(small.findViewById(R.id.now_line), small))
+        assertEquals("Gewitter, regnerisch", small.text(R.id.now_line_long).text.toString())
+
+        val wide = placed(SizeBucket.sizeOf(columns = 4, rows = 2))
+        assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_line), wide))
+        assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_line_long), wide))
+        assertEquals(1, wide.text(R.id.now_line).maxLines)
     }
 
     @Test

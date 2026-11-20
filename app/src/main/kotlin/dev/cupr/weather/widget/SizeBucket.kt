@@ -43,7 +43,10 @@ enum class SizeBucket {
             }
         }
 
-        /** Whether a widget [size] dp large is 4 cells wide or more, which adds the hours (D11). */
+        /**
+         * Whether a widget [size] dp large is 4 cells wide or more, which adds the hours, or in the flat bucket the
+         * days (D11).
+         */
         fun wide(size: SizeF): Boolean = cells(size.width, CELL_WIDTH) >= WIDE_CELLS
 
         /** The cells [dp] spans: the most n whose n cells, less the margin and the [SLACK], fit into it. */

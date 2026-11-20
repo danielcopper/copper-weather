@@ -88,7 +88,7 @@ sealed interface WidgetContent {
         @param:DrawableRes val icon: Int,
         val highLow: HighLow,
         val rain: Rain?,
-        @param:StringRes val word: Int?,
+        @param:StringRes val short: Int?,
     )
 
     /** Rain that falls in an hour or on a day (D37), as the rows write it ([WidgetRows]). */
@@ -181,7 +181,7 @@ sealed interface WidgetContent {
                                 icon = WeatherIcons.of(it.condition, night = false),
                                 highLow = HighLow(forecastDegrees(it.high), forecastDegrees(it.low)),
                                 rain = rainAmount(it.precipitation, it.condition),
-                                word = Condition.of(it.condition)?.short,
+                                short = Condition.of(it.condition)?.short,
                             )
                         },
                 signInAgain = signInAgain,

@@ -29,6 +29,6 @@
 
     <TextView
         android:id="@+id/flat_day_note"
-        style="@style/WeatherWidget.FlatDaySmall"
+        style="@style/WeatherWidget.FlatDayNote"
         android:visibility="invisible" />
 </LinearLayout>

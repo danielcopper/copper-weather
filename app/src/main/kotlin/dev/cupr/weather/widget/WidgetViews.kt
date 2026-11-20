@@ -2,12 +2,12 @@ package dev.cupr.weather.widget
 
 import android.content.Context
 import android.content.res.Resources
+import android.text.TextPaint
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RemoteViews
-import androidx.annotation.DimenRes
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.tap.Taps
@@ -45,7 +45,15 @@ internal object WidgetViews {
     /** The parts of each layout a plain text hides: all of the flat one's, or all of the other one's. */
     private val flatParts = intArrayOf(R.id.now_column, R.id.divider, R.id.days)
     private val parts =
-        intArrayOf(R.id.now, R.id.now_today_below, R.id.now_line, R.id.widget_notice, R.id.hours, R.id.days)
+        intArrayOf(
+            R.id.now,
+            R.id.now_today_below,
+            R.id.now_line,
+            R.id.now_line_long,
+            R.id.widget_notice,
+            R.id.hours,
+            R.id.days,
+        )
 
     private fun plain(
         context: Context,
@@ -69,16 +77,14 @@ internal object WidgetViews {
         now(views, content.now, compact = small)
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
-        line(context, views, content.now.line, compact = small)
-
         val room = Room(context.resources, size, content.signInAgain)
+        line(context, views, content.now.line, room.inside().takeIf { small })
+
         val hours = if (small) emptyList() else content.hours.take(room.hours())
-        views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
-        hours.forEach { views.addView(R.id.hours, WidgetRows.hour(context, it)) }
+        views.rows(R.id.hours, hours) { WidgetRows.hour(context, it) }
         rest(context, views, content)
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
-        views.setViewVisibility(R.id.days, if (days.isEmpty()) View.GONE else View.VISIBLE)
-        days.forEach { views.addView(R.id.days, WidgetRows.day(context, it)) }
+        views.rows(R.id.days, days) { WidgetRows.day(context, it) }
     }
 
     /**
@@ -94,14 +100,15 @@ internal object WidgetViews {
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
         now(views, content.now, compact = true)
-        if (content.signInAgain) {
-            views.setViewVisibility(R.id.now_line, View.GONE)
-        } else {
-            line(context, views, content.now.line, compact = true)
-        }
-
         val room = Room(context.resources, size, content.signInAgain)
         val days = if (SizeBucket.wide(size)) content.days.take(room.flatDays()) else emptyList()
+        if (content.signInAgain) {
+            views.setViewVisibility(R.id.now_line, View.GONE)
+            views.setViewVisibility(R.id.now_line_long, View.GONE)
+        } else {
+            line(context, views, content.now.line, if (days.isEmpty()) room.inside() else room.flatNow())
+        }
+
         if (days.isEmpty()) {
             views.setViewLayoutWidth(
                 R.id.now_column,
@@ -111,11 +118,9 @@ internal object WidgetViews {
         } else {
             views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
         }
-        val shown = if (days.isEmpty()) View.GONE else View.VISIBLE
-        views.setViewVisibility(R.id.divider, shown)
+        views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
-        views.setViewVisibility(R.id.days, shown)
-        days.forEach { views.addView(R.id.days, WidgetRows.flatDay(context, it)) }
+        views.rows(R.id.days, days) { WidgetRows.flatDay(context, it) }
         rest(context, views, content)
     }
 
@@ -156,25 +161,26 @@ internal object WidgetViews {
     }
 
     /**
-     * The line below "now": the rain hint in the palette's `rain`, else the condition's word, else nothing; [compact]
-     * in the small and the flat bucket, room for two lines (D36).
+     * The line below "now": the rain hint in the palette's `rain`, else the condition's word, else nothing (D36). In
+     * the small and the flat bucket, with [room] dp for it, a text that does not fit one line at the line's size goes
+     * to the line below, which takes two lines at a smaller size.
      */
     private fun line(
         context: Context,
         views: RemoteViews,
         line: WidgetContent.Line?,
-        compact: Boolean,
+        room: Float?,
     ) {
-        views.setViewLayoutHeightDimen(
-            R.id.now_line,
-            if (compact) R.dimen.widget_line_height_compact else R.dimen.widget_line_height,
-        )
-        when (line) {
-            null -> views.show(R.id.now_line, null, Palette::text)
-            WidgetContent.Line.RainNow -> views.show(R.id.now_line, context.getString(R.string.rain_now), Palette::rain)
-            is WidgetContent.Line.RainIn -> views.show(R.id.now_line, context.rainIn(line.minutes), Palette::rain)
-            is WidgetContent.Line.Word -> views.show(R.id.now_line, context.getString(line.word), Palette::text)
-        }
+        val (text, role) =
+            when (line) {
+                null -> null to Palette::text
+                WidgetContent.Line.RainNow -> context.getString(R.string.rain_now) to Palette::rain
+                is WidgetContent.Line.RainIn -> context.rainIn(line.minutes) to Palette::rain
+                is WidgetContent.Line.Word -> context.getString(line.word) to Palette::text
+            }
+        val long = text != null && room != null && !context.fitsOneLine(text, room)
+        views.show(R.id.now_line, text.takeUnless { long }, role)
+        views.show(R.id.now_line_long, text.takeIf { long }, role)
     }
 
     /** Shows [today]'s high and low in [high] and [low] and their [group], or hides the group without them. */
@@ -207,20 +213,23 @@ internal object WidgetViews {
         private val padding = dimen(R.dimen.widget_padding)
         private val gap = dimen(R.dimen.widget_gap)
 
+        /** The width inside the card's padding. */
+        fun inside(): Float = size.width - 2 * padding
+
+        /** The width of "now"'s column in the flat bucket beside its days. */
+        fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
+
         /** The hours that fit the width, each at least its least width. */
-        fun hours(): Int = fit(size.width - 2 * padding, R.dimen.widget_hour_width)
+        fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))
 
         /**
          * The days that fit beside "now" in the flat bucket: after its column, the gap and the divider with its
-         * padding, each day at least its least width with the gap before it.
+         * padding, each day at least its least width with the gap before it (D41).
          */
         fun flatDays(): Int {
             val left =
-                size.width - 2 * padding - dimen(R.dimen.widget_flat_now_width) - gap - dimen(R.dimen.widget_divider) -
-                    dimen(R.dimen.widget_flat_days_padding)
-            return floor(left / (dimen(R.dimen.widget_flat_day_width) + dimen(R.dimen.widget_flat_day_gap)))
-                .toInt()
-                .coerceAtLeast(0)
+                inside() - flatNow() - gap - dimen(R.dimen.widget_divider) - dimen(R.dimen.widget_flat_days_padding)
+            return fit(left, dimen(R.dimen.widget_flat_day_width) + dimen(R.dimen.widget_flat_day_gap))
         }
 
         /** The days that fit the height below "now" and, when they show ([withHours]), the hours. */
@@ -228,12 +237,28 @@ internal object WidgetViews {
             var left = size.height - 2 * padding - dimen(R.dimen.widget_now_height) - dimen(R.dimen.widget_line_height)
             if (notice) left -= dimen(R.dimen.widget_notice_height)
             if (withHours) left -= gap + dimen(R.dimen.widget_hour_height)
-            return fit(left - gap, R.dimen.widget_day_height)
+            return fit(left - gap, dimen(R.dimen.widget_day_height))
         }
 
+        /** How many parts [each] dp large fit into [room] dp. */
         private fun fit(
             room: Float,
-            @DimenRes each: Int,
-        ): Int = floor(room / dimen(each)).toInt().coerceAtLeast(0)
+            each: Float,
+        ): Int = floor(room / each).toInt().coerceAtLeast(0)
     }
+}
+
+/**
+ * Whether [text] fits [room] dp on one line at the size of the line below "now" (`widget_line_text`), in the system
+ * font the launcher draws it in (D36).
+ */
+private fun Context.fitsOneLine(
+    text: String,
+    room: Float,
+): Boolean {
+    val paint =
+        TextPaint(
+            TextPaint.ANTI_ALIAS_FLAG,
+        ).apply { textSize = resources.getDimension(R.dimen.widget_line_text) }
+    return paint.measureText(text) / resources.displayMetrics.density <= room
 }

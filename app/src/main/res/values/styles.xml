@@ -71,19 +71,31 @@
         <item name="android:layout_marginEnd">8dp</item>
     </style>
 
-    <!-- 14 sp on one line; a word too long for it takes a second line, and
-         the text shrinks down to 11 sp until both fit the line's height. -->
+    <!-- The line below "now" and its two-line form: D36. -->
     <style name="WeatherWidget.Line">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_line_height</item>
-        <item name="android:autoSizeMaxTextSize">14sp</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_line_text</item>
+        <item name="android:autoSizeMinTextSize">11sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_line_text</item>
+    </style>
+
+    <style name="WeatherWidget.LineLong">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_line_long_height</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_line_long_text</item>
         <item name="android:autoSizeMinTextSize">11sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:ellipsize">end</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:maxLines">2</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">@dimen/widget_line_long_text</item>
     </style>
 
     <!-- "Neu anmelden" and the plain text instead of the weather; each layout
@@ -208,26 +220,55 @@
         <item name="android:layout_marginBottom">1dp</item>
     </style>
 
+    <!-- The high and the low share the cell's width, and each shrinks from
+         13 sp down to 7.5 sp until it fits its half (D41). -->
     <style name="WeatherWidget.FlatDayDegrees">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_flat_day_degrees_height</item>
+        <item name="android:baselineAligned">false</item>
         <item name="android:orientation">horizontal</item>
     </style>
 
     <style name="WeatherWidget.FlatDayHigh">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:autoSizeMaxTextSize">13sp</item>
+        <item name="android:autoSizeMinTextSize">7.5sp</item>
+        <item name="android:autoSizeStepGranularity">0.5sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">end|center_vertical</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="WeatherWidget.FlatDayLow">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
         <item name="android:layout_marginStart">3dp</item>
+        <item name="android:autoSizeMaxTextSize">13sp</item>
+        <item name="android:autoSizeMinTextSize">7.5sp</item>
+        <item name="android:autoSizeStepGranularity">0.5sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">start|center_vertical</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- The rain or the short word below them: 11.5 sp, shrinking down to
+         7.5 sp until it fits the cell's width (D41). -->
+    <style name="WeatherWidget.FlatDayNote">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_flat_day_note_height</item>
+        <item name="android:autoSizeMaxTextSize">11.5sp</item>
+        <item name="android:autoSizeMinTextSize">7.5sp</item>
+        <item name="android:autoSizeStepGranularity">0.5sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">11.5sp</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

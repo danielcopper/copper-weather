@@ -2,6 +2,7 @@ package dev.cupr.weather.widget
 
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.text.TextPaint
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
@@ -21,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.time.Duration
 
 /** The widget one row high, the flat bucket (D11, D35, D36, D41): "now" and the days beside it, texts and colours. */
@@ -47,7 +49,6 @@ class FlatWidgetTest : WidgetTestBase() {
             ),
             WidgetHost.days(widget),
         )
-        assertEquals(emptyList<List<String>>(), WidgetHost.hours(widget))
         val days = widget.findViewById<ViewGroup>(R.id.days)
         assertEquals(R.drawable.weather_sunny_day, days.getChildAt(0).image(R.id.flat_day_icon))
         val high = days.getChildAt(0).text(R.id.flat_day_high)
@@ -66,7 +67,8 @@ class FlatWidgetTest : WidgetTestBase() {
                 }.filter { WidgetHost.visible(it, widget) }
                 .map { it.id },
         )
-        assertEquals(dp(104), widget.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(108), widget.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.divider).layoutParams.height)
         assertEquals(TapActivity::class.java.name, widget.tapped().component?.className)
     }
 
@@ -91,7 +93,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         val wide = WidgetHost.resize(application, id, SizeBucket.sizeOf(columns = 5, rows = 1))
 
-        assertEquals(dp(104), wide.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(108), wide.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(4, WidgetHost.days(wide).size)
     }
 
@@ -112,25 +114,109 @@ class FlatWidgetTest : WidgetTestBase() {
     }
 
     @Test
-    fun `the line below now takes up to two lines, shrinking from 14 to 11 sp, in the flat and the small bucket`() {
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `in the flat bucket a text too long for one line at 14 sp takes two lines at 12 sp, a short one stays`() {
         signIn()
-        written(SampleWeather.data().replace("partlycloudy", "lightning-rainy"))
-        val metrics = application.resources.displayMetrics
-        val sp = { value: Float -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, metrics).toInt() }
+        val size = SizeBucket.sizeOf(columns = 5, rows = 1)
 
-        for ((size, height) in listOf(
-            SizeBucket.sizeOf(columns = 5, rows = 1) to 36,
-            SizeBucket.sizeOf(columns = 2, rows = 2) to 36,
-            SizeBucket.sizeOf(columns = 4, rows = 2) to 20,
-        )) {
-            val line = placed(size).text(R.id.now_line)
-            assertEquals("$size", "Gewitter, regnerisch", line.text.toString())
-            assertEquals("$size", dp(height), line.layoutParams.height)
-            assertEquals("$size", 2, line.maxLines)
-            assertEquals("$size", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, line.autoSizeTextType)
-            assertEquals("$size", sp(11f), line.autoSizeMinTextSize)
-            assertEquals("$size", sp(14f), line.autoSizeMaxTextSize)
+        // With days beside it, so "now" has its column of 108 dp.
+        written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
+        val long = placed(size)
+        assertEquals(listOf("Gewitter, regnerisch"), WidgetHost.shown(long.findViewById(R.id.now_column)).drop(1))
+        assertTrue(WidgetHost.visible(long.findViewById(R.id.now_line_long), long))
+        assertLine(long.text(R.id.now_line_long), lines = 2, height = 36, largest = 12f)
+
+        written(SampleWeather.full().replace("partlycloudy", "fog"))
+        val short = placed(size)
+        assertTrue(WidgetHost.visible(short.findViewById(R.id.now_line), short))
+        assertFalse(WidgetHost.visible(short.findViewById(R.id.now_line_long), short))
+        assertLine(short.text(R.id.now_line), lines = 1, height = 20, largest = 14f)
+
+        // "Außergewöhnlich", the longest single word, still fits the column on one line at 14 sp.
+        written(SampleWeather.full().replace("partlycloudy", "exceptional"))
+        val longest = placed(size)
+        assertTrue(WidgetHost.visible(longest.findViewById(R.id.now_line), longest))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `a flat day's texts shrink to fit its cell instead of being cut`() {
+        signIn()
+        val wet =
+            """{"datetime":"2026-11-21T00:00:00+01:00","condition":"rainy","temperature":-12,"templow":-15,""" +
+                """"precipitation":0.04}"""
+        val sleet =
+            """{"datetime":"2026-11-22T00:00:00+01:00","condition":"snowy-rainy","temperature":-12,"templow":-15}"""
+        written(SampleWeather.data(""","days":[$wet,$sleet]"""))
+        val metrics = application.resources.displayMetrics
+        val sp = { value: Float -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, metrics) }
+
+        for (width in listOf(349f, 388f, 410f)) {
+            val widget = laidOut(placed(SizeF(width, 102f)), SizeF(width, 102f))
+            val days = widget.findViewById<ViewGroup>(R.id.days)
+            assertEquals(
+                listOf(listOf("Sa", "-12°", "-15°", "<\u00A00,1\u00A0mm"), listOf("So", "-12°", "-15°", "Schneeregen")),
+                WidgetHost.days(widget),
+            )
+            for (index in 0 until days.childCount) {
+                for (id in listOf(R.id.flat_day_high, R.id.flat_day_low, R.id.flat_day_note)) {
+                    val text = days.getChildAt(index).text(id)
+                    assertEquals("$width ${text.text}", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, text.autoSizeTextType)
+                    assertEquals("$width ${text.text}", Math.round(sp(7.5f)), text.autoSizeMinTextSize)
+                    assertEquals("$width ${text.text}", 1, text.maxLines)
+                    val paint = TextPaint(text.paint).apply { textSize = sp(7.5f) }
+                    assertTrue("$width ${text.text}", paint.measureText(text.text.toString()) <= text.width)
+                }
+            }
         }
+    }
+
+    @Test
+    fun `a redraw of a flat widget does not add its days a second time`() {
+        signIn()
+        written(SampleWeather.full())
+        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
+        val before = WidgetHost.days(widget)
+
+        Widgets.update(application)
+
+        assertEquals(4, before.size)
+        assertEquals(before, WidgetHost.days(widget))
+    }
+
+    @Test
+    fun `each part of a flat day takes its palette role`() {
+        signIn()
+        written(SampleWeather.full())
+
+        val days = placed(SizeBucket.sizeOf(columns = 5, rows = 1)).findViewById<ViewGroup>(R.id.days)
+
+        val palette = Palette.LIGHT
+        val dry = days.getChildAt(0)
+        val wet = days.getChildAt(1)
+        assertEquals(palette.textMuted, dry.text(R.id.flat_day_weekday).currentTextColor)
+        assertEquals(palette.text, dry.text(R.id.flat_day_high).currentTextColor)
+        assertEquals(palette.textMuted, dry.text(R.id.flat_day_low).currentTextColor)
+        assertEquals("sonnig", dry.text(R.id.flat_day_note).text.toString())
+        assertEquals(palette.textMuted, dry.text(R.id.flat_day_note).currentTextColor)
+        assertEquals("2,5\u00A0mm", wet.text(R.id.flat_day_note).text.toString())
+        assertEquals(palette.rain, wet.text(R.id.flat_day_note).currentTextColor)
+    }
+
+    /** [widget] measured and laid out at [size], as a launcher does before it draws it. */
+    private fun laidOut(
+        widget: View,
+        size: SizeF,
+    ): View {
+        val density = application.resources.displayMetrics.density
+        val width = (size.width * density).toInt()
+        val height = (size.height * density).toInt()
+        widget.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+        )
+        widget.layout(0, 0, width, height)
+        return widget
     }
 
     @Test
@@ -231,11 +317,29 @@ class FlatWidgetTest : WidgetTestBase() {
             Services.snapshots(application).clear()
             Widgets.update(application)
             assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), refused.shown())
+            assertFalse(WidgetHost.visible(refused.findViewById(R.id.divider), refused))
+            assertFalse(WidgetHost.visible(refused.findViewById(R.id.days), refused))
         }
     }
 
     private companion object {
         /** Fewer texts than a flat widget shows in the colour tests. */
         const val FLAT_TEXTS = 10
+    }
+
+    /** [line] takes up to [lines] lines in [height] dp, at most [largest] sp, shrinking down to 11 sp. */
+    private fun assertLine(
+        line: TextView,
+        lines: Int,
+        height: Int,
+        largest: Float,
+    ) {
+        val metrics = application.resources.displayMetrics
+        val sp = { value: Float -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, metrics).toInt() }
+        assertEquals(lines, line.maxLines)
+        assertEquals(dp(height), line.layoutParams.height)
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, line.autoSizeTextType)
+        assertEquals(sp(11f), line.autoSizeMinTextSize)
+        assertEquals(sp(largest), line.autoSizeMaxTextSize)
     }
 }

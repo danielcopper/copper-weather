@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The widget's parts (widget_weather.xml, widget_weather_flat.xml,
-     widget_hour.xml, widget_day.xml) at fixed sizes, so WidgetViews can work
-     out how many hours fit the width and how many days the height (D35). -->
+     widget_hour.xml, widget_day.xml, widget_flat_day.xml) at fixed sizes,
+     so WidgetViews can work out how many hours fit the width and how many
+     days the height, or in the flat bucket the width (D35). -->
 <resources>
     <dimen name="widget_padding">12dp</dimen>
     <dimen name="widget_gap">8dp</dimen>
@@ -20,7 +21,7 @@
          it, each at least as wide as the dashboard's day cell, with its gap;
          the card's padding above and below is less than its sides', so a day
          fits one row. -->
-    <dimen name="widget_flat_now_width">104dp</dimen>
+    <dimen name="widget_flat_now_width">108dp</dimen>
     <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_divider">1dp</dimen>
     <!-- 14 dp from the divider to the first day, as the dashboard's padding:
@@ -28,10 +29,14 @@
     <dimen name="widget_flat_days_padding">8dp</dimen>
     <dimen name="widget_flat_day_width">44dp</dimen>
     <dimen name="widget_flat_day_gap">6dp</dimen>
-    <!-- The line below "now": one line, or in the small and the flat bucket
-         up to two in a smaller font (D36). -->
+    <!-- The line below "now" and its two-line form: D36. -->
+    <dimen name="widget_line_text">14sp</dimen>
     <dimen name="widget_line_height">20dp</dimen>
-    <dimen name="widget_line_height_compact">36dp</dimen>
+    <dimen name="widget_line_long_text">12sp</dimen>
+    <dimen name="widget_line_long_height">36dp</dimen>
+    <!-- A flat day's high and low and the line below them (D41). -->
+    <dimen name="widget_flat_day_degrees_height">18dp</dimen>
+    <dimen name="widget_flat_day_note_height">16dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>
