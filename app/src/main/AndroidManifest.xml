@@ -29,10 +29,8 @@
                 android:resource="@xml/widget_weather_info" />
         </receiver>
 
-        <!-- WorkManager starts on demand (WeatherApp, D28), not with every process. The unit-test
-             manifest step notes that no other declaration is present for this removal; that is
-             expected, both merged manifests lack the initializer. The only other documented form
-             removes the whole provider and every startup initializer. -->
+        <!-- WorkManager starts on demand (WeatherApp, D28). Both merged manifests lack this
+             initializer; the other documented form removes the whole provider. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

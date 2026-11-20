@@ -5,8 +5,7 @@ import androidx.work.Configuration
 
 /**
  * The app's Application, for WorkManager's on-demand initialization: the manifest removes WorkManager's start-up
- * initializer, so its database opens only when the app schedules or watches a fetch, not with every process the
- * launcher's widget updates start (D28).
+ * initializer, so its database opens only when the app schedules or watches a fetch (D28).
  */
 class WeatherApp :
     Application(),
