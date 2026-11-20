@@ -258,7 +258,7 @@ class WeatherWidgetTest {
 
         Widgets.update(application)
 
-        assertEquals(listOf("-2°", "Schnee"), widget.shown())
+        assertEquals(listOf("-2°", "Schneefall"), widget.shown())
     }
 
     @Test
@@ -317,10 +317,10 @@ class WeatherWidgetTest {
                 "lightning" to "Gewitter",
                 "lightning-rainy" to "Gewitter, regnerisch",
                 "partlycloudy" to "Teilweise bewölkt",
-                "pouring" to "Strömend",
+                "pouring" to "Strömender Regen",
                 "rainy" to "Regnerisch",
-                "snowy" to "Schnee",
-                "snowy-rainy" to "Schnee, regnerisch",
+                "snowy" to "Schneefall",
+                "snowy-rainy" to "Schneeregen",
                 "sunny" to "Sonnig",
                 "windy" to "Windig",
                 "windy-variant" to "Windig, bewölkt",

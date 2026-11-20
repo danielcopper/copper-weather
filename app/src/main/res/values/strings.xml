@@ -9,7 +9,7 @@
     <string name="widget_signed_out">Nicht angemeldet – zum Anmelden tippen</string>
     <string name="widget_no_data">Noch keine Daten – zum Öffnen tippen</string>
     <string name="widget_sign_in_again">Neu anmelden</string>
-    <!-- Home Assistant's conditions in German, as Home Assistant shows them (D34). -->
+    <!-- Home Assistant's conditions in German, its own translation (D34). -->
     <string name="condition_clear_night">Klare Nacht</string>
     <string name="condition_cloudy">Bewölkt</string>
     <string name="condition_exceptional">Außergewöhnlich</string>
@@ -18,10 +18,10 @@
     <string name="condition_lightning">Gewitter</string>
     <string name="condition_lightning_rainy">Gewitter, regnerisch</string>
     <string name="condition_partlycloudy">Teilweise bewölkt</string>
-    <string name="condition_pouring">Strömend</string>
+    <string name="condition_pouring">Strömender Regen</string>
     <string name="condition_rainy">Regnerisch</string>
-    <string name="condition_snowy">Schnee</string>
-    <string name="condition_snowy_rainy">Schnee, regnerisch</string>
+    <string name="condition_snowy">Schneefall</string>
+    <string name="condition_snowy_rainy">Schneeregen</string>
     <string name="condition_sunny">Sonnig</string>
     <string name="condition_windy">Windig</string>
     <string name="condition_windy_variant">Windig, bewölkt</string>
