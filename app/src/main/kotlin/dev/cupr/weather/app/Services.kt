@@ -62,7 +62,10 @@ object Services {
             online(context)
         }
 
-    /** Whether the phone has a network that reaches the internet, as the system sees it now. */
+    /**
+     * Whether the phone has a network meant to reach the internet, as the system sees it now (true when it cannot
+     * tell).
+     */
     internal fun online(context: Context): Boolean {
         val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return true
         val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork)
@@ -86,13 +89,13 @@ object Services {
     /**
      * Signs out (D27) and updates the widgets, which then say that no one is signed in (D33). The fetches stop before
      * and again after it, so a fetch scheduled while it waits for a running one, when the screen opens, does not
-     * outlive it (D31).
+     * outlive it (D31). The second stop and the update run also when the sign-out throws.
      */
     fun signOut(context: Context) {
         FetchWork.stop(context)
-        fetcher(context).signOut()
-        FetchWork.stop(context)
-        Widgets.update(context)
+        runThen({ fetcher(context).signOut() }) {
+            runThen({ FetchWork.stop(context) }) { Widgets.update(context) }
+        }
     }
 
     /** The app's screen opened: while signed in, it fetches at once and keeps the periodic fetch (D28). */

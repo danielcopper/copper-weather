@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The widget "Wetter" (D19): added at 4 x 2 cells, down to 2 x 2, its
-     least size (D11). The app updates it after each fetch, signing in and
-     signing out (D33); the launcher has no periodic update of its own to
-     make, since nothing it shows changes with the time. -->
+     least size (D11). updatePeriodMillis 0: the app updates it (D33). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_weather"

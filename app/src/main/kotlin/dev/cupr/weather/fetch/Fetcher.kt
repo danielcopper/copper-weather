@@ -5,6 +5,7 @@ import dev.cupr.weather.ha.AuthorizationCode
 import dev.cupr.weather.ha.FailureKind
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.ha.HaClient
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.ha.TokenClient
 import dev.cupr.weather.store.Account
@@ -14,8 +15,6 @@ import dev.cupr.weather.store.FailedFetchStore
 import dev.cupr.weather.store.FetchCause
 import dev.cupr.weather.store.Snapshot
 import dev.cupr.weather.store.SnapshotStore
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.time.Clock
@@ -69,7 +68,8 @@ class Fetcher(
     /**
      * Trades the code [request]'s redirect carried for a refresh token and keeps it with the `client_id` it was issued
      * to (D23, D26); the snapshot and the last failure of an earlier sign-in go (D31). When the token cannot be sealed,
-     * Home Assistant is asked to end it again, so it is not left valid there unused, and nothing is kept.
+     * or the earlier snapshot cannot be deleted, Home Assistant is asked to end it again, so it is not left valid there
+     * unused, and nothing is kept.
      */
     fun signIn(
         request: SignInRequest,
@@ -96,12 +96,21 @@ class Fetcher(
         try {
             synchronized(LOCK) {
                 account.signIn(address, signed.clientId, signed.refreshToken)
-                forgetKept()
+                try {
+                    forgetKept()
+                } catch (e: IOException) {
+                    // The earlier sign-in's snapshot stays; the new sign-in must not show it as its own.
+                    account.signOut()
+                    throw e
+                }
             }
             SignIn.SignedIn
         } catch (e: CipherFailureException) {
             val revoked = revoked(tokens.revoke(signed.refreshToken))
             SignIn.Failed("the token cannot be sealed (${e.message}); ${revoked.text}")
+        } catch (e: IOException) {
+            val revoked = revoked(tokens.revoke(signed.refreshToken))
+            SignIn.Failed("the earlier snapshot cannot be deleted (${e.message}); ${revoked.text}")
         }
 
     /**
@@ -124,7 +133,8 @@ class Fetcher(
      * Signs out ("Abmelden", D27): asks Home Assistant to end the refresh token, then forgets it and deletes the
      * snapshot and the last failure; the address stays. Waits for a fetch that is running, so it cannot write its
      * snapshot afterwards (D31). The sign-in on the phone goes even when asking Home Assistant fails or the stored
-     * token cannot be read; the log then warns that the token was not ended there.
+     * token cannot be read; the log then warns that the token was not ended there. Throws [IOException] when the
+     * snapshot cannot be deleted, after the sign-in on the phone has gone.
      */
     fun signOut() {
         var asked = Asked("Home Assistant was not asked to end the refresh token", ended = false)
@@ -148,14 +158,17 @@ class Fetcher(
                     }
                 }
         } finally {
-            synchronized(LOCK) {
-                account.signOut()
-                forgetKept()
-            }
-            if (asked.ended) {
-                Log.i(ACCOUNT_TAG, "Signed out; ${asked.text}")
-            } else {
-                Log.w(ACCOUNT_TAG, "Signed out; ${asked.text}")
+            try {
+                synchronized(LOCK) {
+                    account.signOut()
+                    forgetKept()
+                }
+            } finally {
+                if (asked.ended) {
+                    Log.i(ACCOUNT_TAG, "Signed out; ${asked.text}")
+                } else {
+                    Log.w(ACCOUNT_TAG, "Signed out; ${asked.text}")
+                }
             }
         }
     }
@@ -233,10 +246,10 @@ class Fetcher(
     private fun read(sensor: HaClient.Result): Outcome =
         when (sensor) {
             is HaClient.Result.Failed -> Outcome.Failed(sensor.reason, causeOf(sensor.kind, online))
-            is HaClient.Result.Ok -> schemaProblem(sensor.data) ?: store(sensor.data)
+            is HaClient.Result.Ok -> store(sensor.data)
         }
 
-    private fun store(data: JsonObject): Outcome =
+    private fun store(data: SensorData): Outcome =
         try {
             snapshots.write(Snapshot(clock.instant(), data))
             Outcome.Fetched
@@ -261,42 +274,6 @@ private const val ACCOUNT_TAG = "Account"
 
 /** The log's tag for the fetches. */
 private const val FETCH_TAG = "Fetch"
-
-/** The schema version the app reads (D30). */
-internal const val SCHEMA_VERSION = 1
-
-/**
- * Why the app does not read [data] (D30): a schema version newer than [SCHEMA_VERSION] asks for an update of the app;
- * none, one that is not a whole number, or an older one is an unexpected answer. None when it is [SCHEMA_VERSION].
- */
-private fun schemaProblem(data: JsonObject): Fetcher.Outcome.Failed? {
-    val field = data["schema_version"]
-    val version = (field as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toIntOrNull()
-    return when {
-        version == SCHEMA_VERSION -> {
-            null
-        }
-
-        version != null && version > SCHEMA_VERSION -> {
-            Fetcher.Outcome.Failed(
-                "schema_version $version is newer than $SCHEMA_VERSION",
-                FetchCause.NEWER_SCHEMA,
-            )
-        }
-
-        field == null -> {
-            Fetcher.Outcome.Failed("the data has no schema_version", FetchCause.UNEXPECTED)
-        }
-
-        version == null -> {
-            Fetcher.Outcome.Failed("schema_version is not a whole number", FetchCause.UNEXPECTED)
-        }
-
-        else -> {
-            Fetcher.Outcome.Failed("schema_version $version is older than $SCHEMA_VERSION", FetchCause.UNEXPECTED)
-        }
-    }
-}
 
 private fun log(outcome: Fetcher.Outcome) {
     when (outcome) {
@@ -333,4 +310,5 @@ private fun causeOf(
         FailureKind.NOT_FOUND -> FetchCause.SENSOR_MISSING
         FailureKind.REFUSED -> FetchCause.REFUSED
         FailureKind.UNEXPECTED -> FetchCause.UNEXPECTED
+        FailureKind.NEWER_SCHEMA -> FetchCause.NEWER_SCHEMA
     }

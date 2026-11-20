@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.ha.HaAddress
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.FailedFetch
 import dev.cupr.weather.store.FetchCause
@@ -119,7 +120,7 @@ class StatusTest {
         Services
             .snapshots(
                 context,
-            ).write(Snapshot(Instant.ofEpochMilli(1_000), Json.parseToJsonElement(data).jsonObject))
+            ).write(Snapshot(Instant.ofEpochMilli(1_000), SensorData(Json.parseToJsonElement(data).jsonObject)))
         Services.failures(context).write(FailedFetch(Instant.ofEpochMilli(2_000), FetchCause.NEWER_SCHEMA))
         Services.settings(context).writeFetchInterval(FetchInterval.EVERY_30_MINUTES)
 

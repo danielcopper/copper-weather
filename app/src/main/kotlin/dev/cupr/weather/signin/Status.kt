@@ -28,7 +28,8 @@ data class Status(
     val fetchInterval: FetchInterval = FetchInterval.DEFAULT,
 ) {
     /**
-     * The line under the title: while signed in, when the last fetch was, or that none was yet; else why signing in
+     * The line under the title: while signed in, when the last successful fetch was (the snapshot's time), or that
+     * none was yet; else why signing in
      * again is needed (D32); none while signed out, when the address form shows instead.
      */
     fun line(
@@ -130,7 +131,7 @@ data class Status(
                         .orEmpty(),
                 fetchedAt = snapshot?.fetchedAt,
                 failed = Services.failures(context).read(),
-                attribution = snapshot?.attribution,
+                attribution = snapshot?.data?.attribution,
                 fetchInterval = Services.settings(context).fetchInterval(),
             )
         }

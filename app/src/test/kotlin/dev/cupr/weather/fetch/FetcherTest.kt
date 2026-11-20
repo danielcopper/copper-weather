@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.ha.AuthorizationCode
 import dev.cupr.weather.ha.FakeHomeAssistant
 import dev.cupr.weather.ha.RefreshToken
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.AesGcmCipher
@@ -24,12 +25,14 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLog
 import java.io.File
+import java.io.IOException
 import java.security.ProviderException
 import java.time.Clock
 import java.time.Instant
@@ -58,7 +61,8 @@ class FetcherTest {
     private var online = true
     private val fetcher = fetcher(account)
     private val code = AuthorizationCode("code-1")
-    private val old = Snapshot(Instant.ofEpochMilli(1), json("""{"schema_version":1,"now":{"temperature":-3}}"""))
+    private val old =
+        Snapshot(Instant.ofEpochMilli(1), SensorData(json("""{"schema_version":1,"now":{"temperature":-3}}""")))
 
     @After
     fun stop() = home.close()
@@ -96,13 +100,13 @@ class FetcherTest {
 
         val snapshot = checkNotNull(snapshots.read())
         assertEquals(now, snapshot.fetchedAt)
-        assertEquals(json(FakeHomeAssistant.DATA), snapshot.data)
-        assertFalse(snapshot.data.toString(), "rain_at" in snapshot.data)
-        assertFalse(snapshot.data.toString(), "storm" in snapshot.data)
-        assertFalse(snapshot.toString(), "null" in snapshot.data.toString())
-        assertEquals(7.4, snapshot.temperature)
-        assertEquals("partlycloudy", snapshot.condition)
-        assertEquals("Weather data: a test source", snapshot.attribution)
+        assertEquals(json(FakeHomeAssistant.DATA), snapshot.data.json)
+        assertFalse(snapshot.data.toString(), "rain_at" in snapshot.data.json)
+        assertFalse(snapshot.data.toString(), "storm" in snapshot.data.json)
+        assertFalse(snapshot.toString(), "null" in snapshot.data.json.toString())
+        assertEquals(7.4, snapshot.data.temperature)
+        assertEquals("partlycloudy", snapshot.data.condition)
+        assertEquals("Weather data: a test source", snapshot.data.attribution)
         val (refresh, form) = home.requests.first()
         assertEquals("/auth/token", refresh.url.encodedPath)
         assertEquals("refresh-1", form["refresh_token"])
@@ -121,9 +125,9 @@ class FetcherTest {
         fetcher.fetch()
 
         val snapshot = checkNotNull(snapshots.read())
-        assertEquals(json(home.data), snapshot.data)
-        assertNull(snapshot.temperature)
-        assertNull(snapshot.attribution)
+        assertEquals(json(home.data), snapshot.data.json)
+        assertNull(snapshot.data.temperature)
+        assertNull(snapshot.data.attribution)
     }
 
     @Test
@@ -490,6 +494,42 @@ class FetcherTest {
             accountLogs.contains("Signed out; Home Assistant was not asked to end the refresh token"),
         )
         assertEquals(Log.WARN, signedOutLevel())
+    }
+
+    @Test
+    fun `a new sign-in whose earlier snapshot cannot be deleted keeps nothing and ends its token again`() {
+        val request = SignInRequest.start(home.address)
+        // A directory with a file in it where the snapshot belongs: it cannot be deleted.
+        File(snapshotFile, "blocking").mkdirs()
+
+        val outcome = fetcher.signIn(request, code)
+
+        assertEquals(
+            Fetcher.SignIn.Failed(
+                "the earlier snapshot cannot be deleted (the snapshot was not deleted); " +
+                    "Home Assistant ended the refresh token",
+            ),
+            outcome,
+        )
+        assertEquals(Account.State.SIGNED_OUT, account.state)
+        assertFalse(prefs.contains("refresh_token"))
+        assertEquals(
+            "/auth/revoke",
+            home.requests
+                .last()
+                .first.url.encodedPath,
+        )
+    }
+
+    @Test
+    fun `signing out with a snapshot that cannot be deleted signs out, logs it and throws`() {
+        signIn()
+        File(snapshotFile, "blocking").mkdirs()
+
+        assertThrows(IOException::class.java) { fetcher.signOut() }
+
+        assertEquals(Account.State.SIGNED_OUT, account.state)
+        assertTrue(accountLogs, accountLogs.contains("Signed out; Home Assistant ended the refresh token"))
     }
 
     // The lock (D31).

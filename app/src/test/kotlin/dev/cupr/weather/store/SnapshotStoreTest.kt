@@ -1,6 +1,7 @@
 package dev.cupr.weather.store
 
 import androidx.core.util.AtomicFile
+import dev.cupr.weather.ha.SensorData
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -8,11 +9,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowLog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -26,7 +29,9 @@ class SnapshotStoreTest {
     private val file by lazy { File(folder.root, "snapshot.json") }
     private val store by lazy { SnapshotStore(file) }
 
-    private fun data(text: String): JsonObject = Json.parseToJsonElement(text).jsonObject
+    private fun data(text: String) = SensorData(Json.parseToJsonElement(text).jsonObject)
+
+    private val empty = SensorData(JsonObject(emptyMap()))
 
     private val snapshot =
         Snapshot(
@@ -44,9 +49,7 @@ class SnapshotStoreTest {
         store.write(snapshot)
 
         assertEquals(snapshot, store.read())
-        assertEquals(7.4, store.read()!!.temperature)
-        assertEquals("sunny", store.read()!!.condition)
-        assertEquals("Source", store.read()!!.attribution)
+        assertEquals(7.4, store.read()!!.data.temperature)
     }
 
     @Test
@@ -55,7 +58,7 @@ class SnapshotStoreTest {
 
         val json = Json.parseToJsonElement(file.readText()).jsonObject
         assertEquals(setOf("fetched_at", "data"), json.keys)
-        assertEquals(snapshot.data, json["data"])
+        assertEquals(snapshot.data.json, json["data"])
     }
 
     @Test
@@ -66,7 +69,7 @@ class SnapshotStoreTest {
         store.write(next)
 
         assertEquals(next, store.read())
-        assertNull(store.read()!!.temperature)
+        assertNull(store.read()!!.data.temperature)
     }
 
     @Test
@@ -74,7 +77,7 @@ class SnapshotStoreTest {
         store.write(snapshot)
         File(file.path + ".new", "blocking").mkdirs()
 
-        assertThrows(IOException::class.java) { store.write(Snapshot(Instant.ofEpochMilli(2), JsonObject(emptyMap()))) }
+        assertThrows(IOException::class.java) { store.write(Snapshot(Instant.ofEpochMilli(2), empty)) }
 
         assertEquals(snapshot, store.read())
     }
@@ -89,7 +92,6 @@ class SnapshotStoreTest {
 
     @Test
     fun `a rename that fails over an old snapshot of the same length is a failure`() {
-        val empty = JsonObject(emptyMap())
         store.write(Snapshot(Instant.ofEpochMilli(1), empty))
         val renameFails = SnapshotStore(file, ::RenameFails)
 
@@ -125,20 +127,6 @@ class SnapshotStoreTest {
     }
 
     @Test
-    fun `fields of the wrong kind read as absent`() {
-        val odd =
-            Snapshot(
-                Instant.EPOCH,
-                data("""{"attribution":3,"now":{"condition":["sunny"],"temperature":"7"}}"""),
-            )
-
-        assertNull(odd.temperature)
-        assertNull(odd.condition)
-        assertNull(odd.attribution)
-        assertNull(Snapshot(Instant.EPOCH, data("""{"now":[]}""")).temperature)
-    }
-
-    @Test
     fun `clearing deletes the snapshot`() {
         store.write(snapshot)
 
@@ -146,5 +134,27 @@ class SnapshotStoreTest {
 
         assertNull(store.read())
         assertFalse(file.exists())
+    }
+
+    @Test
+    fun `clearing deletes what a write left beside the snapshot too`() {
+        store.write(snapshot)
+        File(file.path + ".new").writeText("{}")
+        File(file.path + ".bak").writeText("{}")
+
+        store.clear()
+
+        assertEquals(emptyList<String>(), folder.root.list()!!.toList())
+    }
+
+    @Test
+    fun `a snapshot that is still there after clearing is a failure, and logged`() {
+        // A directory with a file in it where the snapshot belongs: AtomicFile's delete fails, which it only logs.
+        File(file, "blocking").mkdirs()
+
+        assertThrows(IOException::class.java) { store.clear() }
+
+        val logs = ShadowLog.getLogsForTag("Snapshot").joinToString { it.msg }
+        assertTrue(logs, logs.contains("The snapshot could not be deleted: snapshot.json left"))
     }
 }

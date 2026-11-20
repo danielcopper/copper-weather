@@ -23,6 +23,9 @@ enum class FailureKind {
     /** Home Assistant refused the access token. */
     REFUSED,
 
+    /** The app sensor's data is in a newer schema version than the app reads (D30). */
+    NEWER_SCHEMA,
+
     /** Any other answer: another status, or one that is not what Home Assistant sends. */
     UNEXPECTED,
     ;

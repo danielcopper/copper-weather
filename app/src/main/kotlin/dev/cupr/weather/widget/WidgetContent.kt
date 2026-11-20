@@ -6,8 +6,7 @@ import dev.cupr.weather.R
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.Snapshot
-import java.math.BigDecimal
-import java.math.RoundingMode
+import kotlin.math.roundToLong
 
 /** What the widget shows (D33): the snapshot's weather, or a plain text when there is none to show. */
 sealed interface WidgetContent {
@@ -33,37 +32,42 @@ sealed interface WidgetContent {
             of(Services.account(context).state, Services.snapshots(context).read())
 
         /**
-         * What the widget shows for [state] and [snapshot] (D33): signed in without a snapshot, "Noch keine Daten";
-         * without a snapshot otherwise, or signed out, "Nicht angemeldet"; else the snapshot's weather, with
-         * "Neu anmelden" while the sign-in is refused or unreadable.
+         * What the widget shows for [state] and [snapshot] (D33). A snapshot with neither a temperature nor a
+         * condition the app knows counts as none. Signed in without one, "Noch keine Daten"; without one otherwise, or
+         * signed out, "Nicht angemeldet"; else the snapshot's weather, with "Neu anmelden" while the sign-in is refused
+         * or unreadable.
          */
         fun of(
             state: Account.State,
             snapshot: Snapshot?,
-        ): WidgetContent =
-            when {
-                snapshot == null && state == Account.State.SIGNED_IN -> {
+        ): WidgetContent {
+            val temperature = snapshot?.data?.temperature?.let(::degrees)
+            val condition = snapshot?.data?.condition?.let(Conditions::word)
+            val shown = temperature != null || condition != null
+            return when {
+                !shown && state == Account.State.SIGNED_IN -> {
                     Plain(R.string.widget_no_data)
                 }
 
-                snapshot == null || state == Account.State.SIGNED_OUT -> {
+                !shown || state == Account.State.SIGNED_OUT -> {
                     Plain(R.string.widget_signed_out)
                 }
 
                 else -> {
                     Weather(
-                        temperature = snapshot.temperature?.let(::degrees),
-                        condition = snapshot.condition?.let(Conditions::word),
+                        temperature = temperature,
+                        condition = condition,
                         signInAgain = state == Account.State.REJECTED || state == Account.State.UNREADABLE,
                     )
                 }
             }
+        }
 
         /**
-         * [celsius] in whole degrees, as the dashboard shows it (D33): a half away from zero, as the browser's number
-         * format rounds, so 2.5 is "3°" and -2.5 "-3°"; what rounds to zero is "0°".
+         * [celsius] in whole degrees, as the dashboard shows it (D33): JavaScript's `Math.round`, a half toward
+         * positive infinity, so 2.5 is "3°" and -2.5 "-2°"; what rounds to zero is "0°", never "-0°". Java's
+         * `Math.round`, which `roundToLong` calls, rounds the same way, and a Long has no negative zero.
          */
-        internal fun degrees(celsius: Double): String =
-            BigDecimal.valueOf(celsius).setScale(0, RoundingMode.HALF_UP).toPlainString() + "°"
+        internal fun degrees(celsius: Double): String = "${celsius.roundToLong()}°"
     }
 }

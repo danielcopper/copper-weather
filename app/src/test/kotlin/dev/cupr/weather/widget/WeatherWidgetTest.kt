@@ -13,16 +13,20 @@ import dev.cupr.weather.app.MainActivity
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.ha.RefreshToken
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.store.AesGcmCipher
 import dev.cupr.weather.store.Snapshot
 import dev.cupr.weather.store.TokenCipher
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +34,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.crypto.KeyGenerator
 
 /**
@@ -60,22 +67,18 @@ class WeatherWidgetTest {
     private fun snapshot(now: String = """{"condition":"partlycloudy","temperature":7.4}""") =
         Services
             .snapshots(application)
-            .write(Snapshot(Instant.EPOCH, Json.parseToJsonElement("""{"schema_version":1,"now":$now}""").jsonObject))
+            .write(
+                Snapshot(
+                    Instant.EPOCH,
+                    SensorData(Json.parseToJsonElement("""{"schema_version":1,"now":$now}""").jsonObject),
+                ),
+            )
 
-    /** A widget placed on the home screen, which the launcher updates through the provider. */
-    private fun placed(): View {
-        val shadow = shadowOf(manager)
-        return shadow.getViewFor(shadow.createWidget(WeatherWidgetProvider::class.java, R.layout.widget_weather))
-    }
+    private fun placed(): View = WidgetHost.placed(application)
 
     private fun View.text(id: Int): TextView = findViewById(id)
 
-    /** The texts shown, from the top. */
-    private fun View.shown(): List<String> =
-        listOf(R.id.widget_temperature, R.id.widget_condition, R.id.widget_notice, R.id.widget_plain)
-            .map { text(it) }
-            .filter { it.visibility == View.VISIBLE }
-            .map { it.text.toString() }
+    private fun View.shown(): List<String> = WidgetHost.shown(this)
 
     /** The activity a tap on the widget starts. */
     private fun View.tapped(): Intent {
@@ -181,6 +184,63 @@ class WeatherWidgetTest {
     }
 
     @Test
+    fun `a snapshot with neither a temperature nor a condition it knows shows that there is no data yet`() {
+        signIn()
+        for (now in listOf("{}", """{"condition":"sandstorm"}""", """{"humidity":80}""")) {
+            snapshot(now)
+            assertEquals(now, listOf("Noch keine Daten – zum Öffnen tippen"), placed().shown())
+        }
+        Services.snapshots(application).write(Snapshot(Instant.EPOCH, SensorData(JsonObject(emptyMap()))))
+        assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), placed().shown())
+
+        Services.account(application).reject()
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), placed().shown())
+    }
+
+    @Test
+    fun `signed out with a snapshot still on the phone, the widget says no one is signed in`() {
+        snapshot()
+
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), placed().shown())
+    }
+
+    @Test(timeout = 10_000)
+    fun `an update waits for one that is reading what to show, so the later one's views come last`() {
+        val widget = placed()
+        val content = WeatherWidgetProvider.content
+        val reading = CountDownLatch(1)
+        val gate = CountDownLatch(1)
+        // The first update reads the signed-out state, then waits; the sign-in and its snapshot come meanwhile.
+        WeatherWidgetProvider.content = { context ->
+            content(context).also {
+                if (reading.count > 0) {
+                    reading.countDown()
+                    gate.await()
+                }
+            }
+        }
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val first = pool.submit { Widgets.update(application) }
+            assertTrue(reading.await(5, TimeUnit.SECONDS))
+            signIn()
+            snapshot()
+            val second = pool.submit { Widgets.update(application) }
+            Thread.sleep(SETTLE_MILLIS)
+            assertFalse(second.isDone)
+            gate.countDown()
+            first.get(5, TimeUnit.SECONDS)
+            second.get(5, TimeUnit.SECONDS)
+        } finally {
+            gate.countDown()
+            pool.shutdownNow()
+            WeatherWidgetProvider.content = content
+        }
+
+        assertEquals(listOf("7°", "Teilweise bewölkt"), widget.shown())
+    }
+
+    @Test
     fun `the app's update shows a new snapshot on a widget already placed`() {
         val widget = placed()
         signIn()
@@ -211,18 +271,22 @@ class WeatherWidgetTest {
     }
 
     @Test
-    fun `the temperature is in whole degrees, a half away from zero`() {
+    fun `the temperature is in whole degrees, a half toward positive infinity, as the dashboard rounds`() {
         val shown =
-            listOf(7.4, 7.5, -2.5, -2.4, -0.4, 0.0, 12.0, 30.49)
+            listOf(7.4, 7.5, 2.5, -2.5, -2.6, -2.4, -0.4, -0.5, -0.0, 0.0, 12.0, 30.49)
                 .associateWith(WidgetContent::degrees)
 
         assertEquals(
             mapOf(
                 7.4 to "7°",
                 7.5 to "8°",
-                -2.5 to "-3°",
+                2.5 to "3°",
+                -2.5 to "-2°",
+                -2.6 to "-3°",
                 -2.4 to "-2°",
                 -0.4 to "0°",
+                -0.5 to "0°",
+                -0.0 to "0°",
                 0.0 to "0°",
                 12.0 to "12°",
                 30.49 to "30°",
@@ -283,5 +347,10 @@ class WeatherWidgetTest {
             while (xml.next() != org.xmlpull.v1.XmlPullParser.START_TAG) continue
             return (0 until xml.attributeCount).associate { xml.getAttributeName(it) to xml.getAttributeValue(it) }
         }
+    }
+
+    private companion object {
+        /** Long enough for the second update to reach the lock, were there none. */
+        const val SETTLE_MILLIS = 300L
     }
 }

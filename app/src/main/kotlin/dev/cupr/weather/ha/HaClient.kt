@@ -1,6 +1,5 @@
 package dev.cupr.weather.ha
 
-import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -18,9 +17,9 @@ class HaClient(
     private val address: HaAddress,
 ) {
     sealed interface Result {
-        /** The app sensor's attribute `data`, as Home Assistant sent it. */
+        /** The app sensor's attribute `data`, in the schema version the app reads ([SensorData.read]). */
         data class Ok(
-            val data: JsonObject,
+            val data: SensorData,
         ) : Result
 
         data class Failed(
@@ -29,7 +28,7 @@ class HaClient(
         ) : Result
     }
 
-    /** The app sensor's attribute `data`. */
+    /** The app sensor's attribute `data`, read by [SensorData.read]. */
     fun sensor(accessToken: AccessToken): Result {
         val request =
             Request
@@ -46,7 +45,7 @@ class HaClient(
 
     private fun sensorOf(response: Response): Result {
         val state = if (response.isSuccessful) parseObject(response.body.string()) else null
-        val data = (state?.get("attributes") as? JsonObject)?.get("data") as? JsonObject
+        val data = state?.objectField("attributes")?.objectField("data")
         return when {
             !response.isSuccessful -> {
                 Result.Failed("HTTP ${response.code} for $SENSOR", kindOf(response.code))
@@ -64,7 +63,7 @@ class HaClient(
             }
 
             else -> {
-                Result.Ok(data)
+                SensorData.read(data)
             }
         }
     }

@@ -35,7 +35,7 @@
     <string name="sign_in_rejected">Home Assistant hat die Anmeldung abgelehnt – bitte neu anmelden</string>
     <string name="sign_in_unreadable">Gespeicherte Anmeldung auf diesem Handy nicht lesbar – bitte neu anmelden</string>
     <string name="sign_in_no_fetch">Angemeldet, noch kein Abruf</string>
-    <!-- The last fetch's time, today ("14:30"); on another day also its date ("11. November") (D28). -->
+    <!-- The last successful fetch's time, the snapshot's, today ("14:30"); on another day also its date ("11. November") (D28). -->
     <string name="sign_in_status_today">Angemeldet, letzter Abruf um %1$s</string>
     <string name="sign_in_status_day">Angemeldet, letzter Abruf am %2$s um %1$s</string>
     <!-- The last fetch failed: its cause in plain words, and its time; on another day also its date (D28). -->

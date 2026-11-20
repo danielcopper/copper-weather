@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -22,6 +23,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import androidx.work.testing.WorkManagerTestInitHelper.getTestDriver
 import dev.cupr.weather.R
 import dev.cupr.weather.app.MainActivity
 import dev.cupr.weather.app.Services
@@ -29,6 +31,7 @@ import dev.cupr.weather.fetch.FetchWork
 import dev.cupr.weather.ha.FakeHomeAssistant
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.ha.RefreshToken
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.AesGcmCipher
@@ -247,6 +250,30 @@ class SignInScreenTest {
     }
 
     @Test
+    fun `a fetch that finishes while the screen is open shows its time there`() {
+        signIn()
+        open()
+        node(R.string.sign_in_no_fetch).assertExists()
+        val now =
+            WorkManager
+                .getInstance(context)
+                .getWorkInfosForUniqueWork(FetchWork.NOW)
+                .get()
+                .single()
+
+        // The fetch the screen started as it opened runs now, against the fake Home Assistant.
+        checkNotNull(getTestDriver(context)).setAllConstraintsMet(now.id)
+
+        compose.waitUntil(TIMEOUT_MILLIS) {
+            compose
+                .onAllNodesWithText("Angemeldet, letzter Abruf um", substring = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        node(R.string.sign_in_no_fetch).assertDoesNotExist()
+    }
+
+    @Test
     fun `signed in, the screen says when the last fetch failed and why`() {
         signIn()
         Services.failures(context).write(FailedFetch(Instant.now(), FetchCause.NEWER_SCHEMA))
@@ -294,7 +321,7 @@ class SignInScreenTest {
     private fun signIn() = Services.account(context).signIn(address, SignInRequest.CLIENT_ID, RefreshToken("refresh-1"))
 
     private fun snapshot(data: String) =
-        Services.snapshots(context).write(Snapshot(Instant.now(), Json.parseToJsonElement(data).jsonObject))
+        Services.snapshots(context).write(Snapshot(Instant.now(), SensorData(Json.parseToJsonElement(data).jsonObject)))
 
     /** The periodic fetch's interval, as it is scheduled. */
     private fun periodicMillis(): Long? =
@@ -393,5 +420,9 @@ class SignInScreenTest {
                     .build(),
             )
         }
+    }
+
+    private companion object {
+        const val TIMEOUT_MILLIS = 5_000L
     }
 }

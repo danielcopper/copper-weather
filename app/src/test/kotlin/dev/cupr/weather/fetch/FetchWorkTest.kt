@@ -13,19 +13,23 @@ import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
-import dev.cupr.weather.R
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.ha.AuthorizationCode
 import dev.cupr.weather.ha.FakeHomeAssistant
 import dev.cupr.weather.ha.RefreshToken
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.signin.Status
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.AesGcmCipher
 import dev.cupr.weather.store.FetchInterval
+import dev.cupr.weather.store.Snapshot
 import dev.cupr.weather.store.TokenCipher
 import dev.cupr.weather.widget.WeatherWidgetProvider
 import dev.cupr.weather.widget.WidgetContent
+import dev.cupr.weather.widget.WidgetHost
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import mockwebserver3.MockResponse
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -39,6 +43,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.crypto.KeyGenerator
 
@@ -53,9 +58,6 @@ class FetchWorkTest {
     private lateinit var content: (Context) -> WidgetContent
     private val manager get() = WorkManager.getInstance(context)
 
-    /** How often the widgets read what to show. */
-    private var reads = 0
-
     @Before
     fun setUp() {
         keystoreCipher = Services.cipher
@@ -63,10 +65,6 @@ class FetchWorkTest {
         http = Services.http
         Services.http = OkHttpClient()
         content = WeatherWidgetProvider.content
-        WeatherWidgetProvider.content = {
-            reads++
-            content(it)
-        }
         WorkManagerTestInitHelper.initializeTestWorkManager(
             context,
             Configuration
@@ -87,6 +85,27 @@ class FetchWorkTest {
     }
 
     private fun work() = TestListenableWorkerBuilder<FetchWorker>(context).build().doWork()
+
+    private fun placed() = WidgetHost.placed(context)
+
+    /** A snapshot with [celsius] now, written as a fetch would. */
+    private fun snapshot(celsius: Int) =
+        Services
+            .snapshots(context)
+            .write(
+                Snapshot(
+                    Instant.EPOCH,
+                    SensorData(Json.parseToJsonElement("""{"now":{"temperature":$celsius}}""").jsonObject),
+                ),
+            )
+
+    /** The test's cipher, but opening a stored token runs [open], which throws. */
+    private fun throwingOpen(open: () -> Nothing) =
+        object : TokenCipher {
+            override fun seal(plain: ByteArray) = AesGcmCipher { key }.seal(plain)
+
+            override fun open(sealed: ByteArray): ByteArray = open()
+        }
 
     private fun signIn() =
         Services.account(context).signIn(home.address, SignInRequest.CLIENT_ID, RefreshToken("refresh-1"))
@@ -111,28 +130,39 @@ class FetchWorkTest {
 
         assertEquals(ListenableWorker.Result.success(), work())
 
-        assertEquals(7.4, Services.snapshots(context).read()!!.temperature)
+        assertEquals(
+            7.4,
+            Services
+                .snapshots(context)
+                .read()!!
+                .data.temperature,
+        )
     }
 
     @Test
     fun `each fetch updates the widgets, a failed one too`() {
+        val widget = placed()
         signIn()
         assertEquals(ListenableWorker.Result.success(), work())
-        assertEquals(1, reads)
+        assertEquals(listOf("7°", "Teilweise bewölkt"), WidgetHost.shown(widget))
 
+        snapshot(3)
         home.close()
         assertEquals(ListenableWorker.Result.failure(), work())
 
-        assertEquals(2, reads)
+        assertEquals(listOf("3°"), WidgetHost.shown(widget))
     }
 
     @Test
     fun `a fetch that throws still updates the widgets`() {
-        Services.cipher = { throw IllegalStateException("no cipher") }
+        val widget = placed()
+        signIn()
+        snapshot(3)
+        Services.cipher = { throwingOpen { throw IllegalStateException("broken") } }
 
         assertThrows(IllegalStateException::class.java) { work() }
 
-        assertEquals(1, reads)
+        assertEquals(listOf("3°"), WidgetHost.shown(widget))
     }
 
     @Test
@@ -286,15 +316,16 @@ class FetchWorkTest {
 
     @Test
     fun `a sign-in updates the widgets and schedules the fetches, a failed one does neither`() {
+        val widget = placed()
         home.token = { FakeHomeAssistant.json("""{"error":"invalid_grant"}""", 400) }
         assertFalse(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
         assertEquals(emptyList<WorkInfo.State>(), scheduled)
-        assertEquals(0, reads)
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
 
         home.token = { FakeHomeAssistant.json("""{"refresh_token":"refresh-1","token_type":"Bearer"}""") }
         assertTrue(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
         assertEquals(listOf(WorkInfo.State.ENQUEUED, WorkInfo.State.ENQUEUED), scheduled)
-        assertEquals(1, reads)
+        assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), WidgetHost.shown(widget))
     }
 
     @Test
@@ -328,13 +359,33 @@ class FetchWorkTest {
         signIn()
         assertEquals(ListenableWorker.Result.success(), work())
         FetchWork.start(context)
-        reads = 0
+        val widget = placed()
+        assertEquals(listOf("7°", "Teilweise bewölkt"), WidgetHost.shown(widget))
 
         Services.signOut(context)
 
         assertTrue(scheduled.toString(), scheduled.isNotEmpty() && scheduled.all { it == WorkInfo.State.CANCELLED })
         assertNull(Services.snapshots(context).read())
-        assertEquals(1, reads)
-        assertEquals(WidgetContent.Plain(R.string.widget_signed_out), WidgetContent.read(context))
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
+    }
+
+    @Test
+    fun `a sign-out that throws still stops the fetches scheduled meanwhile and updates the widgets`() {
+        signIn()
+        snapshot(3)
+        val widget = placed()
+        assertEquals(listOf("3°"), WidgetHost.shown(widget))
+        // Opening the stored sign-in throws, after the screen opening meanwhile has scheduled the fetches anew.
+        Services.cipher = {
+            throwingOpen {
+                FetchWork.start(context)
+                throw IllegalStateException("broken")
+            }
+        }
+
+        assertThrows(IllegalStateException::class.java) { Services.signOut(context) }
+
+        assertTrue(scheduled.toString(), scheduled.isNotEmpty() && scheduled.all { it == WorkInfo.State.CANCELLED })
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
     }
 }
