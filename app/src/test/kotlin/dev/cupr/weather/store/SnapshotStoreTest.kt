@@ -113,16 +113,18 @@ class SnapshotStoreTest {
     }
 
     @Test
-    fun `a file that holds no snapshot reads as none`() {
+    fun `a file that holds no snapshot reads as none, and is logged`() {
         for (text in listOf(
-            """{"data":{}}""",
-            """{"fetched_at":"1","data":{}}""",
+            """{"data":{"schema_version":1}}""",
+            """{"fetched_at":"1","data":{"schema_version":1}}""",
             """{"fetched_at":1}""",
             "not json",
         )) {
             file.writeText(text)
             assertNull(text, store.read())
         }
+        val logs = ShadowLog.getLogsForTag("Snapshot").map { it.msg }
+        assertEquals(List(4) { "The snapshot's file holds no snapshot" }, logs)
     }
 
     @Test
