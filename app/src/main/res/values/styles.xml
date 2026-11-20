@@ -6,10 +6,11 @@
      (widget_weather_preview.xml, D40) uses the same styles for the card,
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
-     sets "now"'s row and image sizes by bucket outside the flat bucket and
-     picks the line's one- or two-line form (D36). The sizes are in dimens.xml (D35); the colours come
-     from the palette, set by WidgetViews or, in the preview, from
-     colors.xml (D7). -->
+     sets "now"'s row and image sizes by bucket, in the flat bucket the
+     image's by whether days show, and picks the line's one- or two-line
+     form (D36). The sizes are in dimens.xml
+     (D35); the colours come from the palette, set by WidgetViews or, in the
+     preview, from colors.xml (D7). -->
 <resources>
     <!-- The parent the dotted names below imply: every text in the system's
          sans-serif, the font the app measures the line in (D36). -->
@@ -58,11 +59,12 @@
     <style name="WeatherWidget.FlatTemperature" parent="WeatherWidget.Temperature">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_temperature_height</item>
-        <item name="android:autoSizeMaxTextSize">@dimen/widget_now_temperature_text</item>
-        <item name="android:autoSizeMinTextSize">20sp</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_flat_temperature_text</item>
+        <item name="android:autoSizeMinTextSize">18sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:gravity">center_vertical</item>
+        <item name="android:textSize">@dimen/widget_flat_temperature_text</item>
     </style>
 
     <style name="WeatherWidget.NowToday">
@@ -111,14 +113,25 @@
         <item name="android:textSize">@dimen/widget_line_long_text</item>
     </style>
 
-    <!-- In the flat bucket's narrow text area the two-line form may
-         hyphenate, in the phone's language (D36). -->
-    <style name="WeatherWidget.Line.Long.Flat">
-        <item name="android:hyphenationFrequency">normal</item>
+    <!-- In the flat bucket's narrow text area the line and its two-line form
+         are smaller, and the two-line form may hyphenate, in the phone's
+         language (D36). -->
+    <style name="WeatherWidget.Line.Flat">
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_line_flat_text</item>
+        <item name="android:textSize">@dimen/widget_line_flat_text</item>
     </style>
 
-    <!-- "Neu anmelden" and the plain text instead of the weather; each layout
-         gives them their height. -->
+    <style name="WeatherWidget.Line.Long.Flat">
+        <item name="android:layout_height">@dimen/widget_line_long_flat_height</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_line_long_flat_text</item>
+        <item name="android:autoSizeMinTextSize">9sp</item>
+        <item name="android:hyphenationFrequency">normal</item>
+        <item name="android:textSize">@dimen/widget_line_long_flat_text</item>
+    </style>
+
+    <!-- "Neu anmelden" and the plain text instead of the weather:
+         widget_weather.xml gives the notice its height, Notice.Flat the flat
+         one's; each layout gives the plain text its height. -->
     <style name="WeatherWidget.Notice">
         <item name="android:layout_width">match_parent</item>
         <item name="android:gravity">center_vertical</item>

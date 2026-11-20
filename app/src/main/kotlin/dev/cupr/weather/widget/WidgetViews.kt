@@ -9,6 +9,7 @@ import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RemoteViews
+import androidx.annotation.DimenRes
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.tap.Taps
@@ -79,7 +80,17 @@ internal object WidgetViews {
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
         val room = Room(context.resources, size, content.signInAgain)
-        line(context, views, room, content.now.line, twoLineRoom = room.inside().takeIf { small })
+        line(
+            context,
+            views,
+            room,
+            content.now.line,
+            twoLineRoom =
+                room.inside().takeIf {
+                    small
+                },
+            lineText = R.dimen.widget_line_text,
+        )
 
         val hours = if (small) emptyList() else content.hours.take(room.hours())
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it) }
@@ -105,8 +116,8 @@ internal object WidgetViews {
         views.show(R.id.now_temperature, content.now.temperature, Palette::text)
         val room = Room(context.resources, size, content.signInAgain)
         val days = if (SizeBucket.wide(size)) content.days.take(room.flatDays()) else emptyList()
-        // With days "now" has its column, without them the card's width; the line is measured against the text area
-        // beside the image in it.
+        // With days "now" has its column and its large image; without them the card's width and the smaller image,
+        // which leaves 2 cells room for the text. The line is measured against the text area beside the image.
         val column =
             if (days.isEmpty()) {
                 views.setViewLayoutWidth(
@@ -119,11 +130,15 @@ internal object WidgetViews {
                 views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
+        val icon = if (days.isEmpty()) R.dimen.widget_flat_now_icon_narrow else R.dimen.widget_flat_now_icon
+        views.setViewLayoutWidthDimen(R.id.now_icon, icon)
+        views.setViewLayoutHeightDimen(R.id.now_icon, icon)
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
         } else {
-            line(context, views, room, content.now.line, twoLineRoom = room.flatText(column))
+            val text = room.flatText(column, icon)
+            line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
 
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
@@ -171,8 +186,8 @@ internal object WidgetViews {
     /**
      * The line below "now": the rain hint in the palette's `rain`, else the condition's word, else nothing (D36). In
      * the small and the flat bucket, given [twoLineRoom], the dp the line has there, a text that does not fit that on
-     * one line at the line's size takes the line's two-line form (`now_line_long`) instead, at a smaller size; in the
-     * other buckets, without it, the line keeps its one-line form.
+     * one line at the line's size, [lineText], takes the line's two-line form (`now_line_long`) instead, at a smaller
+     * size; in the other buckets, without it, the line keeps its one-line form.
      */
     private fun line(
         context: Context,
@@ -180,6 +195,7 @@ internal object WidgetViews {
         room: Room,
         line: WidgetContent.Line?,
         twoLineRoom: Float?,
+        @DimenRes lineText: Int,
     ) {
         val (text, role) =
             when (line) {
@@ -188,7 +204,7 @@ internal object WidgetViews {
                 is WidgetContent.Line.RainIn -> context.rainIn(line.minutes) to Palette::rain
                 is WidgetContent.Line.Word -> context.getString(line.word) to Palette::text
             }
-        val long = text != null && twoLineRoom != null && !room.fitsOneLine(text, twoLineRoom)
+        val long = text != null && twoLineRoom != null && !room.fitsOneLine(text, twoLineRoom, lineText)
         views.show(R.id.now_line, text.takeUnless { long }, role)
         views.show(R.id.now_line_long, text.takeIf { long }, role)
     }
@@ -214,27 +230,27 @@ internal object WidgetViews {
      * anmelden" while it shows ([notice]), in the others.
      */
     private class Room(
-        resources: Resources,
+        private val resources: Resources,
         private val size: SizeF,
         private val notice: Boolean,
     ) {
         private val density = resources.displayMetrics.density
-        private val lineText = resources.getDimension(R.dimen.widget_line_text)
         private val dimen = { id: Int -> dp(resources.getDimension(id)) }
 
         private fun dp(px: Float): Float = px / density
 
         /**
-         * Whether [text] fits [width] dp on one line at the size of the line below "now" (`widget_line_text`), in the
+         * Whether [text] fits [width] dp on one line at [size], the size of the line below "now" in its bucket, in the
          * system's sans-serif, the font every text of the widget is set in (`styles.xml`, D36).
          */
         fun fitsOneLine(
             text: String,
             width: Float,
+            @DimenRes size: Int,
         ): Boolean {
             val paint =
                 TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
-                    textSize = lineText
+                    textSize = resources.getDimension(size)
                     typeface = Typeface.create("sans-serif", Typeface.NORMAL)
                 }
             return dp(paint.measureText(text)) <= width
@@ -249,9 +265,11 @@ internal object WidgetViews {
         /** The width of "now"'s column in the flat bucket beside its days. */
         fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
 
-        /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
-        fun flatText(column: Float): Float =
-            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_now_gap)
+        /** The text area beside the image, [icon] wide, in a flat "now" column [column] dp wide (D36). */
+        fun flatText(
+            column: Float,
+            @DimenRes icon: Int,
+        ): Float = column - dimen(icon) - dimen(R.dimen.widget_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))

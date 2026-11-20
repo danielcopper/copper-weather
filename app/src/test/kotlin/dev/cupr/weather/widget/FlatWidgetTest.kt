@@ -57,7 +57,7 @@ class FlatWidgetTest : WidgetTestBase() {
         val high = days.getChildAt(0).text(R.id.flat_day_high)
         assertEquals(Typeface.BOLD, high.typeface?.style)
         assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
-        assertFlatNow(widget)
+        assertFlatNow(widget, icon = 72)
         // "Now" in its column, the divider and the days side by side on the card.
         assertEquals(LinearLayout.HORIZONTAL, (widget as LinearLayout).orientation)
         assertEquals(
@@ -70,7 +70,7 @@ class FlatWidgetTest : WidgetTestBase() {
                 }.filter { WidgetHost.visible(it, widget) }
                 .map { it.id },
         )
-        assertEquals(dp(142), widget.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(144), widget.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.divider).layoutParams.height)
         assertEquals(TapActivity::class.java.name, widget.tapped().component?.className)
     }
@@ -96,7 +96,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         val wide = WidgetHost.resize(application, id, SizeBucket.sizeOf(columns = 5, rows = 1))
 
-        assertEquals(dp(142), wide.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(144), wide.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(3, WidgetHost.days(wide).size)
     }
 
@@ -110,9 +110,9 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(listOf("7°", "Regen in 25 min"), widget.shown())
         assertEquals(emptyList<List<String>>(), WidgetHost.days(widget))
         assertFalse(WidgetHost.visible(widget.findViewById(R.id.divider), widget))
-        // Without days "now" takes the card's width, its image at the left as with days.
+        // Without days "now" takes the card's width, its image at the left as with days, smaller.
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.now_column).layoutParams.width)
-        assertFlatNow(widget)
+        assertFlatNow(widget, icon = 56)
         // 3 cells wide on a phone with wider cells, room for a day beside "now": still only "now" (D11).
         assertEquals(listOf("7°", "Regen in 25 min"), placed(SizeF(272f, 100f)).shown())
     }
@@ -120,25 +120,26 @@ class FlatWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
-    fun `in the flat bucket a text too long for one line at 14 sp takes two lines at 12 sp, a short one stays`() {
+    fun `in the flat bucket a text too long for one line at 13 sp takes two lines at 11 sp, a short one stays`() {
         signIn()
         val size = SizeBucket.sizeOf(columns = 5, rows = 1)
 
-        // With days beside it, so "now" has its column of 142 dp and beside its image a text area of 80 dp.
+        // With days beside it, so "now" has its column of 144 dp and beside its image a text area of 66 dp.
         written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
         val long = placed(size)
         assertEquals(listOf("Gewitter, regnerisch"), WidgetHost.shown(long.findViewById(R.id.now_text)).drop(1))
         assertTrue(WidgetHost.visible(long.findViewById(R.id.now_line_long), long))
-        assertLine(long.text(R.id.now_line_long), lines = 2, height = 36, largest = 12f)
+        assertLine(long.text(R.id.now_line_long), lines = 2, height = 32, largest = 11f, least = 9f)
 
         written(SampleWeather.full().replace("partlycloudy", "fog"))
         val short = placed(size)
         assertTrue(WidgetHost.visible(short.findViewById(R.id.now_line), short))
         assertFalse(WidgetHost.visible(short.findViewById(R.id.now_line_long), short))
-        assertLine(short.text(R.id.now_line), lines = 1, height = 20, largest = 14f)
+        assertLine(short.text(R.id.now_line), lines = 1, height = 20, largest = 13f, least = 11f)
 
-        // Measured against the text area, not the column: at the test's density "Regnerisch" fits 80 dp on one line,
-        // "Regen in 25 min", "Außergewöhnlich" and "Schneeregen" (80.7 dp) do not, though they would fit the column.
+        // Measured at 13 sp against the text area, not the column: at the test's density "Regnerisch" (64.3 dp) fits
+        // 66 dp on one line, "Regen in 25 min", "Außergewöhnlich" and "Klare Nacht" (67 dp) do not, though they would
+        // fit the column.
         val shown = { condition: String, rain: Duration?, at: SizeF ->
             written(SampleWeather.full(rain).replace("\"condition\":\"partlycloudy\"", "\"condition\":\"$condition\""))
             val widget = placed(at)
@@ -147,9 +148,9 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(listOf(R.id.now_line), shown("rainy", null, size))
         assertEquals(listOf(R.id.now_line_long), shown("partlycloudy", Duration.ofMinutes(25), size))
         assertEquals(listOf(R.id.now_line_long), shown("exceptional", null, size))
-        assertEquals(listOf(R.id.now_line_long), shown("snowy-rainy", null, size))
-        // Without days, against the text area beside the image at the card's width: 44 dp at 2 x 1, where "Bewölkt"
-        // (49.7 dp) takes two lines; 186 dp at 272 dp wide, where it takes one.
+        assertEquals(listOf(R.id.now_line_long), shown("clear-night", null, size))
+        // Without days, against the text area beside the smaller image at the card's width: 44 dp at 2 x 1, where
+        // "Bewölkt" (46 dp) takes two lines; 186 dp at 272 dp wide, where it takes one.
         assertEquals(listOf(R.id.now_line_long), shown("cloudy", null, SizeBucket.sizeOf(columns = 2, rows = 1)))
         assertEquals(listOf(R.id.now_line), shown("cloudy", null, SizeF(272f, 100f)))
     }
@@ -157,7 +158,7 @@ class FlatWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
-    fun `the flat text area is 80 dp beside the image, 6 dp from it, and holds -12 degrees at 30 sp`() {
+    fun `the flat text area is 66 dp beside the image, 6 dp from it, and holds -12 degrees at 24 sp`() {
         signIn()
         written(SampleWeather.full().replace("\"temperature\":7.4", "\"temperature\":-12.4"))
         val size = SizeBucket.sizeOf(columns = 5, rows = 1)
@@ -166,16 +167,20 @@ class FlatWidgetTest : WidgetTestBase() {
 
         val icon = widget.findViewById<View>(R.id.now_icon)
         val area = widget.findViewById<View>(R.id.now_text)
-        assertTrue("${area.width}", kotlin.math.abs(area.width - 80 * density) <= 1)
+        assertTrue("${area.width}", kotlin.math.abs(area.width - 66 * density) <= 1)
         assertTrue("${area.left - icon.right}", kotlin.math.abs(area.left - icon.right - 6 * density) <= 1)
         val temperature = widget.text(R.id.now_temperature)
         assertEquals("-12°", temperature.text.toString())
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, temperature.autoSizeTextType)
-        assertEquals(Math.round(sp(30f)), temperature.autoSizeMaxTextSize)
-        assertEquals(Math.round(sp(20f)), temperature.autoSizeMinTextSize)
-        assertEquals(dp(36), temperature.layoutParams.height)
-        val largest = TextPaint(temperature.paint).apply { textSize = sp(30f) }
+        assertEquals(Math.round(sp(24f)), temperature.autoSizeMaxTextSize)
+        assertEquals(Math.round(sp(18f)), temperature.autoSizeMinTextSize)
+        assertEquals(dp(30), temperature.layoutParams.height)
+        val largest = TextPaint(temperature.paint).apply { textSize = sp(24f) }
         assertTrue(largest.measureText("-12°") <= area.width)
+        // TextView's own sizing, run with the layout's values, keeps the largest size: "-12°" fits the area's width
+        // and, without the font's padding, its 30 dp height.
+        resize(temperature)
+        assertEquals(sp(24f), temperature.textSize, 0.5f)
     }
 
     @Test
@@ -190,13 +195,8 @@ class FlatWidgetTest : WidgetTestBase() {
             val notice = laidOut(placed(size), size).text(R.id.widget_notice)
             assertEquals(2, notice.maxLines)
             assertEquals(dp(36), notice.layoutParams.height)
-            // Robolectric does not size the text by itself; this runs TextView's own sizing with the layout's settings.
-            notice.setAutoSizeTextTypeUniformWithConfiguration(
-                notice.autoSizeMinTextSize,
-                notice.autoSizeMaxTextSize,
-                notice.autoSizeStepGranularity,
-                TypedValue.COMPLEX_UNIT_PX,
-            )
+            assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, notice.autoSizeTextType)
+            resize(notice)
             val text = notice.text.toString()
             val layout = notice.layout
             assertEquals("$size", "Neu anmelden", text)
@@ -456,22 +456,39 @@ class FlatWidgetTest : WidgetTestBase() {
         lines: Int,
         height: Int,
         largest: Float,
+        least: Float,
     ) {
         assertEquals(lines, line.maxLines)
         assertEquals(dp(height), line.layoutParams.height)
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, line.autoSizeTextType)
-        assertEquals(Math.round(sp(11f)), line.autoSizeMinTextSize)
+        assertEquals(Math.round(sp(least)), line.autoSizeMinTextSize)
         assertEquals(Math.round(sp(largest)), line.autoSizeMaxTextSize)
     }
 
-    /** "Now" of a flat widget: its 56 dp image at the left of its column, beside it the temperature over the line. */
-    private fun assertFlatNow(widget: View) {
+    /**
+     * Runs TextView's own sizing of [text] once more, with the values its layout gave it, on the size it is laid out
+     * at; it throws when the layout lost its autosize, whose values it reads.
+     */
+    private fun resize(text: TextView) {
+        text.setAutoSizeTextTypeUniformWithConfiguration(
+            text.autoSizeMinTextSize,
+            text.autoSizeMaxTextSize,
+            text.autoSizeStepGranularity,
+            TypedValue.COMPLEX_UNIT_PX,
+        )
+    }
+
+    /** "Now" of a flat widget: its image, [icon] dp, at the left of its column, beside it temperature over line. */
+    private fun assertFlatNow(
+        widget: View,
+        icon: Int,
+    ) {
         val column = widget.findViewById<LinearLayout>(R.id.now_column)
         val text = widget.findViewById<ViewGroup>(R.id.now_text)
         assertEquals(LinearLayout.HORIZONTAL, column.orientation)
         assertEquals(listOf(R.id.now_icon, R.id.now_text), (0 until column.childCount).map { column.getChildAt(it).id })
-        assertEquals(dp(56), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
-        assertEquals(dp(56), widget.findViewById<View>(R.id.now_icon).layoutParams.height)
+        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.height)
         assertEquals(
             listOf(R.id.now_temperature, R.id.now_line, R.id.now_line_long, R.id.widget_notice),
             (0 until text.childCount).map { text.getChildAt(it).id },
