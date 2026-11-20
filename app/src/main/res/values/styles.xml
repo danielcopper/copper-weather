@@ -11,8 +11,8 @@
      from the palette, set by WidgetViews or, in the preview, from
      colors.xml (D7). -->
 <resources>
-    <!-- The parent the dotted names below imply: every text in the font the
-         app measures it in, the system's sans-serif (D36). -->
+    <!-- The parent the dotted names below imply: every text in the system's
+         sans-serif, the font the app measures the line in (D36). -->
     <style name="WeatherWidget">
         <item name="android:fontFamily">sans-serif</item>
     </style>
