@@ -74,7 +74,8 @@ object Services {
 
     /**
      * Keeps a new sign-in, updates the widgets, which have no snapshot to show until the first fetch, and fetches at
-     * once (D28, D33), also when the update throws; true when signed in.
+     * once (D28, D33), also when the update throws; true when signed in. A failed sign-in updates the widgets too,
+     * since a delete of the earlier snapshot that failed part-way may have changed what they show (D31).
      */
     fun signIn(
         context: Context,
@@ -82,7 +83,7 @@ object Services {
         code: AuthorizationCode,
     ): Boolean {
         val signedIn = fetcher(context).signIn(request, code) == Fetcher.SignIn.SignedIn
-        if (signedIn) runThen({ Widgets.update(context) }) { FetchWork.start(context) }
+        runThen({ Widgets.update(context) }) { if (signedIn) FetchWork.start(context) }
         return signedIn
     }
 

@@ -65,11 +65,7 @@ data class Status(
             }
         }
 
-    /**
-     * The snapshot's attribution as the screen shows it (D18): while signed in, and beside a refused or unreadable
-     * sign-in, whose snapshot the widget still shows (D32); none while signed out, when a snapshot left behind is no
-     * one's (D31).
-     */
+    /** The snapshot's attribution as the screen shows it: none while signed out (D18, D32). */
     val attributionLine: String?
         get() = attribution?.takeIf { state != Account.State.SIGNED_OUT }
 

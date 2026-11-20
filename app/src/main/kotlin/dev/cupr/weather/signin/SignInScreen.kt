@@ -54,8 +54,8 @@ import java.time.ZoneId
  * login page in a WebView (D24, D25); a sign-in refused or unreadable says so above it (D32). Signed in: when the last
  * successful fetch was, whether the last one failed, "Abmelden" (D27) and how often the app fetches (D28). The
  * snapshot's attribution shows while there is one and someone is signed in, refused or unreadable included (D18, D32).
- * The status is read off the main thread, again each time the screen starts ([starts]),
- * after each sign-in or sign-out, and whenever a fetch changes state.
+ * The status is read off the main thread, again each time the screen starts ([starts]), after each sign-in or
+ * sign-out, and whenever a fetch changes state.
  */
 @Composable
 fun SignInScreen(starts: Int) {

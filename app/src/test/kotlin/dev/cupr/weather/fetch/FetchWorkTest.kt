@@ -43,6 +43,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.File
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.crypto.KeyGenerator
@@ -317,9 +318,9 @@ class FetchWorkTest {
     }
 
     @Test
-    fun `a sign-in updates the widgets and schedules the fetches, a failed one does neither`() {
+    fun `a sign-in updates the widgets and schedules the fetches, a failed one only updates the widgets`() {
         val widget = placed()
-        // A failed sign-in changes nothing the widget shows, so whether it updates the widget is counted.
+        // This failed sign-in changes nothing the widget shows, so whether it updates the widget is counted.
         var updates = 0
         WeatherWidgetProvider.content = {
             updates++
@@ -328,13 +329,30 @@ class FetchWorkTest {
         home.token = { FakeHomeAssistant.json("""{"error":"invalid_grant"}""", 400) }
         assertFalse(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
         assertEquals(emptyList<WorkInfo.State>(), scheduled)
-        assertEquals(0, updates)
+        assertEquals(1, updates)
         assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
 
         home.token = { FakeHomeAssistant.json("""{"refresh_token":"refresh-1","token_type":"Bearer"}""") }
         assertTrue(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
         assertEquals(listOf(WorkInfo.State.ENQUEUED, WorkInfo.State.ENQUEUED), scheduled)
         assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), WidgetHost.shown(widget))
+    }
+
+    @Test
+    fun `a sign-in whose delete of the earlier snapshot fails part-way shows what is left on the widget`() {
+        signIn()
+        snapshot(3)
+        Services.account(context).reject()
+        val widget = placed()
+        assertEquals(listOf("3°", "Neu anmelden"), WidgetHost.shown(widget))
+        // The snapshot itself goes; a directory with a file in it where AtomicFile keeps its new file stays.
+        File(context.filesDir, "snapshot.json.new/blocking").mkdirs()
+        home.token = { FakeHomeAssistant.json("""{"refresh_token":"refresh-1","token_type":"Bearer"}""") }
+
+        assertFalse(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
+
+        assertEquals(emptyList<WorkInfo.State>(), scheduled)
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
     }
 
     @Test

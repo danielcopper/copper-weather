@@ -69,7 +69,7 @@ class Fetcher(
      * Trades the code [request]'s redirect carried for a refresh token and keeps it with the `client_id` it was issued
      * to (D23, D26); the snapshot and the last failure of an earlier sign-in go (D31). When the token cannot be sealed,
      * or the earlier snapshot cannot be deleted, Home Assistant is asked to end it again, so it is not left valid there
-     * unused, and nothing is kept: the account stays as it was.
+     * unused, and nothing is kept: the account stays as it was (D31).
      */
     fun signIn(
         request: SignInRequest,
@@ -94,8 +94,6 @@ class Fetcher(
         tokens: TokenClient,
     ): SignIn =
         try {
-            // What the fetches kept goes once the token is sealed and before it is kept, so a snapshot that cannot be
-            // deleted fails the sign-in with the account as it was.
             synchronized(LOCK) { account.signIn(address, signed.clientId, signed.refreshToken, ::forgetKept) }
             SignIn.SignedIn
         } catch (e: CipherFailureException) {

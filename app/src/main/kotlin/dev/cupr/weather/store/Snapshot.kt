@@ -55,14 +55,21 @@ class SnapshotStore internal constructor(
     private fun parse(text: String): Snapshot? {
         val json = parseObject(text)
         val fetchedAt = json?.get(FETCHED_AT)?.numberContent()?.toLongOrNull()
-        val read = json?.objectField(DATA)?.let(SensorData::read)
-        when {
-            fetchedAt == null || read == null -> Log.w(TAG, "The snapshot's file holds no snapshot")
-            read is SensorData.Read.Unreadable -> Log.w(TAG, "The snapshot's data is not read: ${read.reason}")
-            else -> Unit
+        return when (val read = json?.objectField(DATA)?.let(SensorData::read)) {
+            is SensorData.Read.Readable if fetchedAt != null -> {
+                Snapshot(Instant.ofEpochMilli(fetchedAt), read.data)
+            }
+
+            is SensorData.Read.Unreadable -> {
+                Log.w(TAG, "The snapshot's data is not read: ${read.reason}")
+                null
+            }
+
+            else -> {
+                Log.w(TAG, "The snapshot's file holds no snapshot")
+                null
+            }
         }
-        val data = (read as? SensorData.Read.Readable)?.data
-        return if (fetchedAt == null || data == null) null else Snapshot(Instant.ofEpochMilli(fetchedAt), data)
     }
 
     /**

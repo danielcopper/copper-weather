@@ -148,7 +148,8 @@ class SnapshotStoreTest {
 
     @Test
     fun `a new file or an old backup still there after clearing is a failure, and logged`() {
-        // Directories with a file in them where AtomicFile keeps its new file and an older one's backup.
+        // Directories with a file in them where AtomicFile keeps its new file and where a backup an older AtomicFile
+        // left would be.
         File(file.path + ".new", "blocking").mkdirs()
         File(file.path + ".bak", "blocking").mkdirs()
 
