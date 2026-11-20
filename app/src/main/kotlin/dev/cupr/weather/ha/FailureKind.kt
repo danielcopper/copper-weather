@@ -3,7 +3,10 @@ package dev.cupr.weather.ha
 import java.io.IOException
 import java.io.InterruptedIOException
 
-/** What kind of failure an answer from Home Assistant to a refresh, or its absence, was; the log keeps the reason. */
+/**
+ * What kind of failure an answer from Home Assistant, or its absence, was; the app's screen names it in plain words
+ * (D28), the log keeps the technical reason.
+ */
 enum class FailureKind {
     /**
      * No connection, or a broken one: the host is unknown, refuses, or its TLS fails; or a gateway answers 502, 503 or
@@ -13,6 +16,12 @@ enum class FailureKind {
 
     /** No answer in time. */
     TIMEOUT,
+
+    /** Home Assistant has no app sensor, or one without its `data`. */
+    NOT_FOUND,
+
+    /** Home Assistant refused the access token. */
+    REFUSED,
 
     /** Any other answer: another status, or one that is not what Home Assistant sends. */
     UNEXPECTED,

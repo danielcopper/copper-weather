@@ -12,13 +12,13 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 
 /**
- * A Home Assistant on a local MockWebServer, speaking the parts the app uses: `/auth/token` and `/auth/revoke`, in the
- * forms Core 2026.11.1 answers with. Each part's answer can be set.
+ * A Home Assistant on a local MockWebServer, speaking the parts the app uses: `/auth/token`, `/auth/revoke` and
+ * `/api/states/sensor.copper_weather`, in the forms Core 2026.11.1 answers with. Each part's answer can be set.
  */
 class FakeHomeAssistant : Closeable {
     private val server = MockWebServer()
 
-    /** The access token a refresh is answered with. */
+    /** The access token a refresh is answered with, and the one the states accept. */
     var accessToken = "access-1"
 
     /**
@@ -56,6 +56,21 @@ class FakeHomeAssistant : Closeable {
     /** The answer to `/auth/revoke`; Core answers 200 for any token. */
     var revoke: () -> MockResponse = { MockResponse.Builder().code(200).build() }
 
+    /** The app sensor's attribute `data`, which [states] answers with by default. */
+    var data = DATA
+
+    /** The app sensor's state as JSON, or another answer to `/api/states/sensor.copper_weather`. */
+    var states: () -> MockResponse = {
+        json(
+            """{"entity_id":"sensor.copper_weather","state":"2026-11-20T08:00:00+00:00","attributes":{"data":$data}}""",
+        )
+    }
+
+    /** When set, a request for the states waits for it, after counting down [statesAsked]. */
+    var statesGate: CountDownLatch? = null
+
+    val statesAsked = CountDownLatch(1)
+
     /** The requests to the HTTP endpoints, in order, with their form fields where they have a form. */
     val requests = CopyOnWriteArrayList<Pair<RecordedRequest, Map<String, String>>>()
 
@@ -83,6 +98,10 @@ class FakeHomeAssistant : Closeable {
                             revoke()
                         }
 
+                        "/api/states/sensor.copper_weather" -> {
+                            states(request)
+                        }
+
                         else -> {
                             MockResponse.Builder().code(404).build()
                         }
@@ -92,10 +111,26 @@ class FakeHomeAssistant : Closeable {
         server.start()
     }
 
+    private fun states(request: RecordedRequest): MockResponse {
+        statesAsked.countDown()
+        statesGate?.await()
+        return if (request.headers["Authorization"] == "Bearer $accessToken") {
+            states()
+        } else {
+            json("""{"message":"Unauthorized"}""", 401)
+        }
+    }
+
     /** Stops answering: every request after this fails to connect. */
     override fun close() = server.close()
 
     companion object {
+        /** The app sensor's `data` in schema version 1, with neutral values; `rain_at` and `storm` are absent. */
+        const val DATA =
+            """{"schema_version":1,"attribution":"Weather data: a test source",""" +
+                """"now":{"condition":"partlycloudy","temperature":7.4,"humidity":81,"wind_speed":12.2},""" +
+                """"twilight":"day","hours":[],"days":[],"warnings":[],"pollen_max":0.5}"""
+
         fun json(
             body: String,
             code: Int = 200,

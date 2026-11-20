@@ -4,6 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.ha.AuthorizationCode
 import dev.cupr.weather.ha.FakeHomeAssistant
@@ -43,6 +46,14 @@ class SignInFlowTest {
     fun setUp() {
         keystoreCipher = Services.cipher
         Services.cipher = { AesGcmCipher { key } }
+        WorkManagerTestInitHelper.initializeTestWorkManager(
+            context,
+            Configuration
+                .Builder()
+                .setMinimumLoggingLevel(Log.WARN)
+                .setExecutor(SynchronousExecutor())
+                .build(),
+        )
     }
 
     @After
@@ -53,6 +64,7 @@ class SignInFlowTest {
             awaitIdle()
         } finally {
             Services.cipher = keystoreCipher
+            WorkManagerTestInitHelper.closeWorkDatabase()
             home.close()
             SignInFlow.clearProblem()
         }

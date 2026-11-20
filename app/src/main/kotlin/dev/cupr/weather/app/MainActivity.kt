@@ -6,9 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import dev.cupr.weather.signin.SignInScreen
+import kotlinx.coroutines.launch
 
-/** The app's only screen: signing in with Home Assistant and out again; it reads the status anew on each start. */
+/**
+ * The app's only screen: signing in with Home Assistant and out again, the last fetch and the fetch interval. Each time
+ * it starts while signed in, the app fetches (D28), and the screen reads the status anew.
+ */
 class MainActivity : ComponentActivity() {
     private var starts by mutableIntStateOf(0)
 
@@ -20,7 +25,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // The fetch on opening the screen (D20) goes here.
         starts++
+        lifecycleScope.launch(Services.io) { Services.opened(applicationContext) }
     }
 }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,18 +35,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.work.WorkManager
 import dev.cupr.weather.R
+import dev.cupr.weather.app.Choice
 import dev.cupr.weather.app.Services
+import dev.cupr.weather.fetch.FetchWork
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.store.Account
+import dev.cupr.weather.store.FetchInterval
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * The app's screen. Signed out: the address field and "Mit Home Assistant anmelden", which opens Home Assistant's
- * login page in a WebView (D24, D25). Signed in: that it is signed in, and "Abmelden" (D27). The status is read off the
- * main thread, again each time the screen starts ([starts]) and after each sign-in or sign-out.
+ * login page in a WebView (D24, D25); a sign-in refused or unreadable says so above it (D32). Signed in: when the last
+ * fetch was, whether it failed, "Abmelden" (D27) and how often the app fetches (D28). The snapshot's attribution shows
+ * while there is one (D18). The status is read off the main thread, again each time the screen starts ([starts]),
+ * after each sign-in or sign-out, and whenever a fetch changes state.
  */
 @Composable
 fun SignInScreen(starts: Int) {
@@ -56,8 +65,11 @@ fun SignInScreen(starts: Int) {
     val flow by SignInFlow.state.collectAsState()
     val scope = rememberCoroutineScope()
 
+    fun reload() = scope.launch { status = withContext(Services.io) { Status.read(app) } }
+
     // Again after each sign-in or sign-out, which run in SignInFlow, beyond this screen's life.
-    LaunchedEffect(starts, flow.finished) { status = withContext(Services.io) { Status.read(app) } }
+    LaunchedEffect(starts, flow.finished) { reload() }
+    WatchFetches { reload() }
 
     val signIn = request
     if (signIn == null) {
@@ -71,6 +83,10 @@ fun SignInScreen(starts: Int) {
                 scope.launch(Services.io) { Services.account(app).rememberAddress(address) }
             },
             onSignOut = { SignInFlow.signOut(app) },
+            onFetchInterval = { interval ->
+                status = status?.copy(fetchInterval = interval)
+                scope.launch(Services.io) { FetchWork.setInterval(app, interval) }
+            },
         )
         return
     }
@@ -93,6 +109,19 @@ fun SignInScreen(starts: Int) {
     )
 }
 
+/** Calls [onChange] whenever a fetch, started here or by the period, changes its state, so a new fetch time shows. */
+@Composable
+private fun WatchFetches(onChange: () -> Unit) {
+    val context = LocalContext.current
+    val change by rememberUpdatedState(onChange)
+    LaunchedEffect(Unit) {
+        val work = WorkManager.getInstance(context)
+        for (name in listOf(FetchWork.NOW, FetchWork.PERIODIC)) {
+            launch { work.getWorkInfosForUniqueWorkFlow(name).collect { change() } }
+        }
+    }
+}
+
 @Composable
 private fun Content(
     status: Status?,
@@ -100,7 +129,9 @@ private fun Content(
     problem: Problem?,
     onSignIn: (HaAddress) -> Unit,
     onSignOut: () -> Unit,
+    onFetchInterval: (FetchInterval) -> Unit,
 ) {
+    val context = LocalContext.current
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.safeDrawingPadding().padding(24.dp),
@@ -108,10 +139,19 @@ private fun Content(
         ) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
             if (status == null) return@Column
-            status.line?.let { Text(stringResource(it)) }
+            val now = Instant.now()
+            val zone = ZoneId.systemDefault()
+            status.line(context, now, zone)?.let { Text(it) }
+            status.failedLine(context, now, zone)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             problem?.let { Text(stringResource(it.text), color = MaterialTheme.colorScheme.error) }
+            status.attribution?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             if (status.state == Account.State.SIGNED_IN) {
                 OutlinedButton(enabled = !busy, onClick = onSignOut) { Text(stringResource(R.string.sign_out)) }
+                Choice(R.string.fetch_interval, FetchInterval.entries, status.fetchInterval, ::intervalLabel) {
+                    onFetchInterval(it)
+                }
             } else {
                 AddressForm(status.address, busy, onSignIn)
             }
@@ -177,6 +217,14 @@ private fun LoginPage(
         onRelease = WebView::destroy,
     )
 }
+
+@StringRes
+private fun intervalLabel(interval: FetchInterval): Int =
+    when (interval) {
+        FetchInterval.EVERY_15_MINUTES -> R.string.every_15_minutes
+        FetchInterval.EVERY_30_MINUTES -> R.string.every_30_minutes
+        FetchInterval.EVERY_60_MINUTES -> R.string.every_60_minutes
+    }
 
 /** Keeps a sign-in under way across a configuration change: its address, verifier and state. */
 internal val RequestSaver =

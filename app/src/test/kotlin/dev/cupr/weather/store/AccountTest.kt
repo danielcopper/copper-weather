@@ -65,6 +65,41 @@ class AccountTest {
     }
 
     @Test
+    fun `a refused sign-in forgets the token, keeps the address and opens as not signed in`() {
+        account.signIn(address, "client", token)
+
+        account.reject()
+
+        assertEquals(Account.State.REJECTED, account.state)
+        assertEquals(Account.Opened.NotSignedIn, account.open())
+        assertEquals(address, account.address)
+        assertEquals(setOf("address", "state"), prefs.all.keys)
+    }
+
+    @Test
+    fun `an unreadable sign-in is kept apart from a refused one`() {
+        account.signIn(address, "client", token)
+
+        account.markUnreadable()
+
+        assertEquals(Account.State.UNREADABLE, account.state)
+        assertEquals(Account.Opened.NotSignedIn, account.open())
+        assertEquals(address, account.address)
+        assertEquals(setOf("address", "state"), prefs.all.keys)
+    }
+
+    @Test
+    fun `signing out after a refused sign-in leaves only the address`() {
+        account.signIn(address, "client", token)
+        account.reject()
+
+        account.signOut()
+
+        assertEquals(Account.State.SIGNED_OUT, account.state)
+        assertEquals(setOf("address"), prefs.all.keys)
+    }
+
+    @Test
     fun `signing out forgets the token and keeps the address`() {
         account.signIn(address, "client", token)
 

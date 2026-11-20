@@ -20,6 +20,12 @@ class Account(
         SIGNED_OUT,
 
         SIGNED_IN,
+
+        /** Home Assistant refused the refresh token: sign in again (D32). */
+        REJECTED,
+
+        /** The stored sign-in cannot be read on this phone (D26): sign in again (D32). */
+        UNREADABLE,
     }
 
     /** What a call to Home Assistant with the stored sign-in needs. */
@@ -56,7 +62,13 @@ class Account(
         get() = prefs.getString(ADDRESS, null)?.let(HaAddress::stored)
 
     val state: State
-        get() = if (prefs.getString(STATE, null) == SIGNED_IN) State.SIGNED_IN else State.SIGNED_OUT
+        get() =
+            when (prefs.getString(STATE, null)) {
+                SIGNED_IN -> State.SIGNED_IN
+                REJECTED -> State.REJECTED
+                UNREADABLE -> State.UNREADABLE
+                else -> State.SIGNED_OUT
+            }
 
     fun rememberAddress(address: HaAddress) = prefs.edit { putString(ADDRESS, address.url.toString()) }
 
@@ -107,12 +119,20 @@ class Account(
         }
     }
 
+    /** Forgets the refresh token Home Assistant refused and keeps the sign-in as refused; the address stays (D32). */
+    fun reject() = forget(REJECTED)
+
+    /** Forgets a stored sign-in this phone cannot read and keeps it as unreadable; the address stays (D32). */
+    fun markUnreadable() = forget(UNREADABLE)
+
     /** Forgets the sign-in; the address stays (D27). */
-    fun signOut() =
+    fun signOut() = forget(null)
+
+    private fun forget(state: String?) =
         prefs.edit {
             remove(CLIENT_ID)
             remove(REFRESH_TOKEN)
-            remove(STATE)
+            if (state == null) remove(STATE) else putString(STATE, state)
         }
 
     private companion object {
@@ -121,5 +141,7 @@ class Account(
         const val REFRESH_TOKEN = "refresh_token"
         const val STATE = "state"
         const val SIGNED_IN = "signed_in"
+        const val REJECTED = "rejected"
+        const val UNREADABLE = "unreadable"
     }
 }
