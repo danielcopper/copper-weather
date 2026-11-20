@@ -10,8 +10,7 @@
          line below it, and "Neu anmelden" below that while it shows. -->
     <dimen name="widget_now_height">48dp</dimen>
     <dimen name="widget_now_icon">48dp</dimen>
-    <!-- "Now" in the small and the flat bucket (D36): a lower row with a
-         smaller image. -->
+    <!-- "Now" in the small bucket (D36): a lower row with a smaller image. -->
     <dimen name="widget_now_height_compact">40dp</dimen>
     <dimen name="widget_now_icon_compact">40dp</dimen>
     <!-- Today's high and low in a row below "now", in the small bucket. -->
@@ -24,7 +23,9 @@
          one row. -->
     <dimen name="widget_flat_now_width">142dp</dimen>
     <dimen name="widget_flat_now_icon">56dp</dimen>
-    <dimen name="widget_flat_now_gap">6dp</dimen>
+    <!-- "Now"'s temperature, and its gap to the image, in every bucket. -->
+    <dimen name="widget_now_temperature_text">30sp</dimen>
+    <dimen name="widget_now_gap">6dp</dimen>
     <dimen name="widget_flat_temperature_height">36dp</dimen>
     <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_divider">1dp</dimen>
@@ -43,6 +44,7 @@
     <dimen name="widget_flat_day_note_height">16dp</dimen>
     <dimen name="widget_flat_day_text_least">7.5sp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
+    <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>
     <dimen name="widget_hour_height">76dp</dimen>

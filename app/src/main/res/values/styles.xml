@@ -6,8 +6,8 @@
      (widget_weather_preview.xml, D40) uses the same styles for the card,
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
-     sets "now"'s row and image sizes by bucket and picks the line's one- or
-     two-line form (D36). The sizes are in dimens.xml (D35); the colours come
+     sets "now"'s row and image sizes by bucket outside the flat bucket and
+     picks the line's one- or two-line form (D36). The sizes are in dimens.xml (D35); the colours come
      from the palette, set by WidgetViews or, in the preview, from
      colors.xml (D7). -->
 <resources>
@@ -41,22 +41,24 @@
         <item name="android:layout_height">@dimen/widget_now_icon</item>
     </style>
 
-    <style name="WeatherWidget.NowTemperature">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">6dp</item>
+    <!-- "Now"'s temperature, beside the image or, in the flat bucket, in the
+         text area beside it (D36). -->
+    <style name="WeatherWidget.Temperature">
         <item name="android:includeFontPadding">false</item>
         <item name="android:maxLines">1</item>
-        <item name="android:textSize">30sp</item>
+        <item name="android:textSize">@dimen/widget_now_temperature_text</item>
     </style>
 
-    <!-- In the flat bucket's text area: as wide as the area, shrinking down
-         to 20 sp where that is narrow (D36). -->
-    <style name="WeatherWidget.NowTemperature.Flat">
+    <style name="WeatherWidget.NowTemperature" parent="WeatherWidget.Temperature">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">@dimen/widget_now_gap</item>
+    </style>
+
+    <style name="WeatherWidget.FlatTemperature" parent="WeatherWidget.Temperature">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_temperature_height</item>
-        <item name="android:layout_marginStart">0dp</item>
-        <item name="android:autoSizeMaxTextSize">30sp</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_now_temperature_text</item>
         <item name="android:autoSizeMinTextSize">20sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:autoSizeTextType">uniform</item>
@@ -105,9 +107,14 @@
     <style name="WeatherWidget.Line.Long">
         <item name="android:layout_height">@dimen/widget_line_long_height</item>
         <item name="android:autoSizeMaxTextSize">@dimen/widget_line_long_text</item>
-        <item name="android:hyphenationFrequency">normal</item>
         <item name="android:maxLines">2</item>
         <item name="android:textSize">@dimen/widget_line_long_text</item>
+    </style>
+
+    <!-- In the flat bucket's narrow text area the two-line form may
+         hyphenate, in the phone's language (D36). -->
+    <style name="WeatherWidget.Line.Long.Flat">
+        <item name="android:hyphenationFrequency">normal</item>
     </style>
 
     <!-- "Neu anmelden" and the plain text instead of the weather; each layout
@@ -116,7 +123,21 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:maxLines">1</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">@dimen/widget_notice_text</item>
+    </style>
+
+    <!-- In the flat bucket's text area, in the line's place: up to two lines,
+         shrinking down to 9 sp so "anmelden" fits whole; the simple line
+         breaking moves a word to the next line before it splits it, so the
+         shrinking goes on until no word needs splitting (D36). -->
+    <style name="WeatherWidget.Notice.Flat">
+        <item name="android:layout_height">@dimen/widget_line_long_height</item>
+        <item name="android:breakStrategy">simple</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_notice_text</item>
+        <item name="android:autoSizeMinTextSize">9sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:maxLines">2</item>
     </style>
 
     <style name="WeatherWidget.Plain">
@@ -188,8 +209,8 @@
     </style>
 
     <!-- "Now" in the flat bucket, as the dashboard's today: the image at the
-         left, as high as the row allows, and beside it the temperature over
-         the line (D36). -->
+         left, as high as the temperature over a one-line line, and beside it
+         the temperature over the line (D36). -->
     <style name="WeatherWidget.FlatNow">
         <item name="android:layout_width">@dimen/widget_flat_now_width</item>
         <item name="android:layout_height">wrap_content</item>
@@ -206,7 +227,7 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginStart">@dimen/widget_flat_now_gap</item>
+        <item name="android:layout_marginStart">@dimen/widget_now_gap</item>
         <item name="android:orientation">vertical</item>
     </style>
 

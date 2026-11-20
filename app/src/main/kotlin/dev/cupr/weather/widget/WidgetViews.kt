@@ -150,7 +150,7 @@ internal object WidgetViews {
         content: WidgetContent.Weather,
     ) = if (content.signInAgain) Taps.app(context) else Taps.weather(context)
 
-    /** "Now"'s row (D36): [compact] in the small and the flat bucket, lower and with a smaller image. */
+    /** "Now"'s row outside the flat bucket (D36): [compact] in the small bucket, lower and with a smaller image. */
     private fun now(
         views: RemoteViews,
         now: WidgetContent.Now,
@@ -251,7 +251,7 @@ internal object WidgetViews {
 
         /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
         fun flatText(column: Float): Float =
-            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_flat_now_gap)
+            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))

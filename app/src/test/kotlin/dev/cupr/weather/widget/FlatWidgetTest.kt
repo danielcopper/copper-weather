@@ -2,6 +2,7 @@ package dev.cupr.weather.widget
 
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.text.Layout
 import android.text.TextPaint
 import android.util.SizeF
 import android.util.TypedValue
@@ -112,7 +113,7 @@ class FlatWidgetTest : WidgetTestBase() {
         // Without days "now" takes the card's width, its image at the left as with days.
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.now_column).layoutParams.width)
         assertFlatNow(widget)
-        // 3 cells wide on a phone with wider cells, room for two days beside "now": still only "now" (D11).
+        // 3 cells wide on a phone with wider cells, room for a day beside "now": still only "now" (D11).
         assertEquals(listOf("7°", "Regen in 25 min"), placed(SizeF(272f, 100f)).shown())
     }
 
@@ -137,15 +138,86 @@ class FlatWidgetTest : WidgetTestBase() {
         assertLine(short.text(R.id.now_line), lines = 1, height = 20, largest = 14f)
 
         // Measured against the text area, not the column: at the test's density "Regnerisch" fits 80 dp on one line,
-        // "Regen in 25 min" and "Außergewöhnlich" do not, though they would fit the column.
-        val shown = { condition: String, rain: Duration? ->
+        // "Regen in 25 min", "Außergewöhnlich" and "Schneeregen" (80.7 dp) do not, though they would fit the column.
+        val shown = { condition: String, rain: Duration?, at: SizeF ->
             written(SampleWeather.full(rain).replace("\"condition\":\"partlycloudy\"", "\"condition\":\"$condition\""))
-            val widget = placed(size)
+            val widget = placed(at)
             listOf(R.id.now_line, R.id.now_line_long).filter { WidgetHost.visible(widget.findViewById(it), widget) }
         }
-        assertEquals(listOf(R.id.now_line), shown("rainy", null))
-        assertEquals(listOf(R.id.now_line_long), shown("partlycloudy", Duration.ofMinutes(25)))
-        assertEquals(listOf(R.id.now_line_long), shown("exceptional", null))
+        assertEquals(listOf(R.id.now_line), shown("rainy", null, size))
+        assertEquals(listOf(R.id.now_line_long), shown("partlycloudy", Duration.ofMinutes(25), size))
+        assertEquals(listOf(R.id.now_line_long), shown("exceptional", null, size))
+        assertEquals(listOf(R.id.now_line_long), shown("snowy-rainy", null, size))
+        // Without days, against the text area beside the image at the card's width: 44 dp at 2 x 1, where "Bewölkt"
+        // (49.7 dp) takes two lines; 186 dp at 272 dp wide, where it takes one.
+        assertEquals(listOf(R.id.now_line_long), shown("cloudy", null, SizeBucket.sizeOf(columns = 2, rows = 1)))
+        assertEquals(listOf(R.id.now_line), shown("cloudy", null, SizeF(272f, 100f)))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `the flat text area is 80 dp beside the image, 6 dp from it, and holds -12 degrees at 30 sp`() {
+        signIn()
+        written(SampleWeather.full().replace("\"temperature\":7.4", "\"temperature\":-12.4"))
+        val size = SizeBucket.sizeOf(columns = 5, rows = 1)
+
+        val widget = laidOut(placed(size), size)
+
+        val icon = widget.findViewById<View>(R.id.now_icon)
+        val area = widget.findViewById<View>(R.id.now_text)
+        assertTrue("${area.width}", kotlin.math.abs(area.width - 80 * density) <= 1)
+        assertTrue("${area.left - icon.right}", kotlin.math.abs(area.left - icon.right - 6 * density) <= 1)
+        val temperature = widget.text(R.id.now_temperature)
+        assertEquals("-12°", temperature.text.toString())
+        assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, temperature.autoSizeTextType)
+        assertEquals(Math.round(sp(30f)), temperature.autoSizeMaxTextSize)
+        assertEquals(Math.round(sp(20f)), temperature.autoSizeMinTextSize)
+        assertEquals(dp(36), temperature.layoutParams.height)
+        val largest = TextPaint(temperature.paint).apply { textSize = sp(30f) }
+        assertTrue(largest.measureText("-12°") <= area.width)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `in the flat bucket Neu anmelden shows whole, on two lines and smaller where the text area is narrow`() {
+        signIn()
+        written(SampleWeather.full())
+        Services.account(application).reject()
+
+        for (size in listOf(SizeBucket.sizeOf(columns = 5, rows = 1), SizeBucket.sizeOf(columns = 2, rows = 1))) {
+            val notice = laidOut(placed(size), size).text(R.id.widget_notice)
+            assertEquals(2, notice.maxLines)
+            assertEquals(dp(36), notice.layoutParams.height)
+            // Robolectric does not size the text by itself; this runs TextView's own sizing with the layout's settings.
+            notice.setAutoSizeTextTypeUniformWithConfiguration(
+                notice.autoSizeMinTextSize,
+                notice.autoSizeMaxTextSize,
+                notice.autoSizeStepGranularity,
+                TypedValue.COMPLEX_UNIT_PX,
+            )
+            val text = notice.text.toString()
+            val layout = notice.layout
+            assertEquals("$size", "Neu anmelden", text)
+            assertTrue("$size ${layout.lineCount}", layout.lineCount <= 2)
+            assertEquals("$size", text.length, layout.getLineEnd(layout.lineCount - 1))
+            for (line in 0 until layout.lineCount - 1) {
+                assertEquals("$size breaks a word", ' ', text[layout.getLineEnd(line) - 1])
+            }
+        }
+    }
+
+    @Test
+    fun `only the flat bucket's two-line form hyphenates`() {
+        signIn()
+        written(SampleWeather.full())
+
+        val flat = placed(SizeBucket.sizeOf(columns = 5, rows = 1)).text(R.id.now_line_long)
+        val small = placed(SizeBucket.sizeOf(columns = 2, rows = 2)).text(R.id.now_line_long)
+
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, flat.hyphenationFrequency)
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, small.hyphenationFrequency)
     }
 
     @Test
