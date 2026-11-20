@@ -89,9 +89,10 @@ internal object WidgetViews {
     }
 
     /**
-     * The flat bucket (D36): "now" as in the small bucket without today's high and low, "Neu anmelden" in its line's
-     * place while it shows, and beside it, after a divider in the palette's `border`, as many of the next days as fit,
-     * from 4 cells wide (D41); without days "now" takes the card's width.
+     * The flat bucket (D36): "now" as the dashboard's today, its image at the left and its temperature over its line
+     * beside it, without today's high and low, "Neu anmelden" in its line's place while it shows; and beside it, after
+     * a divider in the palette's `border`, as many of the next days as fit, from 4 cells wide (D41); without days "now"
+     * takes the card's width.
      */
     private fun flatWeather(
         context: Context,
@@ -100,10 +101,12 @@ internal object WidgetViews {
         size: SizeF,
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
-        now(views, content.now, compact = true)
+        views.setImageViewResource(R.id.now_icon, content.now.icon)
+        views.show(R.id.now_temperature, content.now.temperature, Palette::text)
         val room = Room(context.resources, size, content.signInAgain)
         val days = if (SizeBucket.wide(size)) content.days.take(room.flatDays()) else emptyList()
-        // With days "now" has its column, without them the card's width; the line is measured against the same.
+        // With days "now" has its column, without them the card's width; the line is measured against the text area
+        // beside the image in it.
         val column =
             if (days.isEmpty()) {
                 views.setViewLayoutWidth(
@@ -120,7 +123,7 @@ internal object WidgetViews {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
         } else {
-            line(context, views, room, content.now.line, twoLineRoom = column)
+            line(context, views, room, content.now.line, twoLineRoom = room.flatText(column))
         }
 
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
@@ -245,6 +248,10 @@ internal object WidgetViews {
 
         /** The width of "now"'s column in the flat bucket beside its days. */
         fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
+
+        /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
+        fun flatText(column: Float): Float =
+            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_flat_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))

@@ -50,6 +50,19 @@
         <item name="android:textSize">30sp</item>
     </style>
 
+    <!-- In the flat bucket's text area: as wide as the area, shrinking down
+         to 20 sp where that is narrow (D36). -->
+    <style name="WeatherWidget.NowTemperature.Flat">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_flat_temperature_height</item>
+        <item name="android:layout_marginStart">0dp</item>
+        <item name="android:autoSizeMaxTextSize">30sp</item>
+        <item name="android:autoSizeMinTextSize">20sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
     <style name="WeatherWidget.NowToday">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -92,6 +105,7 @@
     <style name="WeatherWidget.Line.Long">
         <item name="android:layout_height">@dimen/widget_line_long_height</item>
         <item name="android:autoSizeMaxTextSize">@dimen/widget_line_long_text</item>
+        <item name="android:hyphenationFrequency">normal</item>
         <item name="android:maxLines">2</item>
         <item name="android:textSize">@dimen/widget_line_long_text</item>
     </style>
@@ -173,9 +187,26 @@
         <item name="android:paddingBottom">@dimen/widget_flat_padding</item>
     </style>
 
+    <!-- "Now" in the flat bucket, as the dashboard's today: the image at the
+         left, as high as the row allows, and beside it the temperature over
+         the line (D36). -->
     <style name="WeatherWidget.FlatNow">
         <item name="android:layout_width">@dimen/widget_flat_now_width</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.FlatNowIcon">
+        <item name="android:layout_width">@dimen/widget_flat_now_icon</item>
+        <item name="android:layout_height">@dimen/widget_flat_now_icon</item>
+    </style>
+
+    <style name="WeatherWidget.FlatNowText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">@dimen/widget_flat_now_gap</item>
         <item name="android:orientation">vertical</item>
     </style>
 
