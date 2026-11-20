@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- An hour of the hours (D13): its time, its still image (the night form at
-     night), its temperature and its rain when it has; WidgetViews fills it
-     and adds as many as fit the width, each an equal share of it. Its looks
+     night), its temperature and its rain when it has; WidgetRows fills it,
+     and WidgetViews adds as many as fit the width, each an equal share of it. Its looks
      are styles.xml's, which the picker's preview shares. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/WeatherWidget.Hour">

@@ -79,6 +79,21 @@
         <item name="android:textSize">14sp</item>
     </style>
 
+    <!-- "Neu anmelden" and the plain text instead of the weather; each layout
+         gives them their height. -->
+    <style name="WeatherWidget.Notice">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="WeatherWidget.Plain">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
     <!-- The hours: a strip of cells sharing its width. -->
     <style name="WeatherWidget.Hours">
         <item name="android:layout_width">match_parent</item>

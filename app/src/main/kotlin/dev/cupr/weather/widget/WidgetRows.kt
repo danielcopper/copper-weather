@@ -56,21 +56,3 @@ internal object WidgetRows {
         return views
     }
 }
-
-/**
- * Shows [text] in [id], in [role]'s colour for light and for dark, or hides [id] ([hidden]) without a text.
- */
-internal fun RemoteViews.show(
-    id: Int,
-    text: String?,
-    role: (Palette) -> Int,
-    hidden: Int = View.GONE,
-) {
-    if (text == null) {
-        setViewVisibility(id, hidden)
-        return
-    }
-    setTextViewText(id, text)
-    setColorInt(id, "setTextColor", role(Palette.LIGHT), role(Palette.DARK))
-    setViewVisibility(id, View.VISIBLE)
-}

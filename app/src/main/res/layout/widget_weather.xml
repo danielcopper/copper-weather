@@ -7,8 +7,9 @@
      hidden; WidgetViews shows the ones it fills, adds the hours and days, and
      sets the texts' colours from the palette, light and dark (D7). The card,
      "now" and the hours' strip take their looks from styles.xml, as the
-     picker's preview does; "Neu anmelden", the days' list and the plain text
-     carry their own. The whole card is one tap. -->
+     picker's preview does, and so do "Neu anmelden" and the plain text but
+     for their heights; the days' list carries its own. The whole card is one
+     tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">
@@ -65,11 +66,8 @@
 
     <TextView
         android:id="@+id/widget_notice"
-        android:layout_width="match_parent"
+        style="@style/WeatherWidget.Notice"
         android:layout_height="@dimen/widget_notice_height"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="13sp"
         android:visibility="gone" />
 
     <LinearLayout
@@ -87,9 +85,7 @@
 
     <TextView
         android:id="@+id/widget_plain"
-        android:layout_width="match_parent"
+        style="@style/WeatherWidget.Plain"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:textSize="14sp"
         android:visibility="gone" />
 </LinearLayout>

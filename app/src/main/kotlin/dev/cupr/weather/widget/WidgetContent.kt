@@ -87,7 +87,7 @@ sealed interface WidgetContent {
         val rain: Rain?,
     )
 
-    /** Rain that falls in an hour or on a day (D37), as the views write it ([WidgetViews]). */
+    /** Rain that falls in an hour or on a day (D37), as the rows write it ([WidgetRows]). */
     sealed interface Rain {
         /** An amount in tenths of a millimetre, never 0: "2,5 mm", "3 mm". */
         data class Amount(

@@ -16,8 +16,9 @@ version has one widget, whose content follows its **size bucket** (D4).
 
 ### Size bucket
 
-The size class of a widget that decides what it shows: flat, one row high (**now** and the **hours** beside it),
-small (**now**), wide (plus the **hours**) and tall (plus the **days**) (D4); where each begins: D11.
+The size class of a widget that decides what it shows: flat, one row high (**now**, and from 4 cells wide the
+**hours** beside it), small (**now**), wide (plus the **hours**) and tall (plus the **days**) (D4); where each begins:
+D11.
 
 ### Snapshot
 
@@ -41,8 +42,8 @@ Home Assistant's word for the weather of a moment or a day, as its weather entit
 
 ### Now / hours / days
 
-The three parts of the weather the widget shows (D4): **now** is the weather of the moment with today's high and low;
-**hours** are the next hours; **days** are the next days.
+The three parts of the weather the widget shows (D4): **now** is the weather of the moment with today's high and low,
+except in the flat size bucket (D12); **hours** are the next hours; **days** are the next days.
 
 ### Rain hint
 

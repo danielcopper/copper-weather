@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.RemoteViews
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
@@ -167,6 +168,12 @@ class WeatherWidgetTest {
         assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
         val density = application.resources.displayMetrics.density
         assertEquals((40 * density).toInt(), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
+        // "Now" in its column and the hours side by side on the card.
+        assertEquals(LinearLayout.HORIZONTAL, (widget as LinearLayout).orientation)
+        assertEquals(widget, widget.findViewById<View>(R.id.now_column).parent)
+        assertEquals(widget, widget.findViewById<View>(R.id.hours).parent)
+        assertEquals((128 * density).toInt(), widget.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(TapActivity::class.java.name, widget.tapped().component?.className)
         // A strip across a phone's five columns, a little lower than the guidance's row.
         assertEquals(5, WidgetHost.hours(placed(SizeF(410f, 95f))).size)
     }
@@ -180,34 +187,35 @@ class WeatherWidgetTest {
 
         assertEquals(listOf("7°", "Regen in 25 min"), widget.shown())
         assertEquals(emptyList<List<String>>(), WidgetHost.hours(widget))
+        // Without hours "now" takes the card's width, so its line ends in "…" inside the padding.
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.now_column).layoutParams.width)
         // 3 cells wide on a phone with wider cells, room for two hours beside "now": still only "now" (D11).
         assertEquals(listOf("7°", "Regen in 25 min"), placed(SizeF(272f, 100f)).shown())
     }
 
     @Test
     fun `every colour a flat widget shows is one of the palette's outside night mode`() {
-        assertFlatColours(dark = false)
+        assertColours(dark = false, SizeBucket.sizeOf(columns = 5, rows = 1), refuse = false, fewest = FLAT_TEXTS)
     }
 
     @Test
     @Config(qualifiers = "+night")
     fun `every colour a flat widget shows is one of the palette's in night mode`() {
-        assertFlatColours(dark = true)
+        assertColours(dark = true, SizeBucket.sizeOf(columns = 5, rows = 1), refuse = false, fewest = FLAT_TEXTS)
     }
 
-    private fun assertFlatColours(dark: Boolean) {
+    @Test
+    fun `on a redraw of a flat widget, Neu anmelden takes the line's place`() {
         signIn()
-        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
-
+        written(SampleWeather.full())
         val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
+        assertEquals(listOf("7°", "Teilweise bewölkt"), widget.shown().take(2))
 
-        val palette = Palette.of(dark)
-        val texts = WidgetHost.texts(widget).filter { WidgetHost.visible(it, widget) }
-        assertTrue(texts.size > 5)
-        val colours = palette.colors().values.toSet()
-        for (text in texts) assertTrue("${text.text}", text.currentTextColor in colours)
-        assertEquals(palette.text, widget.text(R.id.now_temperature).currentTextColor)
-        assertEquals(palette.rain, widget.text(R.id.now_line).currentTextColor)
+        Services.account(application).reject()
+        Widgets.update(application)
+
+        assertEquals(listOf("7°", "Neu anmelden"), widget.shown().take(2))
+        assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line), widget))
     }
 
     @Test
@@ -401,32 +409,60 @@ class WeatherWidgetTest {
 
     @Test
     fun `every colour the widget shows is one of the palette's outside night mode`() {
-        assertColours(dark = false)
+        assertColours(
+            dark = false,
+            SizeBucket.sizeOf(columns = 4, rows = 4),
+            refuse = true,
+            fewest = TALL_TEXTS,
+            more = tallColours,
+        )
     }
 
     @Test
     @Config(qualifiers = "+night")
     fun `every colour the widget shows is one of the palette's in night mode`() {
-        assertColours(dark = true)
+        assertColours(
+            dark = true,
+            SizeBucket.sizeOf(columns = 4, rows = 4),
+            refuse = true,
+            fewest = TALL_TEXTS,
+            more = tallColours,
+        )
     }
 
-    private fun assertColours(dark: Boolean) {
+    /** Beyond what every widget shows: today's low, and "Neu anmelden" below the rain hint. */
+    private val tallColours = { widget: View, palette: Palette ->
+        assertEquals(palette.textMuted, widget.text(R.id.now_low).currentTextColor)
+        assertEquals(palette.accent, widget.text(R.id.widget_notice).currentTextColor)
+    }
+
+    /**
+     * Every text a widget [size] dp large shows with rain due, and the sign-in refused when [refuse], more than
+     * [fewest] of them, is a colour of the palette of night mode when [dark], else of the other: the temperature
+     * `text`, the rain hint `rain`, and [more].
+     */
+    private fun assertColours(
+        dark: Boolean,
+        size: SizeF,
+        refuse: Boolean,
+        fewest: Int,
+        more: (View, Palette) -> Unit = { _, _ -> },
+    ) {
         signIn()
         written(SampleWeather.full(rainIn = Duration.ofMinutes(25)))
-        Services.account(application).reject()
+        if (refuse) Services.account(application).reject()
 
-        val widget = placed(SizeBucket.sizeOf(columns = 4, rows = 4))
+        val widget = placed(size)
 
         val palette = Palette.of(dark)
         val texts = WidgetHost.texts(widget).filter { WidgetHost.visible(it, widget) }
-        assertTrue(texts.size > 20)
+        assertTrue("${texts.size} texts", texts.size > fewest)
         val colours = palette.colors().values.toSet()
         for (text in texts) assertTrue("${text.text}", text.currentTextColor in colours)
         assertEquals(palette.text, widget.text(R.id.now_temperature).currentTextColor)
-        assertEquals(palette.textMuted, widget.text(R.id.now_low).currentTextColor)
         assertEquals(palette.rain, widget.text(R.id.now_line).currentTextColor)
-        assertEquals(palette.accent, widget.text(R.id.widget_notice).currentTextColor)
         assertEquals(palette.surface, application.getColor(R.color.palette_surface))
+        more(widget, palette)
     }
 
     @Test
@@ -728,6 +764,10 @@ class WeatherWidgetTest {
     }
 
     private companion object {
+        /** Fewer texts than a tall widget and a flat one show in the colour tests. */
+        const val TALL_TEXTS = 20
+        const val FLAT_TEXTS = 5
+
         /** Long enough for the second update to reach the lock, were there none. */
         const val SETTLE_MILLIS = 300L
     }

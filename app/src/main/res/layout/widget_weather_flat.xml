@@ -5,9 +5,10 @@
      longer usable) and beside it as many hours as fit, or a plain text
      instead, on the card. Every part starts hidden; WidgetViews shows the
      ones it fills, adds the hours, and sets the texts' colours from the
-     palette, light and dark (D7). "Now"'s row, image, temperature and line
-     take their looks from styles.xml, as in widget_weather.xml; the plain text
-     and "Neu anmelden" carry their own. The whole card is one tap. -->
+     palette, light and dark (D7). Every part takes its looks from styles.xml,
+     as in widget_weather.xml, "Neu anmelden" and the plain text but for their
+     heights; without hours WidgetViews widens "now" to the card. The whole
+     card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.FlatCard">
@@ -40,11 +41,8 @@
 
         <TextView
             android:id="@+id/widget_notice"
-            android:layout_width="match_parent"
+            style="@style/WeatherWidget.Notice"
             android:layout_height="@dimen/widget_line_height"
-            android:gravity="center_vertical"
-            android:maxLines="1"
-            android:textSize="13sp"
             android:visibility="gone" />
     </LinearLayout>
 
@@ -55,9 +53,7 @@
 
     <TextView
         android:id="@+id/widget_plain"
-        android:layout_width="match_parent"
+        style="@style/WeatherWidget.Plain"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="14sp"
         android:visibility="gone" />
 </LinearLayout>

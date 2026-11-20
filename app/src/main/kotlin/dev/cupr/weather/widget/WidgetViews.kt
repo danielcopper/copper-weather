@@ -3,7 +3,9 @@ package dev.cupr.weather.widget
 import android.content.Context
 import android.content.res.Resources
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.widget.RemoteViews
 import androidx.annotation.DimenRes
 import dev.cupr.weather.R
@@ -34,7 +36,7 @@ internal object WidgetViews {
         if (!flat) views.removeAllViews(R.id.days)
         when (content) {
             is WidgetContent.Plain -> plain(context, views, content, flat)
-            is WidgetContent.Weather if flat -> flat(context, views, content, size)
+            is WidgetContent.Weather if flat -> flatWeather(context, views, content, size)
             is WidgetContent.Weather -> weather(context, views, content, size, bucket)
         }
         return views
@@ -63,60 +65,66 @@ internal object WidgetViews {
         size: SizeF,
         bucket: SizeBucket,
     ) {
-        now(views, content.now, small = bucket == SizeBucket.SMALL)
-        views.today(
-            R.id.now_today,
-            R.id.now_high,
-            R.id.now_low,
-            content.now.today.takeUnless {
-                bucket ==
-                    SizeBucket.SMALL
-            },
-        )
-        views.today(
-            R.id.now_today_below,
-            R.id.now_high_below,
-            R.id.now_low_below,
-            content.now.today.takeIf { bucket == SizeBucket.SMALL },
-        )
+        val small = bucket == SizeBucket.SMALL
+        now(views, content.now, compact = small)
+        views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
+        views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
         line(context, views, content.now.line)
-        val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
-        views.show(R.id.widget_notice, again, Palette::accent)
-        views.show(R.id.widget_plain, null, Palette::text)
 
         val room = Room(context.resources, size, content.signInAgain)
-        val hours = if (bucket == SizeBucket.SMALL) emptyList() else content.hours.take(room.hours())
-        views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
-        hours.forEach { views.addView(R.id.hours, WidgetRows.hour(context, it)) }
+        val hours = if (small) emptyList() else content.hours.take(room.hours())
+        rest(context, views, content, hours)
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
         views.setViewVisibility(R.id.days, if (days.isEmpty()) View.GONE else View.VISIBLE)
         days.forEach { views.addView(R.id.days, WidgetRows.day(context, it)) }
-
-        views.setOnClickPendingIntent(R.id.widget, tap(context, content))
     }
 
     /**
      * The flat bucket (D36): "now" as in the small bucket without today's high and low, "Neu anmelden" in its line's
-     * place while it shows, and beside it as many hours as fit, from 4 cells wide.
+     * place while it shows, and beside it as many hours as fit, from 4 cells wide; without hours "now" takes the card's
+     * width, so its line ends in "…" inside the card's padding.
      */
-    private fun flat(
+    private fun flatWeather(
         context: Context,
         views: RemoteViews,
         content: WidgetContent.Weather,
         size: SizeF,
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
-        now(views, content.now, small = true)
-        val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
-        if (again == null) line(context, views, content.now.line) else views.show(R.id.now_line, null, Palette::text)
-        views.show(R.id.widget_notice, again, Palette::accent)
-        views.show(R.id.widget_plain, null, Palette::text)
+        now(views, content.now, compact = true)
+        // "Neu anmelden" takes the line's place while it shows.
+        if (content.signInAgain) {
+            views.setViewVisibility(R.id.now_line, View.GONE)
+        } else {
+            line(context, views, content.now.line)
+        }
 
         val room = Room(context.resources, size, content.signInAgain)
         val hours = if (SizeBucket.wide(size)) content.hours.take(room.flatHours()) else emptyList()
+        if (hours.isEmpty()) {
+            views.setViewLayoutWidth(
+                R.id.now_column,
+                ViewGroup.LayoutParams.MATCH_PARENT.toFloat(),
+                TypedValue.COMPLEX_UNIT_PX,
+            )
+        } else {
+            views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
+        }
+        rest(context, views, content, hours)
+    }
+
+    /** What both layouts show after "now": "Neu anmelden" while it applies, no plain text, the [hours], the tap. */
+    private fun rest(
+        context: Context,
+        views: RemoteViews,
+        content: WidgetContent.Weather,
+        hours: List<WidgetContent.Hour>,
+    ) {
+        val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
+        views.show(R.id.widget_notice, again, Palette::accent)
+        views.show(R.id.widget_plain, null, Palette::text)
         views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
         hours.forEach { views.addView(R.id.hours, WidgetRows.hour(context, it)) }
-
         views.setOnClickPendingIntent(R.id.widget, tap(context, content))
     }
 
@@ -126,19 +134,19 @@ internal object WidgetViews {
         content: WidgetContent.Weather,
     ) = if (content.signInAgain) Taps.app(context) else Taps.weather(context)
 
-    /** "Now"'s row (D36): in the [small] and the flat bucket lower, with a smaller image. */
+    /** "Now"'s row (D36): [compact] in the small and the flat bucket, lower and with a smaller image. */
     private fun now(
         views: RemoteViews,
         now: WidgetContent.Now,
-        small: Boolean,
+        compact: Boolean,
     ) {
         views.setViewVisibility(R.id.now, View.VISIBLE)
         views.setViewLayoutHeightDimen(
             R.id.now,
-            if (small) R.dimen.widget_now_height_small else R.dimen.widget_now_height,
+            if (compact) R.dimen.widget_now_height_small else R.dimen.widget_now_height,
         )
         views.setImageViewResource(R.id.now_icon, now.icon)
-        val icon = if (small) R.dimen.widget_now_icon_small else R.dimen.widget_now_icon
+        val icon = if (compact) R.dimen.widget_now_icon_small else R.dimen.widget_now_icon
         views.setViewLayoutWidthDimen(R.id.now_icon, icon)
         views.setViewLayoutHeightDimen(R.id.now_icon, icon)
         views.show(R.id.now_temperature, now.temperature, Palette::text)
