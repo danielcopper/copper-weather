@@ -9,6 +9,11 @@
          line below it, and "Neu anmelden" below that while it shows. -->
     <dimen name="widget_now_height">48dp</dimen>
     <dimen name="widget_now_icon">48dp</dimen>
+    <!-- In the small bucket "now"'s image is smaller and today's high and low
+         stand in a row below it, so "-12°" fits beside the image at 2 cells
+         wide (D36). -->
+    <dimen name="widget_now_icon_small">40dp</dimen>
+    <dimen name="widget_today_height">18dp</dimen>
     <dimen name="widget_line_height">20dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <!-- An hour of the hours: its least width and its height. -->

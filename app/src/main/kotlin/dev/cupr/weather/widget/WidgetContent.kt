@@ -39,16 +39,20 @@ sealed interface WidgetContent {
     ) : WidgetContent
 
     /**
-     * "Now" (D12, D36): its still image, the temperature as "7°", today's [high] and [low] as "9°" (each none without
-     * today among the days, "–" for a value today lacks), and the line below them, none when there is neither a rain
-     * hint nor a condition the app knows.
+     * "Now" (D12, D36): its still image, the temperature as "7°", [today]'s high and low (none without today among the
+     * days), and the line below them, none when there is neither a rain hint nor a condition the app knows.
      */
     data class Now(
         @param:DrawableRes val icon: Int,
         val temperature: String?,
-        val high: String?,
-        val low: String?,
+        val today: HighLow?,
         val line: Line?,
+    )
+
+    /** A day's high and low as "9°", "–" for one the forecast lacks (D37); shown or left out together. */
+    data class HighLow(
+        val high: String,
+        val low: String,
     )
 
     /** The one line below "now" (D12): the rain hint, else the condition as a German word. */
@@ -62,7 +66,7 @@ sealed interface WidgetContent {
         ) : Line
 
         /** The condition's German word (D34). */
-        data class Condition(
+        data class Word(
             @param:StringRes val word: Int,
         ) : Line
     }
@@ -72,28 +76,34 @@ sealed interface WidgetContent {
         val time: String,
         @param:DrawableRes val icon: Int,
         val temperature: String,
-        val rain: String?,
+        val rain: Rain?,
     )
 
     /** A day of the days (D14, D37): its weekday, its still image, its high and low, and its rain when it has. */
     data class Day(
         val weekday: DayOfWeek,
         @param:DrawableRes val icon: Int,
-        val high: String,
-        val low: String,
-        val rain: String?,
+        val highLow: HighLow,
+        val rain: Rain?,
     )
+
+    /** Rain that falls in an hour or on a day (D37), as the views write it ([WidgetViews]). */
+    sealed interface Rain {
+        /** An amount in tenths of a millimetre, never 0: "2,5 mm", "3 mm". */
+        data class Amount(
+            val tenths: Long,
+        ) : Rain
+
+        /** An amount that rounds to 0 under an image of falling rain, snow or hail: "< 0,1 mm". */
+        data object Trace : Rain
+    }
 
     companion object {
         /** How far ahead a rain start makes the rain hint (D12). */
         private val RAIN_AHEAD: Duration = Duration.ofMinutes(120)
 
         private val MILLIS_PER_MINUTE = Duration.ofMinutes(1).toMillis().toDouble()
-        private const val TENTHS = 10L
-        private const val NO_BREAK = '\u00A0'
-
-        /** The conditions whose image draws falling rain, snow or hail, which a trace of rain is shown for (D37). */
-        private val WET = setOf("rainy", "pouring", "snowy", "snowy-rainy", "hail", "lightning-rainy")
+        private const val TENTHS = 10.0
 
         /** What the widget shows now, from the sign-in and the snapshot the app keeps, at [clock]'s time and zone. */
         fun read(
@@ -142,13 +152,8 @@ sealed interface WidgetContent {
                     Now(
                         icon = WeatherIcons.of(data.condition, night = nightNow(data.twilight)),
                         temperature = data.temperature?.let(::degrees),
-                        high = todays?.let { forecastDegrees(it.high) },
-                        low = todays?.let { forecastDegrees(it.low) },
-                        line =
-                            rainHint(
-                                data.rainAt,
-                                now,
-                            ) ?: data.condition?.let(Conditions::word)?.let(Line::Condition),
+                        today = todays?.let { HighLow(forecastDegrees(it.high), forecastDegrees(it.low)) },
+                        line = rainHint(data.rainAt, now) ?: data.condition?.let(Conditions::word)?.let(Line::Word),
                     ),
                 hours =
                     data.hours
@@ -168,8 +173,7 @@ sealed interface WidgetContent {
                             Day(
                                 weekday = it.date.dayOfWeek,
                                 icon = WeatherIcons.of(it.condition, night = false),
-                                high = forecastDegrees(it.high),
-                                low = forecastDegrees(it.low),
+                                highLow = HighLow(forecastDegrees(it.high), forecastDegrees(it.low)),
                                 rain = rainAmount(it.precipitation, it.condition),
                             )
                         },
@@ -213,22 +217,19 @@ sealed interface WidgetContent {
         internal fun forecastDegrees(celsius: Double?): String = celsius?.let(::degrees) ?: "–"
 
         /**
-         * An amount of rain as the dashboard shows it beside an hour or a day (D37), or none when nothing falls: none
-         * without an amount; for an amount that rounds to 0 at one decimal, "< 0,1 mm" where [condition]'s image draws
-         * falling rain, snow or hail and none otherwise; else the amount at one decimal with a comma, a whole number
-         * without one ("2,5 mm", "3 mm"). A no-break space stands before "mm" and after "<", so a narrow cell keeps it
-         * on one line.
+         * The rain of an hour or a day as the dashboard shows it (D37), or none when nothing falls: none without an
+         * amount; for an amount that rounds to 0 at one decimal, a trace where [condition]'s image draws falling rain,
+         * snow or hail ([Condition.wet]) and none otherwise; else the amount in tenths.
          */
         internal fun rainAmount(
             millimetres: Double?,
             condition: String?,
-        ): String? {
+        ): Rain? {
             val tenths = millimetres?.let { (it * TENTHS).roundToLong() }
             return when {
                 tenths == null -> null
-                tenths == 0L -> if (condition in WET) "<${NO_BREAK}0,1${NO_BREAK}mm" else null
-                tenths % TENTHS == 0L -> "${tenths / TENTHS}${NO_BREAK}mm"
-                else -> "${tenths / TENTHS.toDouble()}".replace('.', ',') + "${NO_BREAK}mm"
+                tenths == 0L -> Rain.Trace.takeIf { Condition.of(condition)?.wet == true }
+                else -> Rain.Amount(tenths)
             }
         }
     }

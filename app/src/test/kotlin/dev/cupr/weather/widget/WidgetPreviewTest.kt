@@ -8,10 +8,14 @@ import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.w3c.dom.Element
+import java.io.File
+import javax.xml.parsers.DocumentBuilderFactory
 
 /** The widget picker's preview (D40): sample weather, wide, in the palette's colours, light and dark. */
 @RunWith(RobolectricTestRunner::class)
@@ -80,8 +84,31 @@ class WidgetPreviewTest {
     }
 
     @Test
+    fun `every part of the preview takes its looks from a style the widget's own layouts use`() {
+        val preview = styles("widget_weather_preview.xml")
+        val widget = listOf("widget_weather.xml", "widget_hour.xml").flatMap(::styles).toSet()
+
+        assertTrue(preview.isNotEmpty())
+        assertEquals(emptyList<String>(), preview.filter { it == NONE || it !in widget })
+    }
+
+    /** The style each element of the layout [name] names, [NONE] for one without, from the source file. */
+    private fun styles(name: String): List<String> {
+        val document =
+            DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
+                File("src/main/res/layout/$name"),
+            )
+        val elements = document.getElementsByTagName("*")
+        return (0 until elements.length).map { (elements.item(it) as Element).getAttribute("style").ifEmpty { NONE } }
+    }
+
+    @Test
     fun `the preview is a layout a widget can show`() {
         // The picker inflates it as a widget's views, which take only the views RemoteViews allows.
         RemoteViews(application.packageName, R.layout.widget_weather_preview).apply(application, null)
+    }
+
+    private companion object {
+        const val NONE = "none"
     }
 }

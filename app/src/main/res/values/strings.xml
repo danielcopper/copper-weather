@@ -25,6 +25,9 @@
     <!-- The rain hint below "now" (D36): rain falls, or is due in so many minutes (1 to 120). -->
     <string name="rain_now">Regen jetzt</string>
     <string name="rain_in">Regen in %1$d min</string>
+    <!-- The rain of an hour or a day (D37): an amount ("2,5"), and a trace that rounds to 0 under an image of falling rain, snow or hail. A no-break space keeps each on one line. -->
+    <string name="rain_amount">%1$s\u00A0mm</string>
+    <string name="rain_trace">&lt;\u00A00,1\u00A0mm</string>
     <!-- The days' weekdays, Monday first, as the dashboard names them (D37). -->
     <string-array name="weekdays_short">
         <item>Mo</item>
@@ -35,7 +38,7 @@
         <item>Sa</item>
         <item>So</item>
     </string-array>
-    <!-- A tap's target cannot be opened (D39): no app handles the weather pop-up, which the Home Assistant app would open; any other case, also one this app may not start. -->
+    <!-- A tap's target cannot be opened (D39): the first start finds no app (the Home Assistant app's launcher start, or the link alone); any other case, also a link that finds no app after the Home Assistant app started, or one this app may not start. -->
     <string name="target_home_assistant_missing">Home-Assistant-App nicht gefunden</string>
     <string name="target_not_openable">Ziel lässt sich nicht öffnen</string>
     <!-- Home Assistant's conditions in German, its own translation (D34). -->

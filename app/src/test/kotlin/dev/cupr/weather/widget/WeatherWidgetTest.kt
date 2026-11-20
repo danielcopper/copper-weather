@@ -3,13 +3,16 @@ package dev.cupr.weather.widget
 import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.SizeF
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.RemoteViews
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.R
@@ -108,6 +111,62 @@ class WeatherWidgetTest {
 
         assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), widget.shown())
         assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
+    }
+
+    @Test
+    fun `in the small bucket today's high and low stand below the temperature, beside a smaller image`() {
+        signIn()
+        written(SampleWeather.full())
+        val density = application.resources.displayMetrics.density
+
+        val small = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
+        assertTrue(WidgetHost.visible(small.findViewById(R.id.now_today_below), small))
+        assertFalse(WidgetHost.visible(small.findViewById(R.id.now_today), small))
+        assertEquals((40 * density).toInt(), small.findViewById<View>(R.id.now_icon).layoutParams.width)
+
+        val wide = placed(SizeBucket.sizeOf(columns = 4, rows = 2))
+        assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_today), wide))
+        assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_today_below), wide))
+        assertEquals((48 * density).toInt(), wide.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), wide.shown().take(4))
+    }
+
+    @Test
+    fun `the views for several sizes show at each size what fits it`() {
+        signIn()
+        written(SampleWeather.full())
+        val small = SizeBucket.sizeOf(columns = 2, rows = 2)
+        val wide = SizeBucket.sizeOf(columns = 4, rows = 2)
+        val content = WidgetContent.read(application, SampleWeather.CLOCK)
+
+        val views = WeatherWidgetProvider.views(application, content, listOf(small, wide))
+
+        // What a launcher applies at a size: RemoteViews' own choice among its sizes (hidden in the SDK, public at run
+        // time).
+        val choose = RemoteViews::class.java.getMethod("getRemoteViewsToApply", Context::class.java, SizeF::class.java)
+        val shown = { size: SizeF ->
+            (choose.invoke(views, application, size) as RemoteViews).apply(application, FrameLayout(application))
+        }
+        assertEquals(emptyList<List<String>>(), WidgetHost.hours(shown(small)))
+        assertEquals(5, WidgetHost.hours(shown(wide)).size)
+    }
+
+    @Test
+    fun `rain reads as the dashboard writes it`() {
+        val texts =
+            listOf(
+                WidgetContent.Rain.Amount(25),
+                WidgetContent.Rain.Amount(30),
+                WidgetContent.Rain.Amount(123),
+                WidgetContent.Rain.Amount(1),
+                WidgetContent.Rain.Trace,
+                null,
+            ).map { with(WidgetViews) { application.rainText(it) } }
+
+        assertEquals(
+            listOf("2,5\u00A0mm", "3\u00A0mm", "12,3\u00A0mm", "0,1\u00A0mm", "<\u00A00,1\u00A0mm", null),
+            texts,
+        )
     }
 
     @Test
@@ -473,10 +532,14 @@ class WeatherWidgetTest {
             ),
             buckets,
         )
-        // Just below 4 cells wide or 2 and 3 high, by a dp.
-        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(275f, 400f)))
-        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(300f, 219f)))
-        assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(300f, 337f)))
+        // The guidance's own table, measured on a Pixel 4: 4 x 2 is 276 x 220 dp, 5 x 3 349 x 337, 5 x 4 349 x 455.
+        assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(276f, 220f)))
+        assertEquals(SizeBucket.TALL, SizeBucket.of(SizeF(349f, 337f)))
+        assertEquals(SizeBucket.TALL, SizeBucket.of(SizeF(349f, 455f)))
+        // Clearly below 4 cells wide, or 2 or 3 high.
+        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(260f, 455f)))
+        assertEquals(SizeBucket.SMALL, SizeBucket.of(SizeF(300f, 200f)))
+        assertEquals(SizeBucket.WIDE, SizeBucket.of(SizeF(300f, 320f)))
     }
 
     @Test
@@ -492,8 +555,10 @@ class WeatherWidgetTest {
         val attributes = providerAttributes()
         assertEquals("4", attributes["targetCellWidth"])
         assertEquals("2", attributes["targetCellHeight"])
-        assertEquals("110.0dip", attributes["minResizeWidth"])
-        assertEquals("110.0dip", attributes["minResizeHeight"])
+        assertEquals("275.0dip", attributes["minWidth"])
+        assertEquals("116.0dip", attributes["minHeight"])
+        assertEquals("129.0dip", attributes["minResizeWidth"])
+        assertEquals("116.0dip", attributes["minResizeHeight"])
         assertEquals("@${R.drawable.widget_preview}", attributes["previewImage"])
         assertEquals("@${R.layout.widget_weather_preview}", attributes["previewLayout"])
         assertEquals("@${R.layout.widget_weather}", attributes["initialLayout"])

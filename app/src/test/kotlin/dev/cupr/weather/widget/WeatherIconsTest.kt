@@ -72,6 +72,18 @@ class WeatherIconsTest {
     }
 
     @Test
+    fun `the conditions whose image draws falling rain, snow or hail are the wet ones`() {
+        assertEquals(
+            setOf("hail", "lightning-rainy", "pouring", "rainy", "snowy", "snowy-rainy"),
+            Condition.entries
+                .filter { it.wet }
+                .map { it.key }
+                .toSet(),
+        )
+        assertEquals(15, Condition.entries.size)
+    }
+
+    @Test
     fun `every weather drawable loads outside night mode`() {
         assertLoads()
     }
@@ -92,16 +104,40 @@ class WeatherIconsTest {
         }
     }
 
-    /** Runs [command] in the repository's root; its exit code and what it wrote. */
-    private fun run(vararg command: String): Pair<Int, String> {
-        val process =
-            ProcessBuilder(*command)
-                .directory(root)
-                .redirectErrorStream(true)
-                .start()
-        val output = process.inputStream.bufferedReader().readText()
-        check(process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) { "${command.joinToString(" ")} did not end" }
-        return process.exitValue() to output
+    /**
+     * Runs [command] in the repository's root; its exit code and what it wrote. The output goes to a file, so a command
+     * that hangs fails the test after [timeout] seconds rather than blocking a read of its output.
+     */
+    private fun run(
+        vararg command: String,
+        timeout: Long = TIMEOUT_SECONDS,
+    ): Pair<Int, String> {
+        val log = File.createTempFile("weather-icons", ".log")
+        try {
+            val process =
+                ProcessBuilder(*command)
+                    .directory(root)
+                    .redirectErrorStream(true)
+                    .redirectOutput(log)
+                    .start()
+            if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                error("${command.joinToString(" ")} did not end within $timeout s")
+            }
+            return process.exitValue() to log.readText()
+        } finally {
+            log.delete()
+        }
+    }
+
+    @Test
+    fun `a command that does not end fails the test once its time is up`() {
+        val failure = runCatching { run("python3", "-I", "-B", "-c", "import time; time.sleep(60)", timeout = 1) }
+
+        assertEquals(
+            "python3 -I -B -c import time; time.sleep(60) did not end within 1 s",
+            failure.exceptionOrNull()?.message,
+        )
     }
 
     private companion object {

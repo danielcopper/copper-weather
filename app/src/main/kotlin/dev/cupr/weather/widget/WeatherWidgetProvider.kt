@@ -61,10 +61,16 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             content: WidgetContent,
         ) {
             ids.forEach { id ->
-                val sizes = sizes(manager.getAppWidgetOptions(id), id)
-                manager.updateAppWidget(id, RemoteViews(sizes.associateWith { WidgetViews.of(context, content, it) }))
+                manager.updateAppWidget(id, views(context, content, sizes(manager.getAppWidgetOptions(id), id)))
             }
         }
+
+        /** The views of [content], one set for each of the [sizes] a widget is shown at; the launcher picks by size. */
+        internal fun views(
+            context: Context,
+            content: WidgetContent,
+            sizes: List<SizeF>,
+        ): RemoteViews = RemoteViews(sizes.associateWith { WidgetViews.of(context, content, it) })
 
         /** This app's widgets on the home screen. */
         internal fun ids(

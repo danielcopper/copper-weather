@@ -27,6 +27,12 @@ enum class SizeBucket {
         private const val CELL_HEIGHT = 118f
         private const val CELL_MARGIN = 16f
 
+        /**
+         * What a size may fall short of its cells' and still count as them: the guidance's own table, measured on a
+         * Pixel 4, has 337 dp for 3 rows and 455 for 4 where the formula gives 338 and 456. Far below half a cell.
+         */
+        private const val SLACK = 2f
+
         /** The bucket of a widget [size] dp large, its cells counted in portrait, the way the phones are held (D35). */
         fun of(size: SizeF): SizeBucket {
             val rows = cells(size.height, CELL_HEIGHT)
@@ -37,11 +43,11 @@ enum class SizeBucket {
             }
         }
 
-        /** The cells [dp] spans at least: the most n whose n cells, less the margin, fit into it. */
+        /** The cells [dp] spans: the most n whose n cells, less the margin and the [SLACK], fit into it. */
         private fun cells(
             dp: Float,
             cell: Float,
-        ): Int = floor((dp + CELL_MARGIN) / cell).toInt()
+        ): Int = floor((dp + CELL_MARGIN + SLACK) / cell).toInt()
 
         /** The size of a widget [columns] × [rows] cells large in portrait, by the same guidance. */
         fun sizeOf(

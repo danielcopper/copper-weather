@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's parts, shared by its layouts (widget_weather.xml,
+     widget_hour.xml, widget_day.xml) and the picker's preview
+     (widget_weather_preview.xml, D40), so the preview cannot drift from the
+     widget. Their sizes are in dimens.xml (D35); the colours come from the
+     palette, set by WidgetViews or, in the preview, from colors.xml (D7). -->
+<resources>
+    <!-- The parent the dotted names below imply; it sets nothing. -->
+    <style name="WeatherWidget" />
+
+    <style name="WeatherWidget.Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@drawable/widget_card</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">@dimen/widget_padding</item>
+    </style>
+
+    <!-- "Now": the row of its image, temperature and today's high and low
+         beside them, the high and low below it in the small bucket, and the
+         line with the rain hint or the condition. -->
+    <style name="WeatherWidget.NowRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_now_height</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.NowIcon">
+        <item name="android:layout_width">@dimen/widget_now_icon</item>
+        <item name="android:layout_height">@dimen/widget_now_icon</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="WeatherWidget.NowTemperature">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">6dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">30sp</item>
+    </style>
+
+    <style name="WeatherWidget.NowToday">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WeatherWidget.NowTodayBelow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_today_height</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.Degrees">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="WeatherWidget.Degrees.Below">
+        <item name="android:layout_marginEnd">8dp</item>
+    </style>
+
+    <style name="WeatherWidget.Line">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_line_height</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- The hours: a strip of cells sharing its width. -->
+    <style name="WeatherWidget.Hours">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_hour_height</item>
+        <item name="android:layout_marginTop">@dimen/widget_gap</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.Hour">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/widget_hour_height</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WeatherWidget.HourTime">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="WeatherWidget.SmallIcon">
+        <item name="android:layout_width">@dimen/widget_small_icon</item>
+        <item name="android:layout_height">@dimen/widget_small_icon</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="WeatherWidget.HourIcon" parent="WeatherWidget.SmallIcon">
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:layout_marginBottom">2dp</item>
+    </style>
+
+    <style name="WeatherWidget.HourTemperature">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="WeatherWidget.HourRain">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+</resources>

@@ -68,9 +68,10 @@ The transition between day and night around sunrise and sunset, as the app senso
 
 ### Still image / animated icon
 
-The two forms of a weather icon (D6). The **animated icon** is an AnimatedVectorDrawable that runs endlessly while the
-widget is seen; the platform stops it when the widget is not seen. The **still image** is the same icon without
-motion, which a setting per widget switches it to.
+The two forms of a weather icon (D6). The **still image** is the icon without motion, a VectorDrawable generated from
+the dashboard's still SVGs (D38); the hours and the days always show it, and "now" shows it while the widget is set
+to still images or has no animated icon yet. The **animated icon** is an AnimatedVectorDrawable that runs endlessly
+while the widget is seen; the platform stops it when the widget is not seen.
 
 ### Palette role
 

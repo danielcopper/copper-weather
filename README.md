@@ -23,8 +23,8 @@ mise run gate     # most of what CI checks; mise.toml says what it leaves out
 mise run install  # builds the debug APK and installs it with adb
 ```
 
-The unit tests also run `python3` (any Python 3 with its standard library), which checks the weather icons against the
-SVGs they are made from; `mise run icons` writes them anew.
+The unit tests also run Python, which mise brings as well, to check the weather icons against the SVGs they are made
+from; `mise run icons` writes them anew.
 
 `install` needs a phone that adb is connected to: pair it once with `adb pair` (Wireless debugging on the phone), then
 `adb connect <address>`; adb is in `~/Android/Sdk/platform-tools`.

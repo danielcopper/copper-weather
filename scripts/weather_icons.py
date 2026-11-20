@@ -401,31 +401,46 @@ def existing(res=RES):
     return {path for folder in MODES.values() for path in (res / folder).glob(PREFIX + "*.xml")}
 
 
-def main(argv):
-    check = argv[1:] == ["--check"]
-    if argv[1:] and not check:
-        print(__doc__, file=sys.stderr)
-        return 2
+def shown(path):
+    """A path for a message: relative to the repository where it lies inside it."""
     try:
-        written = outputs()
+        return path.relative_to(ROOT)
+    except ValueError:
+        return path
+
+
+def run(check, sources=SOURCES, res=RES, err=None, out=None):
+    """Writes the drawables of sources into res, or with check only compares them; the exit code."""
+    err = err or sys.stderr
+    out = out or sys.stdout
+    try:
+        written = outputs(sources, res)
     except Unsupported as e:
-        print(f"weather_icons: {e}", file=sys.stderr)
+        print(f"weather_icons: {e}", file=err)
         return 1
-    stray = existing() - set(written)
+    stray = existing(res) - set(written)
     if check:
         differ = [p for p, text in written.items() if not p.exists() or p.read_text(encoding="utf-8") != text]
         for path in sorted(differ):
-            print(f"weather_icons: {path.relative_to(ROOT)} is not what the script writes", file=sys.stderr)
+            print(f"weather_icons: {shown(path)} is not what the script writes", file=err)
         for path in sorted(stray):
-            print(f"weather_icons: {path.relative_to(ROOT)} has no source SVG", file=sys.stderr)
+            print(f"weather_icons: {shown(path)} has no source SVG", file=err)
         return 1 if differ or stray else 0
     for path in stray:
         path.unlink()
     for path, text in written.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-    print(f"weather_icons: wrote {len(written)} drawables")
+    print(f"weather_icons: wrote {len(written)} drawables", file=out)
     return 0
+
+
+def main(argv):
+    check = argv[1:] == ["--check"]
+    if argv[1:] and not check:
+        print(__doc__, file=sys.stderr)
+        return 2
+    return run(check)
 
 
 if __name__ == "__main__":

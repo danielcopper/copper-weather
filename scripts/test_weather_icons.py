@@ -1,5 +1,6 @@
 """What weather_icons.py makes of an SVG, and what it refuses (D38)."""
 
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -166,6 +167,46 @@ class OutputsTest(unittest.TestCase):
                 (root / "svg" / mode / "sunny-day.svg").write_text(svg('<path d="M0,0 L1,1 Z"/>'))
             with self.assertRaises(Unsupported):
                 weather_icons.outputs(root / "svg", root / "res")
+
+
+class CheckTest(unittest.TestCase):
+    """--check, on a folder of SVGs and one of resources made for the test."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        root = Path(folder.name)
+        self.sources = root / "svg"
+        self.res = root / "res"
+        for mode in ("light", "dark"):
+            (self.sources / mode).mkdir(parents=True)
+            (self.sources / mode / "fog-day-still.svg").write_text(svg('<path d="M0,0 L1,1 Z"/>'))
+        self.assertEqual(0, weather_icons.run(False, self.sources, self.res, out=io.StringIO()))
+
+    def check(self):
+        err = io.StringIO()
+        return weather_icons.run(True, self.sources, self.res, err), err.getvalue()
+
+    def test_drawables_as_written_pass(self):
+        self.assertEqual((0, ""), self.check())
+
+    def test_a_drawable_changed_by_hand_fails_and_is_named(self):
+        changed = self.res / "drawable-night" / "weather_fog_day.xml"
+        changed.write_text(changed.read_text().replace("#000000", "#111111"))
+        code, said = self.check()
+        self.assertEqual(1, code)
+        self.assertIn(f"{changed} is not what the script writes", said)
+
+    def test_a_drawable_without_a_source_fails_and_is_named(self):
+        stray = self.res / "drawable" / "weather_sandstorm_day.xml"
+        stray.write_text("<vector />")
+        code, said = self.check()
+        self.assertEqual(1, code)
+        self.assertIn(f"{stray} has no source SVG", said)
+
+    def test_a_missing_drawable_fails(self):
+        (self.res / "drawable" / "weather_fog_day.xml").unlink()
+        self.assertEqual(1, self.check()[0])
 
 
 if __name__ == "__main__":

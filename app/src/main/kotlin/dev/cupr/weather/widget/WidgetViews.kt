@@ -9,6 +9,8 @@ import androidx.annotation.DimenRes
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.tap.Taps
+import java.text.NumberFormat
+import java.util.Locale
 import kotlin.math.floor
 
 /**
@@ -40,7 +42,14 @@ internal object WidgetViews {
         views: RemoteViews,
         content: WidgetContent.Plain,
     ) {
-        for (id in intArrayOf(R.id.now, R.id.now_line, R.id.widget_notice, R.id.hours, R.id.days)) {
+        for (id in intArrayOf(
+            R.id.now,
+            R.id.now_today_below,
+            R.id.now_line,
+            R.id.widget_notice,
+            R.id.hours,
+            R.id.days,
+        )) {
             views.setViewVisibility(id, View.GONE)
         }
         views.show(R.id.widget_plain, context.getString(content.text), Palette::text)
@@ -53,24 +62,13 @@ internal object WidgetViews {
         content: WidgetContent.Weather,
         size: SizeF,
     ) {
-        val now = content.now
-        views.setViewVisibility(R.id.now, View.VISIBLE)
-        views.setImageViewResource(R.id.now_icon, now.icon)
-        views.show(R.id.now_temperature, now.temperature, Palette::text)
-        views.show(R.id.now_high, now.high, Palette::text)
-        views.show(R.id.now_low, now.low, Palette::textMuted)
-        when (val line = now.line) {
-            null -> views.show(R.id.now_line, null, Palette::text)
-            WidgetContent.Line.RainNow -> views.show(R.id.now_line, context.getString(R.string.rain_now), Palette::rain)
-            is WidgetContent.Line.RainIn -> views.show(R.id.now_line, context.rainIn(line.minutes), Palette::rain)
-            is WidgetContent.Line.Condition -> views.show(R.id.now_line, context.getString(line.word), Palette::text)
-        }
+        val bucket = SizeBucket.of(size)
+        now(context, views, content.now, small = bucket == SizeBucket.SMALL)
         val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
         views.show(R.id.widget_notice, again, Palette::accent)
         views.show(R.id.widget_plain, null, Palette::text)
 
         val room = Room(context.resources, size, content.signInAgain)
-        val bucket = SizeBucket.of(size)
         val hours = if (bucket == SizeBucket.SMALL) emptyList() else content.hours.take(room.hours())
         views.setViewVisibility(R.id.hours, if (hours.isEmpty()) View.GONE else View.VISIBLE)
         hours.forEach { views.addView(R.id.hours, hour(context, it)) }
@@ -84,7 +82,63 @@ internal object WidgetViews {
         )
     }
 
+    /**
+     * "Now" (D36): in the [small] bucket a smaller image and today's high and low in a row below it, so "-12°" fits
+     * beside the image at 2 cells wide; otherwise the high and low beside the temperature.
+     */
+    private fun now(
+        context: Context,
+        views: RemoteViews,
+        now: WidgetContent.Now,
+        small: Boolean,
+    ) {
+        views.setViewVisibility(R.id.now, View.VISIBLE)
+        views.setImageViewResource(R.id.now_icon, now.icon)
+        val icon = if (small) R.dimen.widget_now_icon_small else R.dimen.widget_now_icon
+        views.setViewLayoutWidthDimen(R.id.now_icon, icon)
+        views.setViewLayoutHeightDimen(R.id.now_icon, icon)
+        views.show(R.id.now_temperature, now.temperature, Palette::text)
+        views.today(R.id.now_today, R.id.now_high, R.id.now_low, now.today.takeUnless { small })
+        views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, now.today.takeIf { small })
+        when (val line = now.line) {
+            null -> views.show(R.id.now_line, null, Palette::text)
+            WidgetContent.Line.RainNow -> views.show(R.id.now_line, context.getString(R.string.rain_now), Palette::rain)
+            is WidgetContent.Line.RainIn -> views.show(R.id.now_line, context.rainIn(line.minutes), Palette::rain)
+            is WidgetContent.Line.Word -> views.show(R.id.now_line, context.getString(line.word), Palette::text)
+        }
+    }
+
+    /** Shows [today]'s high and low in [high] and [low] and their [group], or hides the group without them. */
+    private fun RemoteViews.today(
+        group: Int,
+        high: Int,
+        low: Int,
+        today: WidgetContent.HighLow?,
+    ) {
+        setViewVisibility(group, if (today == null) View.GONE else View.VISIBLE)
+        if (today == null) return
+        show(high, today.high, Palette::text)
+        show(low, today.low, Palette::textMuted)
+    }
+
     private fun Context.rainIn(minutes: Long): String = getString(R.string.rain_in, minutes)
+
+    /** [rain] as the dashboard writes it (D37): "2,5 mm", "3 mm", "< 0,1 mm"; none without rain. */
+    internal fun Context.rainText(rain: WidgetContent.Rain?): String? =
+        when (rain) {
+            null -> {
+                null
+            }
+
+            WidgetContent.Rain.Trace -> {
+                getString(R.string.rain_trace)
+            }
+
+            is WidgetContent.Rain.Amount -> {
+                val millimetres = NumberFormat.getNumberInstance(Locale.GERMAN).apply { maximumFractionDigits = 1 }
+                getString(R.string.rain_amount, millimetres.format(rain.tenths / TENTHS))
+            }
+        }
 
     private fun hour(
         context: Context,
@@ -94,7 +148,7 @@ internal object WidgetViews {
         views.show(R.id.hour_time, hour.time, Palette::textMuted)
         views.setImageViewResource(R.id.hour_icon, hour.icon)
         views.show(R.id.hour_temperature, hour.temperature, Palette::text)
-        views.show(R.id.hour_rain, hour.rain, Palette::rain)
+        views.show(R.id.hour_rain, context.rainText(hour.rain), Palette::rain)
         return views
     }
 
@@ -107,11 +161,13 @@ internal object WidgetViews {
         views.show(R.id.day_weekday, weekdays[day.weekday.value - 1], Palette::text)
         views.setImageViewResource(R.id.day_icon, day.icon)
         // The rain keeps its room without an amount, so the highs and lows of all days stand in one column.
-        views.show(R.id.day_rain, day.rain, Palette::rain, hidden = View.INVISIBLE)
-        views.show(R.id.day_high, day.high, Palette::text)
-        views.show(R.id.day_low, day.low, Palette::textMuted)
+        views.show(R.id.day_rain, context.rainText(day.rain), Palette::rain, hidden = View.INVISIBLE)
+        views.show(R.id.day_high, day.highLow.high, Palette::text)
+        views.show(R.id.day_low, day.highLow.low, Palette::textMuted)
         return views
     }
+
+    private const val TENTHS = 10.0
 
     /**
      * Shows [text] in [id], in [role]'s colour for light and for dark, or hides [id] ([hidden]) without a text.

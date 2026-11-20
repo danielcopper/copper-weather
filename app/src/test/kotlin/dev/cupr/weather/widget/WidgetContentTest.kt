@@ -9,8 +9,10 @@ import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
 
 /** What the widget makes of the snapshot's weather at a time: its texts and which hours and days (D33, D36, D37). */
 class WidgetContentTest {
@@ -52,15 +54,15 @@ class WidgetContentTest {
     @Test
     fun `without a rain hint the line is the condition's word, and without a known condition there is none`() {
         assertEquals(
-            WidgetContent.Line.Condition(R.string.condition_partlycloudy),
+            WidgetContent.Line.Word(R.string.condition_partlycloudy),
             weather(SampleWeather.data()).now.line,
         )
         assertEquals(
-            WidgetContent.Line.Condition(R.string.condition_partlycloudy),
+            WidgetContent.Line.Word(R.string.condition_partlycloudy),
             weather(SampleWeather.data(""","rain_at":"${now.plus(Duration.ofMinutes(121))}"""")).now.line,
         )
         assertEquals(
-            WidgetContent.Line.Condition(R.string.condition_partlycloudy),
+            WidgetContent.Line.Word(R.string.condition_partlycloudy),
             weather(SampleWeather.data(""","rain_at":"soon"""")).now.line,
         )
         assertNull(weather("""{"schema_version":1,"now":{"temperature":3,"condition":"sandstorm"}}""").now.line)
@@ -98,28 +100,29 @@ class WidgetContentTest {
     }
 
     @Test
-    fun `rain shows at one decimal with a comma, a trace on a wet condition as under 0,1 mm, and no rain as nothing`() {
-        val nb = ' '
+    fun `rain is an amount in tenths, a trace only on a wet condition, and nothing without rain`() {
+        val trace = WidgetContent.Rain.Trace
         val amounts =
             listOf(
-                Triple(2.5, "rainy", "2,5${nb}mm"),
-                Triple(3.0, "rainy", "3${nb}mm"),
-                Triple(12.34, "pouring", "12,3${nb}mm"),
-                Triple(0.05, "cloudy", "0,1${nb}mm"),
-                Triple(0.06, "sunny", "0,1${nb}mm"),
-                Triple(0.04, "rainy", "<${nb}0,1${nb}mm"),
-                Triple(0.0, "snowy", "<${nb}0,1${nb}mm"),
-                Triple(0.0, "lightning-rainy", "<${nb}0,1${nb}mm"),
-                Triple(0.0, "hail", "<${nb}0,1${nb}mm"),
-                Triple(0.0, "snowy-rainy", "<${nb}0,1${nb}mm"),
-                Triple(0.0, "pouring", "<${nb}0,1${nb}mm"),
+                Triple(2.5, "rainy", WidgetContent.Rain.Amount(25)),
+                Triple(3.0, "rainy", WidgetContent.Rain.Amount(30)),
+                Triple(12.34, "pouring", WidgetContent.Rain.Amount(123)),
+                Triple(0.05, "cloudy", WidgetContent.Rain.Amount(1)),
+                Triple(0.06, "sunny", WidgetContent.Rain.Amount(1)),
+                Triple(0.04, "rainy", trace),
+                Triple(0.0, "snowy", trace),
+                Triple(0.0, "lightning-rainy", trace),
+                Triple(0.0, "hail", trace),
+                Triple(0.0, "snowy-rainy", trace),
+                Triple(0.0, "pouring", trace),
                 Triple(0.04, "lightning", null),
                 Triple(0.0, "cloudy", null),
+                Triple(0.0, "sandstorm", null),
                 Triple(0.0, null, null),
             )
 
-        for ((mm, condition, shown) in amounts) {
-            assertEquals("$mm $condition", shown, WidgetContent.rainAmount(mm, condition))
+        for ((mm, condition, rain) in amounts) {
+            assertEquals("$mm $condition", rain, WidgetContent.rainAmount(mm, condition))
         }
         assertNull(WidgetContent.rainAmount(null, "rainy"))
     }
@@ -134,13 +137,21 @@ class WidgetContentTest {
     }
 
     @Test
+    fun `on the hour, the hours start with that hour`() {
+        val clock = Clock.fixed(OffsetDateTime.parse("2026-11-20T14:00:00+01:00").toInstant(), SampleWeather.ZONE)
+        val read = SensorData.read(Json.parseToJsonElement(SampleWeather.full()).jsonObject) as SensorData.Read.Readable
+        val weather = WidgetContent.of(Account.State.SIGNED_IN, Snapshot(Instant.EPOCH, read.data), clock)
+
+        assertEquals("14", (weather as WidgetContent.Weather).hours.first().time)
+    }
+
+    @Test
     fun `the days start tomorrow, today giving now's high and low`() {
         val weather = weather(SampleWeather.full())
 
         assertEquals(9, weather.days.size)
         assertEquals(java.time.DayOfWeek.SATURDAY, weather.days.first().weekday)
-        assertEquals("9°", weather.now.high)
-        assertEquals("3°", weather.now.low)
+        assertEquals(WidgetContent.HighLow("9°", "3°"), weather.now.today)
     }
 
     @Test
@@ -148,7 +159,6 @@ class WidgetContentTest {
         val day = """{"datetime":"2026-11-20T00:00:00+01:00","templow":1}"""
         val weather = weather(SampleWeather.data(""","days":[$day]"""))
 
-        assertEquals("–", weather.now.high)
-        assertEquals("1°", weather.now.low)
+        assertEquals(WidgetContent.HighLow("–", "1°"), weather.now.today)
     }
 }

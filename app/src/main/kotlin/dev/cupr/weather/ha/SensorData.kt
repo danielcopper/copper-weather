@@ -119,7 +119,7 @@ data class SensorData internal constructor(
 
         /**
          * A day's date as its time states it, the local midnight of the place the weather is for: the date of a time
-         * with an offset, or of one without, as the forecast may send it; none for anything else.
+         * with an offset, as the app sensor sends it; one without an offset reads the same; none for anything else.
          */
         private fun date(text: String): LocalDate? =
             try {
