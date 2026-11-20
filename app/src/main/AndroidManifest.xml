@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Home Assistant, for signing in and out (D22, D27). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -8,6 +11,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true">
 
+        <!-- The app's screen: signing in with Home Assistant and out again. -->
         <activity
             android:name=".app.MainActivity"
             android:exported="true"

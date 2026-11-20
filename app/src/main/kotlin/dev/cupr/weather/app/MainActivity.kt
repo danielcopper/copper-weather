@@ -3,43 +3,24 @@ package dev.cupr.weather.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import dev.cupr.weather.R
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import dev.cupr.weather.signin.SignInScreen
 
-/** The app's screen. Until signing in exists, it only says that the app is not set up yet. */
+/** The app's only screen: signing in with Home Assistant and out again; it reads the status anew on each start. */
 class MainActivity : ComponentActivity() {
+    private var starts by mutableIntStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdgeFromPalette()
-        setContent { WeatherTheme { NotSetUpScreen() } }
+        setContent { WeatherTheme { SignInScreen(starts) } }
     }
-}
 
-/** The app's name and the line that it is not set up yet. */
-@Composable
-fun NotSetUpScreen() {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.safeDrawingPadding().padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-            Text(
-                text = stringResource(R.string.not_set_up),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    override fun onStart() {
+        super.onStart()
+        // The fetch on opening the screen (D20) goes here.
+        starts++
     }
 }

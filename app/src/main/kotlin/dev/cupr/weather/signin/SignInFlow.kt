@@ -1,0 +1,91 @@
+package dev.cupr.weather.signin
+
+import android.content.Context
+import android.util.Log
+import dev.cupr.weather.app.Services
+import dev.cupr.weather.ha.AuthorizationCode
+import dev.cupr.weather.ha.SignInRequest
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+/** The sign-in screen's log tag, for the screen, its WebView client and this flow. */
+internal const val SIGN_IN_TAG = "SignIn"
+
+/**
+ * A sign-in or sign-out under way, and why the last sign-in did not come about (D25, D27). Held for the app's process,
+ * not the screen, so a screen rebuilt meanwhile (a rotation, the dark mode) shows the work still running and its result
+ * once done; only one runs at a time.
+ */
+object SignInFlow {
+    data class State(
+        val busy: Boolean = false,
+        val problem: Problem? = null,
+        /** Counts the finished runs, so the screen reads the status anew after each. */
+        val finished: Int = 0,
+    )
+
+    /** An exception a run did not expect is logged by its class alone, which names no secret; the app goes on. */
+    private val scope =
+        CoroutineScope(
+            SupervisorJob() +
+                CoroutineExceptionHandler { _, e ->
+                    Log.e(SIGN_IN_TAG, "A sign-in or sign-out failed: ${e.javaClass.simpleName}")
+                },
+        )
+    private val mutable = MutableStateFlow(State())
+    val state: StateFlow<State> = mutable.asStateFlow()
+
+    /** Trades [code] for the sign-in; false when another run is under way. */
+    fun signIn(
+        context: Context,
+        request: SignInRequest,
+        code: AuthorizationCode,
+    ): Boolean {
+        val app = context.applicationContext
+        return run { if (Services.signIn(app, request, code)) null else Problem.FAILED }
+    }
+
+    /** Signs out; false when another run is under way. */
+    fun signOut(context: Context): Boolean {
+        val app = context.applicationContext
+        return run {
+            Services.signOut(app)
+            null
+        }
+    }
+
+    /** A sign-in that ended in the login page, without a run. */
+    fun fail(problem: Problem) = mutable.update { it.copy(problem = problem) }
+
+    fun clearProblem() = mutable.update { it.copy(problem = null) }
+
+    /**
+     * Starts [work] unless a run is under way; a refused start is logged, and the screen keeps showing the run. A run
+     * that throws ends too, its problem [Problem.FAILED].
+     */
+    private fun run(work: () -> Problem?): Boolean {
+        var started = false
+        mutable.update {
+            started = !it.busy
+            if (it.busy) it else it.copy(busy = true, problem = null)
+        }
+        if (!started) Log.w(SIGN_IN_TAG, "A sign-in or sign-out is under way; another was not started")
+        if (started) {
+            scope.launch(Services.io) {
+                var problem: Problem? = Problem.FAILED
+                try {
+                    problem = work()
+                } finally {
+                    mutable.update { State(busy = false, problem = problem, finished = it.finished + 1) }
+                }
+            }
+        }
+        return started
+    }
+}

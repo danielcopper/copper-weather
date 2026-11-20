@@ -6,9 +6,9 @@ answer and draws it.
 
 ## Status
 
-A scaffold: the app builds and its screen says that it is not set up yet. There is no widget and no sign-in yet. The
-decisions so far are in [docs/decisions.md](docs/decisions.md), the design in [docs/design.md](docs/design.md), the
-terms in [GLOSSARY.md](GLOSSARY.md).
+The app signs in to Home Assistant and out again on its one screen; it fetches nothing yet, and there is no widget
+yet. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
+[docs/design.md](docs/design.md), the terms in [GLOSSARY.md](GLOSSARY.md).
 
 ## Build and run
 
@@ -29,5 +29,5 @@ Conventional Commits on `main`.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The libraries the app links (AndroidX, Kotlin and kotlinx, Guava's ListenableFuture,
-JSpecify, JetBrains' annotations) and the Gradle wrapper keep their own licenses.
+MIT, see [LICENSE](LICENSE). The libraries the app links (AndroidX, Kotlin and kotlinx, OkHttp and Okio, Guava's
+ListenableFuture, JSpecify, JetBrains' annotations) and the Gradle wrapper keep their own licenses.
