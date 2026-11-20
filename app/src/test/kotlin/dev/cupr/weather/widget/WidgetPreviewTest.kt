@@ -92,9 +92,7 @@ class WidgetPreviewTest {
         assertTrue(preview.isNotEmpty())
         assertEquals(emptyList<String>(), preview.filter { it.getAttribute("style").isEmpty() }.map { it.tagName })
         assertEquals(emptyList<String>(), (shared - widget.map { it.getAttribute("style") }.toSet()).toList())
-        // Besides its style, a part of the preview carries only its sample: a text and its colour, or an image.
         assertEquals(emptyList<String>(), extras(preview, PREVIEW_OWN))
-        // A part of the widget whose style the preview shares carries only what WidgetViews needs to reach and show it.
         assertEquals(emptyList<String>(), extras(widget.filter { it.getAttribute("style") in shared }, WIDGET_OWN))
     }
 
