@@ -31,8 +31,8 @@ import java.time.Instant
 import javax.crypto.KeyGenerator
 
 /**
- * What the widget's tests share: a sign-in with a cipher Robolectric can run, the sample clock, the snapshot written as
- * the app keeps it, a widget placed on Robolectric's host, and the check of its colours.
+ * What the tests of the widget on Robolectric's host share: a sign-in with a cipher Robolectric can run, the sample
+ * clock, the snapshot written as the app keeps it, a widget placed on that host, and the check of its colours.
  */
 abstract class WidgetTestBase {
     protected val application = ApplicationProvider.getApplicationContext<Application>()

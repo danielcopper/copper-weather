@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
      plain text, the hours and the days, used by widget_weather.xml,
-     widget_weather_flat.xml,
-     widget_hour.xml and widget_day.xml. The picker's preview
-     (widget_weather_preview.xml, D40) uses the same styles for the card,
-     "now" and the hours, and WidgetPreviewTest keeps the preview and the
-     widget's layouts from adding looks of their own beside them; WidgetViews
-     sets "now"'s row and image sizes by bucket (D36). The sizes are in
-     dimens.xml (D35); the colours come from the palette, set by WidgetViews
-     or, in the preview, from colors.xml (D7). -->
+     widget_weather_flat.xml, widget_hour.xml and widget_day.xml. The
+     picker's preview (widget_weather_preview.xml, D40) uses the same styles
+     for the card, "now" and the hours, and WidgetPreviewTest keeps the
+     preview and the widget's layouts from adding looks of their own beside
+     them; WidgetViews sets "now"'s row and image sizes by bucket (D36). The
+     sizes are in dimens.xml (D35); the colours come from the palette, set by
+     WidgetViews or, in the preview, from colors.xml (D7). -->
 <resources>
     <!-- The parent the dotted names below imply; it sets nothing. -->
     <style name="WeatherWidget" />
