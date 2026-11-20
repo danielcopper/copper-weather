@@ -7,9 +7,11 @@ answer and draws it.
 ## Status
 
 The app signs in to Home Assistant on its one screen, fetches the app sensor at the interval set there and keeps its
-last good answer; the widget "Wetter" shows its temperature and condition as plain text, a stand-in until the drawn
-widget. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
-[docs/design.md](docs/design.md), the terms in [GLOSSARY.md](GLOSSARY.md).
+last good answer; the widget "Wetter" shows it by its size: "now" with today's high and low and the rain hint, the next
+hours from 4 × 2 cells, the next days from 4 × 3, or one row high "now" with the next days beside it, with still
+weather icons; a tap opens the dashboard's weather pop-up in the Home Assistant app. The decisions so far are in
+[docs/decisions.md](docs/decisions.md), the design in [docs/design.md](docs/design.md), the terms in
+[GLOSSARY.md](GLOSSARY.md).
 
 ## Build and run
 
@@ -21,6 +23,9 @@ mise run setup    # Android command-line tools, SDK packages, local.properties
 mise run gate     # most of what CI checks; mise.toml says what it leaves out
 mise run install  # builds the debug APK and installs it with adb
 ```
+
+The unit tests also run Python, which mise brings as well, to check the weather icons against the SVGs they are made
+from; `mise run icons` writes them anew.
 
 `install` needs a phone that adb is connected to: pair it once with `adb pair` (Wireless debugging on the phone), then
 `adb connect <address>`; adb is in `~/Android/Sdk/platform-tools`.

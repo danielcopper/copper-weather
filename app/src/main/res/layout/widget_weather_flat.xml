@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" (its
+     still image and the temperature, below them the rain hint or the
+     condition, or "Neu anmelden" in that line's place while the sign-in is no
+     longer usable), and beside it, after a divider, as many of the next days
+     as fit (D41), or a plain text instead, on the card. Every part starts
+     hidden; WidgetViews shows the ones it fills, adds the days, and sets the
+     colours from the palette, light and dark (D7). Every part takes its looks
+     from styles.xml, as in widget_weather.xml, "Neu anmelden" and the plain
+     text but for their heights; without days WidgetViews widens "now" to the
+     card. The whole card is one tap. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget"
+    style="@style/WeatherWidget.FlatCard">
+
+    <LinearLayout
+        android:id="@+id/now_column"
+        style="@style/WeatherWidget.FlatNow"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/now"
+            style="@style/WeatherWidget.NowRow">
+
+            <ImageView
+                android:id="@+id/now_icon"
+                style="@style/WeatherWidget.NowIcon"
+                android:importantForAccessibility="no"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/now_temperature"
+                style="@style/WeatherWidget.NowTemperature"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/now_line"
+            style="@style/WeatherWidget.Line"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/now_line_long"
+            style="@style/WeatherWidget.Line.Long"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_notice"
+            style="@style/WeatherWidget.Notice"
+            android:layout_height="@dimen/widget_line_height"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/divider"
+        style="@style/WeatherWidget.FlatDivider"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/days"
+        style="@style/WeatherWidget.FlatDays"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_plain"
+        style="@style/WeatherWidget.Plain"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+</LinearLayout>

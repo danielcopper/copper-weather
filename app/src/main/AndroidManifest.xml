@@ -7,6 +7,19 @@
     <!-- Whether a fetch that cannot reach Home Assistant had a network at all (D28). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- The apps that open Home Assistant's navigate links, so a tap can
+         start the one that handles the weather pop-up as its icon does (D39).
+         The host is needed: a query intent without one matches no filter that
+         names a host, and the Home Assistant app's filter names "navigate". -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data
+                android:host="navigate"
+                android:scheme="homeassistant" />
+        </intent>
+    </queries>
+
     <application
         android:name=".app.WeatherApp"
         android:allowBackup="false"
@@ -52,6 +65,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Shows nothing: opens the weather pop-up a tap on the widget asks for and finishes (D39). -->
+        <activity
+            android:name=".tap.TapActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
     </application>
 
 </manifest>

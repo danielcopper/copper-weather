@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A day of the flat bucket (D41), as the dashboard's day cell: its
+     weekday, its still image in the day form, its high and beside it its low,
+     and below them its rain when it has, else its condition's short word;
+     WidgetRows fills it, and WidgetViews adds as many as fit the width. Its
+     looks are styles.xml's. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/WeatherWidget.FlatDay">
+
+    <TextView
+        android:id="@+id/flat_day_weekday"
+        style="@style/WeatherWidget.FlatDaySmall" />
+
+    <ImageView
+        android:id="@+id/flat_day_icon"
+        style="@style/WeatherWidget.FlatDayIcon"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout style="@style/WeatherWidget.FlatDayDegrees">
+
+        <TextView
+            android:id="@+id/flat_day_high"
+            style="@style/WeatherWidget.FlatDayFit.Degree.High" />
+
+        <TextView
+            android:id="@+id/flat_day_low"
+            style="@style/WeatherWidget.FlatDayFit.Degree.Low" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/flat_day_note"
+        style="@style/WeatherWidget.FlatDayFit.Note"
+        android:visibility="invisible" />
+</LinearLayout>

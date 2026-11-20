@@ -1,0 +1,125 @@
+package dev.cupr.weather.tap
+
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.core.net.toUri
+import dev.cupr.weather.R
+
+/**
+ * The invisible activity a tap on the widget starts (D39): it shows nothing, opens the weather pop-up ([Taps.WEATHER])
+ * and finishes at once. When no app handles or may open it, a Toast says so besides the log line.
+ */
+class TapActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        openTarget(this, Taps.WEATHER, ::startActivity)
+        finish()
+    }
+}
+
+/**
+ * Opens [target] with [start], an Activity's startActivity (another context's would need a new task for every link).
+ *
+ * A Home Assistant target opens on top of the Home Assistant app started as its icon starts it, in a cleared task, so
+ * back returns to that app's own start page and taps do not stack pages (D39); when no single app is seen to handle
+ * the link or that app has no launcher entry, the link opens alone in a new task, and the log says why. Any other
+ * target opens alone in a new task.
+ *
+ * When no app handles a start or this app may not make it, the rest is not started, and the log and a short Toast say
+ * so. No app for the first start of a Home Assistant target, the launcher start or the link alone, says that the Home
+ * Assistant app is missing; any other failure, such as no app for the link after the launcher start, says that the
+ * target does not open.
+ */
+internal fun openTarget(
+    context: Context,
+    target: String,
+    start: (Intent) -> Unit,
+) {
+    val view = Intent(Intent.ACTION_VIEW, target.toUri())
+    // Two starts, not startActivities, whose documentation leaves the task undefined when one of its intents finds no
+    // app: with two starts the failing one is logged by name, its Toast says whether the Home Assistant app is
+    // missing, and the rest is not started. Back to the target alone, without clearing, once the Home Assistant app
+    // opens navigate links in place (home-assistant/android issue 5381, pull request 7163).
+    val app = if (view.forHomeAssistant) launcherStart(context, view) else null
+    val links = if (app != null) listOf(app, view) else listOf(view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    links.forEachIndexed { index, link ->
+        val first = index == 0
+        val name = if (link === view) target else "${link.component?.flattenToShortString()} (tapped $target)"
+        if (!opened(context, link, name, missing = first && view.forHomeAssistant, start = start)) return
+    }
+}
+
+/** A link the Home Assistant app opens: its scheme, [Taps.HOME_ASSISTANT_SCHEME]. */
+private val Intent.forHomeAssistant: Boolean get() = data?.scheme == Taps.HOME_ASSISTANT_SCHEME
+
+/**
+ * The app that handles [link] started the way its icon starts it, in a cleared task: its launch intent from the
+ * package manager, which sees that app through the manifest's `<queries>`. None, and a log line why, when no app is
+ * seen to handle the link, when several do and none is the default (the link resolves to the chooser), or when the one
+ * that does has no launcher entry.
+ */
+private fun launcherStart(
+    context: Context,
+    link: Intent,
+): Intent? {
+    val target = link.dataString
+    val packageManager = context.packageManager
+    val resolved = packageManager.resolveActivity(link, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+    val handlers =
+        packageManager
+            .queryIntentActivities(link, PackageManager.MATCH_DEFAULT_ONLY)
+            .map { it.activityInfo.packageName }
+            .distinct()
+    val launch = resolved?.takeIf { it in handlers }?.let(packageManager::getLaunchIntentForPackage)
+    val fallback =
+        when {
+            resolved == null -> "No app is seen to open $target"
+            resolved !in handlers -> "${handlers.size} apps open $target and none is the default"
+            launch == null -> "$resolved opens $target but has no launcher entry"
+            else -> null
+        }
+    if (fallback != null) Log.w(TAG, "$fallback; opening the link alone")
+    // CLEAR_TASK works only with NEW_TASK, which the launch intent carries already but is not documented to.
+    return launch?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+}
+
+/**
+ * Starts one [link] with [start]; when that fails, logs it under [name], shows a short Toast and answers false.
+ * [missing]: no app handling it means the Home Assistant app is missing.
+ */
+private fun opened(
+    context: Context,
+    link: Intent,
+    name: String,
+    missing: Boolean,
+    start: (Intent) -> Unit,
+): Boolean =
+    try {
+        start(link)
+        true
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "No app opens $name", e)
+        toast(context, if (missing) R.string.target_home_assistant_missing else R.string.target_not_openable)
+        false
+    } catch (e: SecurityException) {
+        // An app that handles it is there, so even for Home Assistant's scheme the app is not missing.
+        Log.w(TAG, "Not allowed to open $name", e)
+        toast(context, R.string.target_not_openable)
+        false
+    }
+
+private fun toast(
+    context: Context,
+    @StringRes text: Int,
+) {
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+}
+
+private const val TAG = "TapActivity"

@@ -1,14 +1,15 @@
 package dev.cupr.weather.palette
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
  * Keeps colours out of the app's sources outside [Palette] (D7). It reads every `.kt` and `.xml` file of every source
- * set under `app/src` but the tests' (`test…`, `androidTest…`), the palette itself and the two `colors.xml` files
- * excepted, and fails on:
+ * set under `app/src` but the tests' (`test…`, `androidTest…`), the palette itself, the two `colors.xml` files and
+ * the weather icons excepted, and fails on:
  * - in Kotlin: a hex number of 6 or 8 digits, also with underscores or a `u`/`L` suffix; a string that holds only `#`
  *   and 3, 4, 6 or 8 hex digits; Compose's `Color(` with a number or a named argument first, also on the next line;
  *   `Color.` with `parseColor`, `rgb`, `argb`, `valueOf`, `pack`, `hsv`, `hsl` or `HSVToColor`; Compose's and
@@ -18,10 +19,12 @@ import java.io.File
  * - in XML: a `#` colour as an attribute's value or an element's text, also on lines of its own; `@android:color/`,
  *   and `?android:attr/color…` or its short form `?android:color…`.
  *
- * The two `colors.xml` files may only define the palette's fields the resources need, and AppIdentityTest and
- * WindowTest keep those equal to the palette. No built-in rule of detekt or Android Lint finds colour literals in
- * Kotlin and in the resources alike, so this test reads the sources; the test task declares them as its input
- * (build.gradle.kts).
+ * The two `colors.xml` files may only define the palette's fields the resources need, and ColorResourcesTest keeps
+ * those equal to the palette. The weather icons, `weather_*.xml` in `main/res/drawable` and `main/res/drawable-night`,
+ * are excepted too: their colours are the icons' own, as an image's are, not the palette's (D38); WeatherIconsTest
+ * keeps every such file exactly what `scripts/weather_icons.py` writes from the dashboard's SVGs, so no colour is
+ * written into them by hand. No built-in rule of detekt or Android Lint finds colour literals in Kotlin and in the
+ * resources alike, so this test reads the sources; the test task declares them as its input (build.gradle.kts).
  */
 class ColorLiteralTest {
     private val sources = File("src")
@@ -32,7 +35,7 @@ class ColorLiteralTest {
             sources
                 .walkTopDown()
                 .onEnter { it == sources || it.parentFile != sources || !isTestSourceSet(it.name) }
-                .filter { it.isFile && it.extension in setOf("kt", "xml") && path(it) !in exempt }
+                .filter { it.isFile && it.extension in setOf("kt", "xml") && !exempt(path(it)) }
                 .toList()
         assertTrue("No main sources found under ${sources.absolutePath}", found.any { path(it).startsWith("main/") })
 
@@ -52,7 +55,7 @@ class ColorLiteralTest {
     }
 
     @Test
-    fun `the resources' only colours are the palette's bg, surface and sun`() {
+    fun `the resources' only colours are the palette's bg, surface, text, textMuted, rain and sun`() {
         for (path in resourceColors) {
             val names =
                 COLOR_NAME
@@ -60,7 +63,34 @@ class ColorLiteralTest {
                     .map { it.groupValues[1] }
                     .toSet()
 
-            assertEquals(path, setOf("palette_bg", "palette_surface", "palette_sun"), names)
+            assertEquals(
+                path,
+                setOf(
+                    "palette_bg",
+                    "palette_surface",
+                    "palette_text",
+                    "palette_text_muted",
+                    "palette_rain",
+                    "palette_sun",
+                ),
+                names,
+            )
+        }
+    }
+
+    @Test
+    fun `only the weather icons are excepted, not another drawable or a file elsewhere`() {
+        assertTrue(exempt("main/res/drawable/weather_sunny_day.xml"))
+        assertTrue(exempt("main/res/drawable-night/weather_lightning_rainy_night.xml"))
+        for (path in listOf(
+            "main/res/drawable/widget_card.xml",
+            "main/res/drawable-night/widget_card.xml",
+            "main/res/drawable-v31/weather_sunny_day.xml",
+            "main/res/layout/weather_sunny_day.xml",
+            "main/res/drawable/weather_sunny_day.kt",
+            "debug/res/drawable/weather_sunny_day.xml",
+        )) {
+            assertFalse(path, exempt(path))
         }
     }
 
@@ -132,7 +162,12 @@ class ColorLiteralTest {
         val resourceColors = listOf("main/res/values/colors.xml", "main/res/values-night/colors.xml")
 
         /** The palette itself, and the resources that mirror its fields. */
-        val exempt = setOf("main/kotlin/dev/cupr/weather/palette/Palette.kt") + resourceColors
+        val exemptFiles = setOf("main/kotlin/dev/cupr/weather/palette/Palette.kt") + resourceColors
+
+        /** The weather icons (D38), light and dark. */
+        val WEATHER_ICON = Regex("""main/res/drawable(-night)?/weather_[a-z_]+\.xml""")
+
+        fun exempt(path: String) = path in exemptFiles || WEATHER_ICON.matches(path)
 
         val COLOR_NAME = Regex("""<color\s+name="([^"]+)"""")
 
