@@ -2,13 +2,13 @@
 <!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" (its
      still image and the temperature, below them the rain hint or the
      condition, or "Neu anmelden" in that line's place while the sign-in is no
-     longer usable) and beside it as many hours as fit, or a plain text
-     instead, on the card. Every part starts hidden; WidgetViews shows the
-     ones it fills, adds the hours, and sets the texts' colours from the
-     palette, light and dark (D7). Every part takes its looks from styles.xml,
-     as in widget_weather.xml, "Neu anmelden" and the plain text but for their
-     heights; without hours WidgetViews widens "now" to the card. The whole
-     card is one tap. -->
+     longer usable), and beside it, after a divider, as many of the next days
+     as fit (D41), or a plain text instead, on the card. Every part starts
+     hidden; WidgetViews shows the ones it fills, adds the days, and sets the
+     colours from the palette, light and dark (D7). Every part takes its looks
+     from styles.xml, as in widget_weather.xml, "Neu anmelden" and the plain
+     text but for their heights; without days WidgetViews widens "now" to the
+     card. The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.FlatCard">
@@ -46,9 +46,15 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/divider"
+        style="@style/WeatherWidget.FlatDivider"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <LinearLayout
-        android:id="@+id/hours"
-        style="@style/WeatherWidget.FlatHours"
+        android:id="@+id/days"
+        style="@style/WeatherWidget.FlatDays"
         android:visibility="gone" />
 
     <TextView

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
-     plain text, the hours and the days, used by widget_weather.xml,
-     widget_weather_flat.xml, widget_hour.xml and widget_day.xml. The
-     picker's preview (widget_weather_preview.xml, D40) uses the same styles
-     for the card, "now" and the hours, and WidgetPreviewTest keeps the
-     preview and the widget's layouts from adding looks of their own beside
-     them; WidgetViews sets "now"'s row and image sizes by bucket (D36). The
-     sizes are in dimens.xml (D35); the colours come from the palette, set by
-     WidgetViews or, in the preview, from colors.xml (D7). -->
+     plain text, the hours, the days and the flat bucket's divider and days,
+     used by widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
+     widget_day.xml and widget_flat_day.xml. The picker's preview
+     (widget_weather_preview.xml, D40) uses the same styles for the card,
+     "now" and the hours, and WidgetPreviewTest keeps the preview and the
+     widget's layouts from adding looks of their own beside them; WidgetViews
+     sets "now"'s row, image and line sizes by bucket (D36). The sizes are in
+     dimens.xml (D35); the colours come from the palette, set by WidgetViews
+     or, in the preview, from colors.xml (D7). -->
 <resources>
     <!-- The parent the dotted names below imply; it sets nothing. -->
     <style name="WeatherWidget" />
@@ -70,12 +71,18 @@
         <item name="android:layout_marginEnd">8dp</item>
     </style>
 
+    <!-- 14 sp on one line; a word too long for it takes a second line, and
+         the text shrinks down to 11 sp until both fit the line's height. -->
     <style name="WeatherWidget.Line">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_line_height</item>
+        <item name="android:autoSizeMaxTextSize">14sp</item>
+        <item name="android:autoSizeMinTextSize">11sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
         <item name="android:ellipsize">end</item>
         <item name="android:gravity">center_vertical</item>
-        <item name="android:maxLines">1</item>
+        <item name="android:maxLines">2</item>
         <item name="android:textSize">14sp</item>
     </style>
 
@@ -143,7 +150,7 @@
         <item name="android:textSize">11sp</item>
     </style>
 
-    <!-- The flat bucket: "now" and the hours side by side in one row. -->
+    <!-- The flat bucket: "now" and the days side by side in one row. -->
     <style name="WeatherWidget.FlatCard">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -162,13 +169,65 @@
         <item name="android:orientation">vertical</item>
     </style>
 
-    <style name="WeatherWidget.FlatHours">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">@dimen/widget_hour_height</item>
-        <item name="android:layout_weight">1</item>
+    <!-- The divider before the days, as the dashboard's border on its days. -->
+    <style name="WeatherWidget.FlatDivider">
+        <item name="android:layout_width">@dimen/widget_divider</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:layout_marginStart">@dimen/widget_gap</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDays">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingStart">@dimen/widget_flat_days_padding</item>
         <item name="android:baselineAligned">false</item>
         <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- A day of the flat bucket, as the dashboard's day cell: its weekday,
+         its image, its high and low, and its rain or short word below. -->
+    <style name="WeatherWidget.FlatDay">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">@dimen/widget_flat_day_gap</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDaySmall">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">11.5sp</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDayIcon" parent="WeatherWidget.SmallIcon">
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:layout_marginBottom">1dp</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDayDegrees">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDayHigh">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="WeatherWidget.FlatDayLow">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">13sp</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

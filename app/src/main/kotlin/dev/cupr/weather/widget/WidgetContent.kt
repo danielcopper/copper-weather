@@ -79,12 +79,16 @@ sealed interface WidgetContent {
         val rain: Rain?,
     )
 
-    /** A day of the days (D14, D37): its weekday, its still image, its high and low, and its rain when it has. */
+    /**
+     * A day of the days (D14, D37): its weekday, its still image, its high and low, its rain when it has, and the short
+     * word of its condition, which the flat bucket shows without rain (D41).
+     */
     data class Day(
         val weekday: DayOfWeek,
         @param:DrawableRes val icon: Int,
         val highLow: HighLow,
         val rain: Rain?,
+        @param:StringRes val word: Int?,
     )
 
     /** Rain that falls in an hour or on a day (D37), as the rows write it ([WidgetRows]). */
@@ -177,6 +181,7 @@ sealed interface WidgetContent {
                                 icon = WeatherIcons.of(it.condition, night = false),
                                 highLow = HighLow(forecastDegrees(it.high), forecastDegrees(it.low)),
                                 rain = rainAmount(it.precipitation, it.condition),
+                                word = Condition.of(it.condition)?.short,
                             )
                         },
                 signInAgain = signInAgain,

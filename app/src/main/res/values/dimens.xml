@@ -15,12 +15,23 @@
     <dimen name="widget_now_icon_compact">40dp</dimen>
     <!-- Today's high and low in a row below "now", in the small bucket. -->
     <dimen name="widget_today_height">18dp</dimen>
-    <!-- The flat bucket (D36): "now" in a column of its own width beside
-         the hours, and the card's padding above and below, less than its
-         sides', so an hour fits one row. -->
-    <dimen name="widget_flat_now_width">128dp</dimen>
+    <!-- The flat bucket (D36): "now" in a column of its own width, then a
+         line as the dashboard's divider and its padding, and the days beside
+         it, each at least as wide as the dashboard's day cell, with its gap;
+         the card's padding above and below is less than its sides', so a day
+         fits one row. -->
+    <dimen name="widget_flat_now_width">104dp</dimen>
     <dimen name="widget_flat_padding">8dp</dimen>
+    <dimen name="widget_divider">1dp</dimen>
+    <!-- 14 dp from the divider to the first day, as the dashboard's padding:
+         the days' own 8 and that day's gap of 6. -->
+    <dimen name="widget_flat_days_padding">8dp</dimen>
+    <dimen name="widget_flat_day_width">44dp</dimen>
+    <dimen name="widget_flat_day_gap">6dp</dimen>
+    <!-- The line below "now": one line, or in the small and the flat bucket
+         up to two in a smaller font (D36). -->
     <dimen name="widget_line_height">20dp</dimen>
+    <dimen name="widget_line_height_compact">36dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>
