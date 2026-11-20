@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The widget "Wetter" (D19): added at 4 x 2 cells, down to 2 x 2, its
-     least size (D11). The sizes in dp follow the sizing guidance D35 counts
-     cells by, as it advises for these attributes: a dp below n cells' size,
-     widths from its portrait sizes (73n - 16), heights from its landscape
-     ones (66n - 15), where a cell is least high; so 2 x 2 is 129 x 116 dp
-     and 4 x 2 275 x 116 dp. targetCellWidth and targetCellHeight give the
-     size it is added at; minWidth and minHeight stand in for a launcher that
-     reads no cells. updatePeriodMillis 0: the app updates it (D33). The
-     picker shows previewLayout (D40); previewImage stands in where a
-     launcher shows no layout. -->
+     least size (D11). Sizes in dp by D35: 2 x 2 is 129 x 116, 4 x 2
+     275 x 116. updatePeriodMillis 0: the app updates it (D33). The picker
+     shows previewLayout (D40); previewImage stands in where a launcher shows
+     no layout. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_weather"

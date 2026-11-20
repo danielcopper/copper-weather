@@ -27,10 +27,7 @@ enum class SizeBucket {
         private const val CELL_HEIGHT = 118f
         private const val CELL_MARGIN = 16f
 
-        /**
-         * What a size may fall short of its cells' and still count as them: the guidance's own table, measured on a
-         * Pixel 4, has 337 dp for 3 rows and 455 for 4 where the formula gives 338 and 456. Far below half a cell.
-         */
+        /** What a size may fall short of its cells' and still count as them (D35). */
         private const val SLACK = 2f
 
         /** The bucket of a widget [size] dp large, its cells counted in portrait, the way the phones are held (D35). */

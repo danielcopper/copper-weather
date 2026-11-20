@@ -1,6 +1,6 @@
 [tools]
 java = "temurin-21.0.11+10.0.LTS"  # runs Gradle; AGP 9.5 needs JDK 17 or newer
-python = "3.15.2"  # runs scripts/weather_icons.py, also from the unit tests (WeatherIconsTest)
+python = "3.15.2"  # runs the weather icon script and its tests
 
 [vars]
 # The Android SDK lives under $HOME, installed by `setup` without root.

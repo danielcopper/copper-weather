@@ -5,9 +5,10 @@
      the sign-in is no longer usable), the hours and the days as the size
      bucket shows them, or a plain text instead, on the card. Every part starts
      hidden; WidgetViews shows the ones it fills, adds the hours and days, and
-     sets the texts' colours from the palette, light and dark (D7). The parts'
-     looks are styles.xml's, which the picker's preview shares. The whole card
-     is one tap. -->
+     sets the texts' colours from the palette, light and dark (D7). The card,
+     "now" and the hours' strip take their looks from styles.xml, as the
+     picker's preview does; "Neu anmelden", the days' list and the plain text
+     carry their own. The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">

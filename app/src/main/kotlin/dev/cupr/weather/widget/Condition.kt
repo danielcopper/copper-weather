@@ -81,13 +81,7 @@ enum class Condition(
     companion object {
         private val byKey = entries.associateBy { it.key }
 
-        /** The condition Home Assistant names [key], none for one the app does not know. */
+        /** The condition Home Assistant names [key], none for one the app does not know, which shows no word (D34). */
         fun of(key: String?): Condition? = byKey[key]
     }
-}
-
-/** The German word for a condition (D34); none for a condition the app does not know, which shows nothing. */
-object Conditions {
-    @StringRes
-    fun word(condition: String): Int? = Condition.of(condition)?.word
 }

@@ -10,7 +10,7 @@ permissions:
 
 env:
   JAVA_VERSION: "21.0.11+10"  # mise.toml's JDK
-  PYTHON_VERSION: "3.15.2"  # mise.toml's Python, which the unit tests run (WeatherIconsTest)
+  PYTHON_VERSION: "3.15.2"  # mise.toml's Python
 
 # The build and lint jobs, with the SonarQube Cloud job's coverage report, run
 # what `mise run gate` runs locally, split so each check reports on its own.

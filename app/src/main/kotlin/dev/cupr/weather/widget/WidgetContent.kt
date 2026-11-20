@@ -92,7 +92,10 @@ sealed interface WidgetContent {
         /** An amount in tenths of a millimetre, never 0: "2,5 mm", "3 mm". */
         data class Amount(
             val tenths: Long,
-        ) : Rain
+        ) : Rain {
+            val millimetres: Double
+                get() = tenths / TENTHS
+        }
 
         /** An amount that rounds to 0 under an image of falling rain, snow or hail: "< 0,1 mm". */
         data object Trace : Rain
@@ -103,7 +106,6 @@ sealed interface WidgetContent {
         private val RAIN_AHEAD: Duration = Duration.ofMinutes(120)
 
         private val MILLIS_PER_MINUTE = Duration.ofMinutes(1).toMillis().toDouble()
-        private const val TENTHS = 10.0
 
         /** What the widget shows now, from the sign-in and the snapshot the app keeps, at [clock]'s time and zone. */
         fun read(
@@ -122,7 +124,7 @@ sealed interface WidgetContent {
             snapshot: Snapshot?,
             clock: Clock,
         ): WidgetContent {
-            val data = snapshot?.data?.takeIf { it.temperature != null || it.condition?.let(Conditions::word) != null }
+            val data = snapshot?.data?.takeIf { it.temperature != null || Condition.of(it.condition)?.word != null }
             return when {
                 data == null && state == Account.State.SIGNED_IN -> {
                     Plain(R.string.widget_no_data)
@@ -153,7 +155,7 @@ sealed interface WidgetContent {
                         icon = WeatherIcons.of(data.condition, night = nightNow(data.twilight)),
                         temperature = data.temperature?.let(::degrees),
                         today = todays?.let { HighLow(forecastDegrees(it.high), forecastDegrees(it.low)) },
-                        line = rainHint(data.rainAt, now) ?: data.condition?.let(Conditions::word)?.let(Line::Word),
+                        line = rainHint(data.rainAt, now) ?: Condition.of(data.condition)?.word?.let(Line::Word),
                     ),
                 hours =
                     data.hours
@@ -234,3 +236,6 @@ sealed interface WidgetContent {
         }
     }
 }
+
+/** Tenths in a millimetre: the steps rain is shown in (D37). */
+private const val TENTHS = 10.0

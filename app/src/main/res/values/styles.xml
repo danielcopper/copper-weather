@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget's parts, shared by its layouts (widget_weather.xml,
-     widget_hour.xml, widget_day.xml) and the picker's preview
-     (widget_weather_preview.xml, D40), so the preview cannot drift from the
-     widget. Their sizes are in dimens.xml (D35); the colours come from the
-     palette, set by WidgetViews or, in the preview, from colors.xml (D7). -->
+<!-- The looks of the widget's parts: "now", the hours and the days, used by
+     widget_weather.xml, widget_hour.xml and widget_day.xml. The picker's
+     preview (widget_weather_preview.xml, D40) uses the same styles for
+     "now" and the hours, and WidgetPreviewTest keeps both sides from adding
+     looks of their own beside them. The sizes are in dimens.xml (D35); the
+     colours come from the palette, set by WidgetViews or, in the preview,
+     from colors.xml (D7). -->
 <resources>
     <!-- The parent the dotted names below imply; it sets nothing. -->
     <style name="WeatherWidget" />
@@ -122,5 +124,39 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">11sp</item>
+    </style>
+
+    <!-- The days: a row each, the highs and lows in columns. -->
+    <style name="WeatherWidget.Day">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_day_height</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.DayWeekday">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="WeatherWidget.DayIcon" parent="WeatherWidget.SmallIcon" />
+
+    <style name="WeatherWidget.DayRain">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="WeatherWidget.DayDegrees">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">14sp</item>
     </style>
 </resources>

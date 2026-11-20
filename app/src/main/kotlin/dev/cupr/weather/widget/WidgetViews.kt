@@ -83,8 +83,8 @@ internal object WidgetViews {
     }
 
     /**
-     * "Now" (D36): in the [small] bucket a smaller image and today's high and low in a row below it, so "-12°" fits
-     * beside the image at 2 cells wide; otherwise the high and low beside the temperature.
+     * "Now" (D36): in the [small] bucket a lower row with a smaller image, and today's high and low in a row below it;
+     * otherwise the high and low beside the temperature.
      */
     private fun now(
         context: Context,
@@ -93,6 +93,10 @@ internal object WidgetViews {
         small: Boolean,
     ) {
         views.setViewVisibility(R.id.now, View.VISIBLE)
+        views.setViewLayoutHeightDimen(
+            R.id.now,
+            if (small) R.dimen.widget_now_height_small else R.dimen.widget_now_height,
+        )
         views.setImageViewResource(R.id.now_icon, now.icon)
         val icon = if (small) R.dimen.widget_now_icon_small else R.dimen.widget_now_icon
         views.setViewLayoutWidthDimen(R.id.now_icon, icon)
@@ -136,7 +140,7 @@ internal object WidgetViews {
 
             is WidgetContent.Rain.Amount -> {
                 val millimetres = NumberFormat.getNumberInstance(Locale.GERMAN).apply { maximumFractionDigits = 1 }
-                getString(R.string.rain_amount, millimetres.format(rain.tenths / TENTHS))
+                getString(R.string.rain_amount, millimetres.format(rain.millimetres))
             }
         }
 
@@ -166,8 +170,6 @@ internal object WidgetViews {
         views.show(R.id.day_low, day.highLow.low, Palette::textMuted)
         return views
     }
-
-    private const val TENTHS = 10.0
 
     /**
      * Shows [text] in [id], in [role]'s colour for light and for dark, or hides [id] ([hidden]) without a text.

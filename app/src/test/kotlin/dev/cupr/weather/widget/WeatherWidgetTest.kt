@@ -114,7 +114,7 @@ class WeatherWidgetTest {
     }
 
     @Test
-    fun `in the small bucket today's high and low stand below the temperature, beside a smaller image`() {
+    fun `in the small bucket today's high and low stand below the temperature, in a lower row with a smaller image`() {
         signIn()
         written(SampleWeather.full())
         val density = application.resources.displayMetrics.density
@@ -123,12 +123,33 @@ class WeatherWidgetTest {
         assertTrue(WidgetHost.visible(small.findViewById(R.id.now_today_below), small))
         assertFalse(WidgetHost.visible(small.findViewById(R.id.now_today), small))
         assertEquals((40 * density).toInt(), small.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals((40 * density).toInt(), small.findViewById<View>(R.id.now).layoutParams.height)
 
         val wide = placed(SizeBucket.sizeOf(columns = 4, rows = 2))
         assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_today), wide))
         assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_today_below), wide))
         assertEquals((48 * density).toInt(), wide.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals((48 * density).toInt(), wide.findViewById<View>(R.id.now).layoutParams.height)
         assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), wide.shown().take(4))
+    }
+
+    @Test
+    fun `a small widget that loses its weather hides today's high and low with it, and a redraw without today too`() {
+        signIn()
+        written(SampleWeather.full())
+        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
+        assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), widget.shown())
+
+        written(SampleWeather.data())
+        Widgets.update(application)
+        assertEquals(listOf("7°", "Teilweise bewölkt"), widget.shown())
+
+        written(SampleWeather.full())
+        Widgets.update(application)
+        Services.account(application).signOut()
+        Services.snapshots(application).clear()
+        Widgets.update(application)
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), widget.shown())
     }
 
     @Test
@@ -586,9 +607,9 @@ class WeatherWidgetTest {
             )
 
         for ((condition, word) in words) {
-            assertEquals(condition, word, application.getString(checkNotNull(Conditions.word(condition))))
+            assertEquals(condition, word, application.getString(checkNotNull(Condition.of(condition)).word))
         }
-        assertNull(Conditions.word("sandstorm"))
+        assertNull(Condition.of("sandstorm"))
     }
 
     /** The provider info's attributes in the android namespace, as the compiled XML holds them. */
