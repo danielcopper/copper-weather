@@ -5,18 +5,19 @@ A skeleton that grows as the design does. What is decided stands in [decisions.m
 
 ## Widget
 
-Its content by size bucket, the warning band, "Stand …" and a tap: D4, D11–D17. How it is drawn: D5.
+Its content by size bucket, the warning band, "Stand …" and a tap: D4, D11–D17. How it is drawn: D5. The plain text
+stand-in until then: D33, D34.
 Weather icons: D6.
 
 ## Data
 
-The app sensor and the snapshot: D2, D3.
+The app sensor and the snapshot: D2, D3; the fetch, the snapshot's file and the schema version: D28–D30.
 
 To fill: the sensor's data format.
 
 ## App
 
-What the app does: D4, D18, D20. The sign-in screen: D22–D27.
+What the app does: D4, D18, D20. The sign-in screen: D22–D27, D32; its fetch lines and interval: D28.
 
 To fill: the screens still to come.
 

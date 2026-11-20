@@ -6,8 +6,9 @@ answer and draws it.
 
 ## Status
 
-The app signs in to Home Assistant and out again on its one screen; it fetches nothing yet, and there is no widget
-yet. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
+The app signs in to Home Assistant on its one screen, fetches the app sensor at the interval set there and keeps its
+last good answer; the widget "Wetter" shows its temperature and condition as plain text, a stand-in until the drawn
+widget. The decisions so far are in [docs/decisions.md](docs/decisions.md), the design in
 [docs/design.md](docs/design.md), the terms in [GLOSSARY.md](GLOSSARY.md).
 
 ## Build and run
