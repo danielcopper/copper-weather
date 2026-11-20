@@ -148,12 +148,14 @@ dependencies {
         implementation(libs.lifecycle.runtime)
     }
     implementation(libs.okhttp)
+    implementation(libs.work.runtime)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.work.testing)
     // The app's screen under Robolectric: ui-test-junit4 in the Compose BOM's version, espresso-core in its own
     // (libs.versions.toml).
     testImplementation(libs.compose.ui.test.junit4)

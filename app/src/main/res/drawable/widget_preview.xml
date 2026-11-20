@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget picker's preview of "Wetter": the launcher icon's sun and
+     cloud on the widget's card, in the palette's colours. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/widget_card" />
+    <item android:drawable="@drawable/ic_launcher_foreground" />
+</layer-list>

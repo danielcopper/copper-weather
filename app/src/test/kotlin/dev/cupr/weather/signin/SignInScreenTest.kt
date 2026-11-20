@@ -3,29 +3,47 @@ package dev.cupr.weather.signin
 import android.app.Application
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
+import androidx.work.testing.WorkManagerTestInitHelper.getTestDriver
 import dev.cupr.weather.R
 import dev.cupr.weather.app.MainActivity
 import dev.cupr.weather.app.Services
+import dev.cupr.weather.fetch.FetchWork
 import dev.cupr.weather.ha.FakeHomeAssistant
 import dev.cupr.weather.ha.HaAddress
 import dev.cupr.weather.ha.RefreshToken
+import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.ha.SignInRequest
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.AesGcmCipher
+import dev.cupr.weather.store.FailedFetch
+import dev.cupr.weather.store.FetchCause
+import dev.cupr.weather.store.FetchInterval
+import dev.cupr.weather.store.Snapshot
 import dev.cupr.weather.store.TokenCipher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -42,6 +60,8 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 import javax.crypto.KeyGenerator
 
 /**
@@ -74,6 +94,14 @@ class SignInScreenTest {
         Services.io = Dispatchers.Unconfined
         http = Services.http
         Services.http = OkHttpClient.Builder().addInterceptor(ToFake(home)).build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(
+            context,
+            Configuration
+                .Builder()
+                .setMinimumLoggingLevel(Log.WARN)
+                .setExecutor(SynchronousExecutor())
+                .build(),
+        )
     }
 
     @After
@@ -82,6 +110,7 @@ class SignInScreenTest {
         Services.cipher = keystoreCipher
         Services.io = io
         Services.http = http
+        WorkManagerTestInitHelper.closeWorkDatabase()
         home.close()
         SignInFlow.clearProblem()
     }
@@ -196,6 +225,124 @@ class SignInScreenTest {
         assertTrue(file.path, file.readText().contains("https://home.example/"))
     }
 
+    @Test
+    fun `the screen shows the attribution from the snapshot`() {
+        signIn()
+        snapshot("""{"schema_version":1,"attribution":"Weather data: a test source"}""")
+
+        open()
+
+        compose.onNodeWithText("Weather data: a test source").assertExists()
+    }
+
+    @Test
+    fun `a refused sign-in keeps showing the snapshot's attribution beside the address form`() {
+        signIn()
+        snapshot("""{"schema_version":1,"attribution":"Weather data: a test source"}""")
+        Services.account(context).reject()
+
+        open()
+
+        node(R.string.sign_in_rejected).assertExists()
+        compose.onNodeWithText("Weather data: a test source").assertExists()
+        node(R.string.sign_in).assertExists()
+        node(R.string.fetch_interval).assertDoesNotExist()
+    }
+
+    @Test
+    fun `signed out, the screen does not show the attribution of a snapshot left behind`() {
+        snapshot("""{"schema_version":1,"attribution":"Weather data: a test source"}""")
+
+        open()
+
+        node(R.string.sign_in).assertExists()
+        compose.onNodeWithText("Weather data: a test source").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a fetch that finishes while the screen is open shows its time there`() {
+        signIn()
+        open()
+        node(R.string.sign_in_no_fetch).assertExists()
+        val now =
+            WorkManager
+                .getInstance(context)
+                .getWorkInfosForUniqueWork(FetchWork.NOW)
+                .get()
+                .single()
+
+        // The fetch the screen started as it opened runs now, against the fake Home Assistant.
+        checkNotNull(getTestDriver(context)).setAllConstraintsMet(now.id)
+
+        compose.waitUntil(TIMEOUT_MILLIS) {
+            compose
+                .onAllNodesWithText("Angemeldet, letzter Abruf um", substring = true)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        node(R.string.sign_in_no_fetch).assertDoesNotExist()
+    }
+
+    @Test
+    fun `signed in, the screen says when the last fetch failed and why`() {
+        signIn()
+        Services.failures(context).write(FailedFetch(Instant.now(), FetchCause.NEWER_SCHEMA))
+
+        open()
+
+        val text = context.getString(R.string.fetch_cause_newer_schema)
+        compose.onNodeWithText(text, substring = true).assertExists()
+    }
+
+    @Test
+    fun `signed in, the screen shows the stored fetch interval, and picking another sets it`() {
+        signIn()
+        Services.settings(context).writeFetchInterval(FetchInterval.EVERY_30_MINUTES)
+
+        open()
+
+        node(R.string.fetch_interval).assertExists()
+        node(R.string.every_30_minutes).assertIsSelected()
+        node(R.string.every_15_minutes).assertIsNotSelected()
+        node(R.string.every_60_minutes).assertIsNotSelected()
+        assertEquals(TimeUnit.MINUTES.toMillis(30), periodicMillis())
+
+        node(R.string.every_60_minutes).performClick()
+        compose.waitForIdle()
+
+        node(R.string.every_60_minutes).assertIsSelected()
+        node(R.string.every_30_minutes).assertIsNotSelected()
+        assertEquals(FetchInterval.EVERY_60_MINUTES, Services.settings(context).fetchInterval())
+        assertEquals(TimeUnit.MINUTES.toMillis(60), periodicMillis())
+    }
+
+    @Test
+    fun `signed out, the screen has no fetch interval and opening it fetches nothing`() {
+        open()
+
+        node(R.string.sign_in).assertExists()
+        node(R.string.fetch_interval).assertDoesNotExist()
+        assertEquals(
+            emptyList<WorkInfo>(),
+            WorkManager.getInstance(context).getWorkInfosForUniqueWork(FetchWork.NOW).get(),
+        )
+    }
+
+    private fun signIn() = Services.account(context).signIn(address, SignInRequest.CLIENT_ID, RefreshToken("refresh-1"))
+
+    private fun snapshot(data: String) =
+        Services.snapshots(context).write(Snapshot(Instant.now(), SensorData(Json.parseToJsonElement(data).jsonObject)))
+
+    /** The periodic fetch's interval, as it is scheduled. */
+    private fun periodicMillis(): Long? =
+        WorkManager
+            .getInstance(context)
+            .getWorkInfosForUniqueWork(FetchWork.PERIODIC)
+            .get()
+            .single { !it.state.isFinished }
+            .periodicityInfo
+            ?.repeatIntervalMillis
+
     /** Types [text] into the address field and taps "Mit Home Assistant anmelden". */
     private fun enter(text: String) {
         compose.onNode(hasSetTextAction()).performTextInput(text)
@@ -283,5 +430,9 @@ class SignInScreenTest {
                     .build(),
             )
         }
+    }
+
+    private companion object {
+        const val TIMEOUT_MILLIS = 5_000L
     }
 }

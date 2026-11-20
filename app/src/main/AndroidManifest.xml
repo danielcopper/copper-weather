@@ -1,17 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Home Assistant, for signing in and out (D22, D27). -->
+    <!-- Home Assistant, for signing in and out and fetching (D22, D27, D28). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Whether a fetch that cannot reach Home Assistant had a network at all (D28). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".app.WeatherApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true">
 
-        <!-- The app's screen: signing in with Home Assistant and out again. -->
+        <!-- Widget broadcasts come from the system; BIND_APPWIDGET is held only by the system and its privileged apps. -->
+        <receiver
+            android:name=".widget.WeatherWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label"
+            android:permission="android.permission.BIND_APPWIDGET">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_weather_info" />
+        </receiver>
+
+        <!-- WorkManager starts on demand (WeatherApp, D28). Both merged manifests lack this
+             initializer; the other documented form removes the whole provider. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <!-- The app's screen: signing in with Home Assistant and out again, the last fetch and the fetch interval. -->
         <activity
             android:name=".app.MainActivity"
             android:exported="true"

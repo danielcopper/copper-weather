@@ -2,13 +2,58 @@
 <resources>
     <!-- A name, English and not translated; a placeholder until the name is decided. -->
     <string name="app_name" translatable="false">Copper Weather</string>
-    <!-- The sign-in screen (D24, D25, D27): the address field, the button that opens Home Assistant's login, why a sign-in did not come about, the line while signed in, and signing out. -->
+    <!-- The widget picker's name (D19) and description of the widget. -->
+    <string name="widget_label">Wetter</string>
+    <string name="widget_description">Temperatur und Wetter aus Home Assistant</string>
+    <!-- The widget without weather to show (D33): signed out, or signed in before the first snapshot; and below the weather while the sign-in is no longer usable. A tap opens the app's screen. -->
+    <string name="widget_signed_out">Nicht angemeldet – zum Anmelden tippen</string>
+    <string name="widget_no_data">Noch keine Daten – zum Öffnen tippen</string>
+    <string name="widget_sign_in_again">Neu anmelden</string>
+    <!-- Home Assistant's conditions in German, its own translation (D34). -->
+    <string name="condition_clear_night">Klare Nacht</string>
+    <string name="condition_cloudy">Bewölkt</string>
+    <string name="condition_exceptional">Außergewöhnlich</string>
+    <string name="condition_fog">Nebel</string>
+    <string name="condition_hail">Hagel</string>
+    <string name="condition_lightning">Gewitter</string>
+    <string name="condition_lightning_rainy">Gewitter, regnerisch</string>
+    <string name="condition_partlycloudy">Teilweise bewölkt</string>
+    <string name="condition_pouring">Strömender Regen</string>
+    <string name="condition_rainy">Regnerisch</string>
+    <string name="condition_snowy">Schneefall</string>
+    <string name="condition_snowy_rainy">Schneeregen</string>
+    <string name="condition_sunny">Sonnig</string>
+    <string name="condition_windy">Windig</string>
+    <string name="condition_windy_variant">Windig, bewölkt</string>
+    <!-- The sign-in screen (D24, D25, D27, D32): the address field, the button that opens Home Assistant's login, why a sign-in did not come about, the status lines, and signing out. -->
     <string name="sign_in_address">Home-Assistant-Adresse</string>
     <string name="sign_in_address_example" translatable="false">https://…</string>
     <string name="sign_in_address_invalid">Bitte die https-Adresse von Home Assistant eingeben</string>
     <string name="sign_in">Mit Home Assistant anmelden</string>
     <string name="sign_in_failed">Anmeldung fehlgeschlagen – bitte noch einmal versuchen</string>
     <string name="sign_in_unreachable">Home Assistant nicht erreichbar – Adresse und Verbindung prüfen</string>
+    <string name="sign_in_rejected">Home Assistant hat die Anmeldung abgelehnt – bitte neu anmelden</string>
+    <string name="sign_in_unreadable">Gespeicherte Anmeldung auf diesem Handy nicht lesbar – bitte neu anmelden</string>
     <string name="sign_in_no_fetch">Angemeldet, noch kein Abruf</string>
+    <!-- The last successful fetch's time, the snapshot's, today ("14:30"); on another day also its date ("11. November") (D28). -->
+    <string name="sign_in_status_today">Angemeldet, letzter Abruf um %1$s</string>
+    <string name="sign_in_status_day">Angemeldet, letzter Abruf am %2$s um %1$s</string>
+    <!-- The last fetch failed: its cause in plain words, and its time; on another day also its date (D28). -->
+    <string name="fetch_failed_today">Letzter Abruf fehlgeschlagen um %2$s: %1$s</string>
+    <string name="fetch_failed_day">Letzter Abruf fehlgeschlagen am %3$s um %2$s: %1$s</string>
+    <!-- The failed fetch's cause in plain words (D28, D30). -->
+    <string name="fetch_cause_unreachable">Home Assistant nicht erreichbar</string>
+    <string name="fetch_cause_no_network">kein Netz</string>
+    <string name="fetch_cause_timeout">Zeitüberschreitung</string>
+    <string name="fetch_cause_sensor_missing">Sensor nicht gefunden</string>
+    <string name="fetch_cause_refused">Anmeldung abgelehnt</string>
+    <string name="fetch_cause_unexpected">unerwartete Antwort</string>
+    <string name="fetch_cause_phone">Fehler auf diesem Handy</string>
+    <string name="fetch_cause_newer_schema">Home Assistant liefert ein neueres Format – App aktualisieren</string>
     <string name="sign_out">Abmelden</string>
+    <!-- The fetch interval, set once for the app on its screen (D28), and its options. -->
+    <string name="fetch_interval">Abruf</string>
+    <string name="every_15_minutes">Alle 15 Minuten</string>
+    <string name="every_30_minutes">Alle 30 Minuten</string>
+    <string name="every_60_minutes">Alle 60 Minuten</string>
 </resources>
