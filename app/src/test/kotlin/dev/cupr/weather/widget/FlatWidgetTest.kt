@@ -32,6 +32,9 @@ class FlatWidgetTest : WidgetTestBase() {
 
     private fun dp(value: Int) = (value * density).toInt()
 
+    private fun sp(value: Float) =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, application.resources.displayMetrics)
+
     @Test
     fun `a widget 5 cells wide and 1 high shows now without today's high and low, and the days that fit beside it`() {
         signIn()
@@ -115,6 +118,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
     fun `in the flat bucket a text too long for one line at 14 sp takes two lines at 12 sp, a short one stays`() {
         signIn()
         val size = SizeBucket.sizeOf(columns = 5, rows = 1)
@@ -132,7 +136,7 @@ class FlatWidgetTest : WidgetTestBase() {
         assertFalse(WidgetHost.visible(short.findViewById(R.id.now_line_long), short))
         assertLine(short.text(R.id.now_line), lines = 1, height = 20, largest = 14f)
 
-        // "Außergewöhnlich", the longest single word, still fits the column on one line at 14 sp.
+        // "Außergewöhnlich", the longest single word, still fits the column on one line at 14 sp at the test's density.
         written(SampleWeather.full().replace("partlycloudy", "exceptional"))
         val longest = placed(size)
         assertTrue(WidgetHost.visible(longest.findViewById(R.id.now_line), longest))
@@ -140,35 +144,76 @@ class FlatWidgetTest : WidgetTestBase() {
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
     fun `a flat day's texts shrink to fit its cell instead of being cut`() {
         signIn()
-        val wet =
-            """{"datetime":"2026-11-21T00:00:00+01:00","condition":"rainy","temperature":-12,"templow":-15,""" +
-                """"precipitation":0.04}"""
-        val sleet =
-            """{"datetime":"2026-11-22T00:00:00+01:00","condition":"snowy-rainy","temperature":-12,"templow":-15}"""
-        written(SampleWeather.data(""","days":[$wet,$sleet]"""))
-        val metrics = application.resources.displayMetrics
-        val sp = { value: Float -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, metrics) }
+        // Five days of -12° and -15°, the rain a trace, "< 0,1 mm", on every other one, sleet without an amount, so its
+        // short word, on the rest.
+        val days =
+            (1..5).joinToString(",") { index ->
+                val wet = index % 2 == 1
+                val condition = if (wet) "rainy" else "snowy-rainy"
+                val rain = if (wet) ",\"precipitation\":0.04" else ""
+                """{"datetime":"2026-11-${20 + index}T00:00:00+01:00","condition":"$condition",""" +
+                    """"temperature":-12,"templow":-15$rain}"""
+            }
+        written(SampleWeather.data(""","days":[$days]"""))
+        var tooWide = 0
 
-        for (width in listOf(349f, 388f, 410f)) {
+        for ((width, count) in listOf(349f to 4, 388f to 4, 410f to 5)) {
             val widget = laidOut(placed(SizeF(width, 102f)), SizeF(width, 102f))
-            val days = widget.findViewById<ViewGroup>(R.id.days)
-            assertEquals(
-                listOf(listOf("Sa", "-12°", "-15°", "<\u00A00,1\u00A0mm"), listOf("So", "-12°", "-15°", "Schneeregen")),
-                WidgetHost.days(widget),
-            )
-            for (index in 0 until days.childCount) {
+            val cells = widget.findViewById<ViewGroup>(R.id.days)
+            assertEquals("$width", count, cells.childCount)
+            for (index in 0 until cells.childCount) {
+                val cell = cells.getChildAt(index)
+                val note = if (index % 2 == 0) "<\u00A00,1\u00A0mm" else "Schneeregen"
+                assertEquals(
+                    listOf(
+                        "-12°",
+                        "-15°",
+                        note,
+                    ),
+                    listOf(R.id.flat_day_high, R.id.flat_day_low, R.id.flat_day_note).map {
+                        cell.text(it).text.toString()
+                    },
+                )
+                // The high and the low each take half the day, less the low's 3 dp before it.
+                val high = cell.text(R.id.flat_day_high).width
+                val low = cell.text(R.id.flat_day_low).width
+                assertTrue("$width $high $low", kotlin.math.abs(high - low) <= 1)
+                assertTrue("$width $high", kotlin.math.abs(high - (cell.width - dp(3)) / 2f) <= 1)
                 for (id in listOf(R.id.flat_day_high, R.id.flat_day_low, R.id.flat_day_note)) {
-                    val text = days.getChildAt(index).text(id)
-                    assertEquals("$width ${text.text}", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, text.autoSizeTextType)
-                    assertEquals("$width ${text.text}", Math.round(sp(7.5f)), text.autoSizeMinTextSize)
-                    assertEquals("$width ${text.text}", 1, text.maxLines)
-                    val paint = TextPaint(text.paint).apply { textSize = sp(7.5f) }
-                    assertTrue("$width ${text.text}", paint.measureText(text.text.toString()) <= text.width)
+                    val text = cell.text(id)
+                    val shown = text.text.toString()
+                    assertEquals("$width $shown", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, text.autoSizeTextType)
+                    assertEquals("$width $shown", Math.round(sp(7.5f)), text.autoSizeMinTextSize)
+                    assertEquals("$width $shown", 1, text.maxLines)
+                    assertTrue(
+                        "$width $shown",
+                        TextPaint(text.paint).apply { textSize = sp(7.5f) }.measureText(shown) <= text.width,
+                    )
+                    val largest = TextPaint(text.paint).apply { textSize = text.autoSizeMaxTextSize.toFloat() }
+                    if (largest.measureText(shown) > text.width) tooWide++
                 }
             }
         }
+        // Some of them need the shrink: at their largest size they would not fit.
+        assertTrue("$tooWide", tooWide > 0)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `a redraw of a flat widget whose line took two lines puts Neu anmelden in its place`() {
+        signIn()
+        written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
+        val widget = placed(SizeBucket.sizeOf(columns = 5, rows = 1))
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.now_line_long), widget))
+
+        Services.account(application).reject()
+        Widgets.update(application)
+
+        assertEquals(listOf("7°", "Neu anmelden"), widget.shown().take(2))
+        assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line_long), widget))
     }
 
     @Test
@@ -334,12 +379,10 @@ class FlatWidgetTest : WidgetTestBase() {
         height: Int,
         largest: Float,
     ) {
-        val metrics = application.resources.displayMetrics
-        val sp = { value: Float -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, metrics).toInt() }
         assertEquals(lines, line.maxLines)
         assertEquals(dp(height), line.layoutParams.height)
         assertEquals(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, line.autoSizeTextType)
-        assertEquals(sp(11f), line.autoSizeMinTextSize)
-        assertEquals(sp(largest), line.autoSizeMaxTextSize)
+        assertEquals(Math.round(sp(11f)), line.autoSizeMinTextSize)
+        assertEquals(Math.round(sp(largest)), line.autoSizeMaxTextSize)
     }
 }

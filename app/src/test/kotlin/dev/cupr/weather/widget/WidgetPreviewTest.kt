@@ -119,6 +119,33 @@ class WidgetPreviewTest {
         }
 
     @Test
+    fun `every text of the widget and its preview is set in sans-serif, the font the app measures the line in`() {
+        val layouts =
+            listOf(
+                "widget_weather.xml",
+                "widget_weather_flat.xml",
+                "widget_hour.xml",
+                "widget_day.xml",
+                "widget_flat_day.xml",
+                "widget_weather_preview.xml",
+            )
+        val texts = layouts.flatMap(::elements).filter { it.tagName == "TextView" }
+
+        assertTrue(texts.size > 20)
+        for (text in texts) {
+            val style = text.getAttribute("style").removePrefix("@style/")
+            val id = R.style::class.java.getField(style.replace('.', '_')).getInt(null)
+            val font =
+                application
+                    .obtainStyledAttributes(
+                        id,
+                        intArrayOf(android.R.attr.fontFamily),
+                    ).use { it.getString(0) }
+            assertEquals(style, "sans-serif", font)
+        }
+    }
+
+    @Test
     fun `the preview is a layout a widget can show`() {
         // The picker inflates it as a widget's views, which take only the views RemoteViews allows.
         RemoteViews(application.packageName, R.layout.widget_weather_preview).apply(application, null)

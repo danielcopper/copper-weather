@@ -2,6 +2,7 @@ package dev.cupr.weather.widget
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Typeface
 import android.text.TextPaint
 import android.util.SizeF
 import android.util.TypedValue
@@ -78,7 +79,7 @@ internal object WidgetViews {
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
         val room = Room(context.resources, size, content.signInAgain)
-        line(context, views, content.now.line, room.inside().takeIf { small })
+        line(context, views, room, content.now.line, twoLineRoom = room.inside().takeIf { small })
 
         val hours = if (small) emptyList() else content.hours.take(room.hours())
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it) }
@@ -102,22 +103,26 @@ internal object WidgetViews {
         now(views, content.now, compact = true)
         val room = Room(context.resources, size, content.signInAgain)
         val days = if (SizeBucket.wide(size)) content.days.take(room.flatDays()) else emptyList()
+        // With days "now" has its column, without them the card's width; the line is measured against the same.
+        val column =
+            if (days.isEmpty()) {
+                views.setViewLayoutWidth(
+                    R.id.now_column,
+                    ViewGroup.LayoutParams.MATCH_PARENT.toFloat(),
+                    TypedValue.COMPLEX_UNIT_PX,
+                )
+                room.inside()
+            } else {
+                views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
+                room.flatNow()
+            }
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
         } else {
-            line(context, views, content.now.line, if (days.isEmpty()) room.inside() else room.flatNow())
+            line(context, views, room, content.now.line, twoLineRoom = column)
         }
 
-        if (days.isEmpty()) {
-            views.setViewLayoutWidth(
-                R.id.now_column,
-                ViewGroup.LayoutParams.MATCH_PARENT.toFloat(),
-                TypedValue.COMPLEX_UNIT_PX,
-            )
-        } else {
-            views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
-        }
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
         views.rows(R.id.days, days) { WidgetRows.flatDay(context, it) }
@@ -162,14 +167,16 @@ internal object WidgetViews {
 
     /**
      * The line below "now": the rain hint in the palette's `rain`, else the condition's word, else nothing (D36). In
-     * the small and the flat bucket, with [room] dp for it, a text that does not fit one line at the line's size goes
-     * to the line below, which takes two lines at a smaller size.
+     * the small and the flat bucket, given [twoLineRoom], the dp the line has there, a text that does not fit that on
+     * one line at the line's size takes the line's two-line form (`now_line_long`) instead, at a smaller size; in the
+     * other buckets, without it, the line keeps its one-line form.
      */
     private fun line(
         context: Context,
         views: RemoteViews,
+        room: Room,
         line: WidgetContent.Line?,
-        room: Float?,
+        twoLineRoom: Float?,
     ) {
         val (text, role) =
             when (line) {
@@ -178,7 +185,7 @@ internal object WidgetViews {
                 is WidgetContent.Line.RainIn -> context.rainIn(line.minutes) to Palette::rain
                 is WidgetContent.Line.Word -> context.getString(line.word) to Palette::text
             }
-        val long = text != null && room != null && !context.fitsOneLine(text, room)
+        val long = text != null && twoLineRoom != null && !room.fitsOneLine(text, twoLineRoom)
         views.show(R.id.now_line, text.takeUnless { long }, role)
         views.show(R.id.now_line_long, text.takeIf { long }, role)
     }
@@ -209,7 +216,27 @@ internal object WidgetViews {
         private val notice: Boolean,
     ) {
         private val density = resources.displayMetrics.density
-        private val dimen = { id: Int -> resources.getDimension(id) / density }
+        private val lineText = resources.getDimension(R.dimen.widget_line_text)
+        private val dimen = { id: Int -> dp(resources.getDimension(id)) }
+
+        private fun dp(px: Float): Float = px / density
+
+        /**
+         * Whether [text] fits [width] dp on one line at the size of the line below "now" (`widget_line_text`), in the
+         * system's sans-serif, the font every text of the widget is set in (`styles.xml`, D36).
+         */
+        fun fitsOneLine(
+            text: String,
+            width: Float,
+        ): Boolean {
+            val paint =
+                TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
+                    textSize = lineText
+                    typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                }
+            return dp(paint.measureText(text)) <= width
+        }
+
         private val padding = dimen(R.dimen.widget_padding)
         private val gap = dimen(R.dimen.widget_gap)
 
@@ -246,19 +273,4 @@ internal object WidgetViews {
             each: Float,
         ): Int = floor(room / each).toInt().coerceAtLeast(0)
     }
-}
-
-/**
- * Whether [text] fits [room] dp on one line at the size of the line below "now" (`widget_line_text`), in the system
- * font the launcher draws it in (D36).
- */
-private fun Context.fitsOneLine(
-    text: String,
-    room: Float,
-): Boolean {
-    val paint =
-        TextPaint(
-            TextPaint.ANTI_ALIAS_FLAG,
-        ).apply { textSize = resources.getDimension(R.dimen.widget_line_text) }
-    return paint.measureText(text) / resources.displayMetrics.density <= room
 }

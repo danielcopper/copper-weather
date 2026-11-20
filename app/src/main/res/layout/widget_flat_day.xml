@@ -20,15 +20,15 @@
 
         <TextView
             android:id="@+id/flat_day_high"
-            style="@style/WeatherWidget.FlatDayHigh" />
+            style="@style/WeatherWidget.FlatDayFit.Degree.High" />
 
         <TextView
             android:id="@+id/flat_day_low"
-            style="@style/WeatherWidget.FlatDayLow" />
+            style="@style/WeatherWidget.FlatDayFit.Degree.Low" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/flat_day_note"
-        style="@style/WeatherWidget.FlatDayNote"
+        style="@style/WeatherWidget.FlatDayFit.Note"
         android:visibility="invisible" />
 </LinearLayout>

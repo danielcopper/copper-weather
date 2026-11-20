@@ -37,6 +37,7 @@
     <!-- A flat day's high and low and the line below them (D41). -->
     <dimen name="widget_flat_day_degrees_height">18dp</dimen>
     <dimen name="widget_flat_day_note_height">16dp</dimen>
+    <dimen name="widget_flat_day_text_least">7.5sp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>

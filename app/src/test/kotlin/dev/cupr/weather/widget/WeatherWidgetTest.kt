@@ -88,6 +88,7 @@ class WeatherWidgetTest : WidgetTestBase() {
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
     fun `in the small bucket a text too long for one line takes the two-line form, in the wide bucket it does not`() {
         signIn()
         written(SampleWeather.data().replace("partlycloudy", "lightning-rainy"))
@@ -101,6 +102,21 @@ class WeatherWidgetTest : WidgetTestBase() {
         assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_line), wide))
         assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_line_long), wide))
         assertEquals(1, wide.text(R.id.now_line).maxLines)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun `a small widget whose line took two lines shows only the plain text once signed out`() {
+        signIn()
+        written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
+        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.now_line_long), widget))
+
+        Services.account(application).signOut()
+        Services.snapshots(application).clear()
+        Widgets.update(application)
+
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), widget.shown())
     }
 
     @Test
