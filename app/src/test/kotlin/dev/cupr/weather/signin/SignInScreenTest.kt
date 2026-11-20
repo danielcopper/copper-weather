@@ -250,6 +250,16 @@ class SignInScreenTest {
     }
 
     @Test
+    fun `signed out, the screen does not show the attribution of a snapshot left behind`() {
+        snapshot("""{"schema_version":1,"attribution":"Weather data: a test source"}""")
+
+        open()
+
+        node(R.string.sign_in).assertExists()
+        compose.onNodeWithText("Weather data: a test source").assertDoesNotExist()
+    }
+
+    @Test
     fun `a fetch that finishes while the screen is open shows its time there`() {
         signIn()
         open()

@@ -305,23 +305,18 @@ class FetcherTest {
     }
 
     @Test
-    fun `data without schema version 1 as a number is an unexpected answer and keeps the last snapshot`() {
+    fun `data without a schema version is an unexpected answer and keeps the last snapshot`() {
         signIn()
         snapshots.write(old)
-        val reasons =
-            mapOf(
-                """{"now":{}}""" to "the data has no schema_version",
-                """{"schema_version":"1"}""" to "schema_version is not a whole number",
-                """{"schema_version":1.5}""" to "schema_version is not a whole number",
-                """{"schema_version":null}""" to "schema_version is not a whole number",
-                """{"schema_version":0}""" to "schema_version 0 is older than 1",
-            )
+        home.data = """{"now":{"temperature":9}}"""
 
-        for ((data, reason) in reasons) {
-            home.data = data
-            assertEquals(data, Fetcher.Outcome.Failed(reason, FetchCause.UNEXPECTED), fetcher.fetch())
-            assertEquals(data, old, snapshots.read())
-        }
+        assertEquals(
+            Fetcher.Outcome.Failed("the data has no schema_version", FetchCause.UNEXPECTED),
+            fetcher.fetch(),
+        )
+
+        assertEquals(old, snapshots.read())
+        assertEquals(FailedFetch(now, FetchCause.UNEXPECTED), failures.read())
     }
 
     // Keeping a new sign-in (D22, D26, D31).
@@ -494,6 +489,25 @@ class FetcherTest {
             accountLogs.contains("Signed out; Home Assistant was not asked to end the refresh token"),
         )
         assertEquals(Log.WARN, signedOutLevel())
+    }
+
+    @Test
+    fun `a sign-in after a refused one whose snapshot cannot be deleted leaves the account refused`() {
+        signIn()
+        account.reject()
+        File(snapshotFile, "blocking").mkdirs()
+
+        val outcome = fetcher.signIn(SignInRequest.start(home.address), code)
+
+        assertTrue(outcome.toString(), outcome is Fetcher.SignIn.Failed)
+        assertEquals(Account.State.REJECTED, account.state)
+        assertFalse(prefs.contains("refresh_token"))
+        assertEquals(
+            "/auth/revoke",
+            home.requests
+                .last()
+                .first.url.encodedPath,
+        )
     }
 
     @Test

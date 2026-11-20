@@ -29,8 +29,8 @@ data class Status(
 ) {
     /**
      * The line under the title: while signed in, when the last successful fetch was (the snapshot's time), or that
-     * none was yet; else why signing in
-     * again is needed (D32); none while signed out, when the address form shows instead.
+     * none was yet; else why signing in again is needed (D32); none while signed out, when the address form shows
+     * instead.
      */
     fun line(
         context: Context,
@@ -64,6 +64,14 @@ data class Status(
                     ?: context.getString(R.string.sign_in_no_fetch)
             }
         }
+
+    /**
+     * The snapshot's attribution as the screen shows it (D18): while signed in, and beside a refused or unreadable
+     * sign-in, whose snapshot the widget still shows (D32); none while signed out, when a snapshot left behind is no
+     * one's (D31).
+     */
+    val attributionLine: String?
+        get() = attribution?.takeIf { state != Account.State.SIGNED_OUT }
 
     /** The line under it while signed in and the last fetch failed: when, and its cause (D28). */
     fun failedLine(

@@ -3,7 +3,6 @@ package dev.cupr.weather.store
 import androidx.core.util.AtomicFile
 import dev.cupr.weather.ha.SensorData
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,7 +30,7 @@ class SnapshotStoreTest {
 
     private fun data(text: String) = SensorData(Json.parseToJsonElement(text).jsonObject)
 
-    private val empty = SensorData(JsonObject(emptyMap()))
+    private val empty = data("""{"schema_version":1}""")
 
     private val snapshot =
         Snapshot(
@@ -148,8 +147,29 @@ class SnapshotStoreTest {
     }
 
     @Test
+    fun `a new file or an old backup still there after clearing is a failure, and logged`() {
+        // Directories with a file in them where AtomicFile keeps its new file and an older one's backup.
+        File(file.path + ".new", "blocking").mkdirs()
+        File(file.path + ".bak", "blocking").mkdirs()
+
+        assertThrows(IOException::class.java) { store.clear() }
+
+        val logs = ShadowLog.getLogsForTag("Snapshot").joinToString { it.msg }
+        assertTrue(logs, logs.contains("The snapshot could not be deleted: snapshot.json.new, snapshot.json.bak left"))
+    }
+
+    @Test
+    fun `a stored snapshot in another schema version reads as none, and is logged`() {
+        file.writeText("""{"fetched_at":1,"data":{"schema_version":2,"now":{"temperature":7}}}""")
+
+        assertNull(store.read())
+        val logs = ShadowLog.getLogsForTag("Snapshot").joinToString { it.msg }
+        assertTrue(logs, logs.contains("The snapshot's data is not read: schema_version 2 is newer than 1"))
+    }
+
+    @Test
     fun `a snapshot that is still there after clearing is a failure, and logged`() {
-        // A directory with a file in it where the snapshot belongs: AtomicFile's delete fails, which it only logs.
+        // A directory with a file in it where the snapshot belongs: AtomicFile's delete fails and does not report it.
         File(file, "blocking").mkdirs()
 
         assertThrows(IOException::class.java) { store.clear() }

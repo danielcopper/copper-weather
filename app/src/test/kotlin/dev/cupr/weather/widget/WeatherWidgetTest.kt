@@ -20,7 +20,6 @@ import dev.cupr.weather.store.AesGcmCipher
 import dev.cupr.weather.store.Snapshot
 import dev.cupr.weather.store.TokenCipher
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -190,11 +189,22 @@ class WeatherWidgetTest {
             snapshot(now)
             assertEquals(now, listOf("Noch keine Daten – zum Öffnen tippen"), placed().shown())
         }
-        Services.snapshots(application).write(Snapshot(Instant.EPOCH, SensorData(JsonObject(emptyMap()))))
+        Services
+            .snapshots(
+                application,
+            ).write(Snapshot(Instant.EPOCH, SensorData(Json.parseToJsonElement("""{"schema_version":1}""").jsonObject)))
         assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), placed().shown())
 
         Services.account(application).reject()
         assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), placed().shown())
+    }
+
+    @Test
+    fun `a temperature that is not a finite number shows nothing, and the condition still shows`() {
+        signIn()
+        snapshot("""{"temperature":NaN,"condition":"sunny"}""")
+
+        assertEquals(listOf("Sonnig"), placed().shown())
     }
 
     @Test

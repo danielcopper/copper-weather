@@ -48,16 +48,21 @@ class SnapshotStore internal constructor(
             null
         }
 
-    /** The snapshot [text] holds, or none when it holds none (logged). */
+    /**
+     * The snapshot [text] holds, or none when it holds none or its data is not in the schema version the app reads,
+     * as after an update of the app that reads another (D30); logged.
+     */
     private fun parse(text: String): Snapshot? {
         val json = parseObject(text)
         val fetchedAt = json?.get(FETCHED_AT)?.numberContent()?.toLongOrNull()
-        val data = json?.objectField(DATA)
-        if (fetchedAt == null || data == null) {
-            Log.w(TAG, "The snapshot's file holds no snapshot")
-            return null
+        val read = json?.objectField(DATA)?.let(SensorData::read)
+        when {
+            fetchedAt == null || read == null -> Log.w(TAG, "The snapshot's file holds no snapshot")
+            read is SensorData.Read.Unreadable -> Log.w(TAG, "The snapshot's data is not read: ${read.reason}")
+            else -> Unit
         }
-        return Snapshot(Instant.ofEpochMilli(fetchedAt), SensorData(data))
+        val data = (read as? SensorData.Read.Readable)?.data
+        return if (fetchedAt == null || data == null) null else Snapshot(Instant.ofEpochMilli(fetchedAt), data)
     }
 
     /**
@@ -86,9 +91,9 @@ class SnapshotStore internal constructor(
     }
 
     /**
-     * Deletes the snapshot, with the files AtomicFile keeps beside it while it writes (`.new`) and an older one's
-     * backup (`.bak`). Throws [IOException] when one of them is still there afterwards, since AtomicFile's `delete`
-     * only logs a file it could not delete, and a snapshot must not outlive the sign-in it was fetched with (D31).
+     * Deletes the snapshot, with the file AtomicFile keeps beside it while it writes (`.new`) and a backup an older
+     * AtomicFile left (`.bak`). Throws [IOException] when one of them is still there afterwards, since AtomicFile's
+     * `delete` ignores whether each file went, and a snapshot left behind must never show as a later sign-in's (D31).
      */
     fun clear() {
         file.delete()

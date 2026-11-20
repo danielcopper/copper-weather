@@ -63,7 +63,10 @@ class HaClient(
             }
 
             else -> {
-                SensorData.read(data)
+                when (val read = SensorData.read(data)) {
+                    is SensorData.Read.Readable -> Result.Ok(read.data)
+                    is SensorData.Read.Unreadable -> Result.Failed(read.reason, read.kind)
+                }
             }
         }
     }

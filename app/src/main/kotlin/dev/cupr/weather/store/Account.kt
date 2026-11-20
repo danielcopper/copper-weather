@@ -72,13 +72,19 @@ class Account(
 
     fun rememberAddress(address: HaAddress) = prefs.edit { putString(ADDRESS, address.url.toString()) }
 
-    /** Keeps a new sign-in; throws [CipherFailureException] when the token cannot be sealed, and keeps nothing then. */
+    /**
+     * Keeps a new sign-in; throws [CipherFailureException] when the token cannot be sealed, and keeps nothing then.
+     * [beforeKeeping] runs once the token is sealed and before anything is kept; when it throws, nothing is kept
+     * either.
+     */
     fun signIn(
         address: HaAddress,
         clientId: String,
         refreshToken: RefreshToken,
+        beforeKeeping: () -> Unit = {},
     ) {
         val sealed = Base64.getEncoder().encodeToString(cipher.seal(refreshToken.value.toByteArray(Charsets.UTF_8)))
+        beforeKeeping()
         prefs.edit {
             putString(ADDRESS, address.url.toString())
             putString(CLIENT_ID, clientId)

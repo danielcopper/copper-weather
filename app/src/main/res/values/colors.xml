@@ -2,8 +2,8 @@
 <!-- Fields of the palette (dev.cupr.weather.palette.Palette, D7) that the
      resources need, outside night mode (night: values-night): bg for the
      window and the splash screen, surface and sun for the launcher icon's
-     background and glyph, surface for the widget's card. ColorLiteralTest says what keeps them
-     equal to the palette. -->
+     background and glyph, surface for the widget's card. ColorLiteralTest
+     says what keeps them equal to the palette. -->
 <resources>
     <color name="palette_bg">#FFEEF1F5</color>
     <color name="palette_surface">#FFFFFFFF</color>

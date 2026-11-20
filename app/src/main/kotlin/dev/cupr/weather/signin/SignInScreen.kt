@@ -52,8 +52,9 @@ import java.time.ZoneId
 /**
  * The app's screen. Signed out: the address field and "Mit Home Assistant anmelden", which opens Home Assistant's
  * login page in a WebView (D24, D25); a sign-in refused or unreadable says so above it (D32). Signed in: when the last
- * fetch was, whether it failed, "Abmelden" (D27) and how often the app fetches (D28). The snapshot's attribution shows
- * while there is one (D18). The status is read off the main thread, again each time the screen starts ([starts]),
+ * successful fetch was, whether the last one failed, "Abmelden" (D27) and how often the app fetches (D28). The
+ * snapshot's attribution shows while there is one and someone is signed in, refused or unreadable included (D18, D32).
+ * The status is read off the main thread, again each time the screen starts ([starts]),
  * after each sign-in or sign-out, and whenever a fetch changes state.
  */
 @Composable
@@ -144,7 +145,7 @@ private fun Content(
             status.line(context, now, zone)?.let { Text(it) }
             status.failedLine(context, now, zone)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             problem?.let { Text(stringResource(it.text), color = MaterialTheme.colorScheme.error) }
-            status.attribution?.let {
+            status.attributionLine?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (status.state == Account.State.SIGNED_IN) {

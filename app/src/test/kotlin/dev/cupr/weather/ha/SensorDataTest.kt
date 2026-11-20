@@ -35,13 +35,21 @@ class SensorDataTest {
     }
 
     @Test
+    fun `a temperature that is not a finite number reads as absent`() {
+        for (number in listOf("NaN", "Infinity", "-Infinity", "1e400", "-1e400")) {
+            assertNull(number, data("""{"now":{"temperature":$number}}""").temperature)
+        }
+        assertEquals(-1.0e300, data("""{"now":{"temperature":-1e300}}""").temperature)
+    }
+
+    @Test
     fun `schema version 1 is read, a newer one is named as such, and anything else is unexpected`() {
         assertEquals(
-            HaClient.Result.Ok(data("""{"schema_version":1}""")),
+            SensorData.Read.Readable(data("""{"schema_version":1}""")),
             SensorData.read(json("""{"schema_version":1}""")),
         )
         assertEquals(
-            HaClient.Result.Failed("schema_version 2 is newer than 1", FailureKind.NEWER_SCHEMA),
+            SensorData.Read.Unreadable("schema_version 2 is newer than 1", FailureKind.NEWER_SCHEMA),
             SensorData.read(json("""{"schema_version":2}""")),
         )
         val unexpected =
@@ -52,9 +60,10 @@ class SensorDataTest {
                 """{"schema_version":null}""" to "schema_version is not a whole number",
                 """{"schema_version":true}""" to "schema_version is not a whole number",
                 """{"schema_version":0}""" to "schema_version 0 is older than 1",
+                """{"schema_version":NaN}""" to "schema_version is not a whole number",
             )
         for ((text, reason) in unexpected) {
-            assertEquals(text, HaClient.Result.Failed(reason, FailureKind.UNEXPECTED), SensorData.read(json(text)))
+            assertEquals(text, SensorData.Read.Unreadable(reason, FailureKind.UNEXPECTED), SensorData.read(json(text)))
         }
     }
 }

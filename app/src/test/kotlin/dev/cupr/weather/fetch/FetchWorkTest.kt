@@ -95,7 +95,9 @@ class FetchWorkTest {
             .write(
                 Snapshot(
                     Instant.EPOCH,
-                    SensorData(Json.parseToJsonElement("""{"now":{"temperature":$celsius}}""").jsonObject),
+                    SensorData(
+                        Json.parseToJsonElement("""{"schema_version":1,"now":{"temperature":$celsius}}""").jsonObject,
+                    ),
                 ),
             )
 
@@ -317,9 +319,16 @@ class FetchWorkTest {
     @Test
     fun `a sign-in updates the widgets and schedules the fetches, a failed one does neither`() {
         val widget = placed()
+        // A failed sign-in changes nothing the widget shows, so whether it updates the widget is counted.
+        var updates = 0
+        WeatherWidgetProvider.content = {
+            updates++
+            content(it)
+        }
         home.token = { FakeHomeAssistant.json("""{"error":"invalid_grant"}""", 400) }
         assertFalse(Services.signIn(context, SignInRequest.start(home.address), AuthorizationCode("code-1")))
         assertEquals(emptyList<WorkInfo.State>(), scheduled)
+        assertEquals(0, updates)
         assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), WidgetHost.shown(widget))
 
         home.token = { FakeHomeAssistant.json("""{"refresh_token":"refresh-1","token_type":"Bearer"}""") }

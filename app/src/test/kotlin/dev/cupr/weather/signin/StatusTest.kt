@@ -106,6 +106,25 @@ class StatusTest {
     }
 
     @Test
+    fun `the attribution shows while someone is signed in, refused or unreadable included, not while signed out`() {
+        val shown =
+            Account.State.entries.associateWith {
+                Status(it, "", attribution = "Weather data: a test source").attributionLine
+            }
+
+        assertEquals(
+            mapOf(
+                Account.State.SIGNED_OUT to null,
+                Account.State.SIGNED_IN to "Weather data: a test source",
+                Account.State.REJECTED to "Weather data: a test source",
+                Account.State.UNREADABLE to "Weather data: a test source",
+            ),
+            shown,
+        )
+        assertNull(Status(Account.State.SIGNED_IN, "").attributionLine)
+    }
+
+    @Test
     fun `the status reads the state and the address without its slash, or none before one is entered`() {
         assertEquals(Status(Account.State.SIGNED_OUT, ""), Status.read(context))
 

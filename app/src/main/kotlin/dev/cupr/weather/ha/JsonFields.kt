@@ -11,9 +11,12 @@ internal fun JsonElement.stringContent(): String? = (this as? JsonPrimitive)?.ta
 /** A field that is a JSON string, or none. */
 internal fun JsonObject.string(name: String): String? = this[name]?.stringContent()
 
-/** A JSON number as written, or none for any other element: a string, a boolean, `null`, an object or an array. */
+/**
+ * A finite JSON number as written, or none for any other element: a string, a boolean, `null`, an object or an array,
+ * and NaN, an infinity or a number too large for a Double, which the parser takes as numbers.
+ */
 internal fun JsonElement.numberContent(): String? =
-    (this as? JsonPrimitive)?.takeUnless { it.isString }?.content?.takeIf { it.toDoubleOrNull() != null }
+    (this as? JsonPrimitive)?.takeUnless { it.isString }?.content?.takeIf { it.toDoubleOrNull()?.isFinite() == true }
 
 /** A field that is a JSON number, or none. */
 internal fun JsonObject.number(name: String): Double? = this[name]?.numberContent()?.toDouble()
