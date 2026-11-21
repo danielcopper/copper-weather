@@ -310,7 +310,7 @@ internal object WidgetViews {
 
         /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
         fun flatText(column: Float): Float =
-            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_now_gap)
+            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_flat_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))
