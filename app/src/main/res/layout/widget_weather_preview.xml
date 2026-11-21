@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget picker's preview of "Wetter" (D40): the widget as it is
+     added, 4 x 2 cells, wide, with sample weather: "now" and five hours, in
+     the parts' styles the widget's layouts use (styles.xml) and the
+     palette's colours, light and dark (values-night). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/WeatherWidget.Card">
+
+    <LinearLayout style="@style/WeatherWidget.NowRow">
+
+        <ImageView
+            style="@style/WeatherWidget.NowIcon"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/weather_partlycloudy_day" />
+
+        <TextView
+            style="@style/WeatherWidget.NowTemperature"
+            android:text="@string/preview_temperature"
+            android:textColor="@color/palette_text" />
+
+        <LinearLayout style="@style/WeatherWidget.NowToday">
+
+            <TextView
+                style="@style/WeatherWidget.Degrees"
+                android:text="@string/preview_high"
+                android:textColor="@color/palette_text" />
+
+            <TextView
+                style="@style/WeatherWidget.Degrees"
+                android:text="@string/preview_low"
+                android:textColor="@color/palette_text_muted" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        style="@style/WeatherWidget.Line"
+        android:text="@string/condition_partlycloudy"
+        android:textColor="@color/palette_text" />
+
+    <LinearLayout style="@style/WeatherWidget.Hours">
+
+        <LinearLayout style="@style/WeatherWidget.Hour">
+
+            <TextView
+                style="@style/WeatherWidget.HourTime"
+                android:text="@string/preview_hour_1"
+                android:textColor="@color/palette_text_muted" />
+
+            <ImageView
+                style="@style/WeatherWidget.HourIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/weather_sunny_day" />
+
+            <TextView
+                style="@style/WeatherWidget.HourTemperature"
+                android:text="@string/preview_degrees_8"
+                android:textColor="@color/palette_text" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/WeatherWidget.Hour">
+
+            <TextView
+                style="@style/WeatherWidget.HourTime"
+                android:text="@string/preview_hour_2"
+                android:textColor="@color/palette_text_muted" />
+
+            <ImageView
+                style="@style/WeatherWidget.HourIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/weather_partlycloudy_day" />
+
+            <TextView
+                style="@style/WeatherWidget.HourTemperature"
+                android:text="@string/preview_degrees_8"
+                android:textColor="@color/palette_text" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/WeatherWidget.Hour">
+
+            <TextView
+                style="@style/WeatherWidget.HourTime"
+                android:text="@string/preview_hour_3"
+                android:textColor="@color/palette_text_muted" />
+
+            <ImageView
+                style="@style/WeatherWidget.HourIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/weather_cloudy_day" />
+
+            <TextView
+                style="@style/WeatherWidget.HourTemperature"
+                android:text="@string/preview_degrees_7"
+                android:textColor="@color/palette_text" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/WeatherWidget.Hour">
+
+            <TextView
+                style="@style/WeatherWidget.HourTime"
+                android:text="@string/preview_hour_4"
+                android:textColor="@color/palette_text_muted" />
+
+            <ImageView
+                style="@style/WeatherWidget.HourIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/weather_rainy_night" />
+
+            <TextView
+                style="@style/WeatherWidget.HourTemperature"
+                android:text="@string/preview_degrees_6"
+                android:textColor="@color/palette_text" />
+
+            <TextView
+                style="@style/WeatherWidget.HourRain"
+                android:text="@string/preview_rain"
+                android:textColor="@color/palette_rain" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/WeatherWidget.Hour">
+
+            <TextView
+                style="@style/WeatherWidget.HourTime"
+                android:text="@string/preview_hour_5"
+                android:textColor="@color/palette_text_muted" />
+
+            <ImageView
+                style="@style/WeatherWidget.HourIcon"
+                android:importantForAccessibility="no"
+                android:src="@drawable/weather_cloudy_night" />
+
+            <TextView
+                style="@style/WeatherWidget.HourTemperature"
+                android:text="@string/preview_degrees_6"
+                android:textColor="@color/palette_text" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

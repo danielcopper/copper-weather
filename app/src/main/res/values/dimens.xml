@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's parts (widget_weather.xml, widget_weather_flat.xml,
+     widget_hour.xml, widget_day.xml, widget_flat_day.xml) at fixed sizes,
+     so WidgetViews can work out how many hours fit the width and how many
+     days the height, or in the flat bucket the width (D35). -->
+<resources>
+    <dimen name="widget_padding">12dp</dimen>
+    <dimen name="widget_gap">8dp</dimen>
+    <!-- "Now": the row of its image, temperature and today's high and low, the
+         line below it, and "Neu anmelden" below that while it shows; the gap
+         between the image and the temperature, outside the flat bucket. -->
+    <dimen name="widget_now_height">48dp</dimen>
+    <dimen name="widget_now_icon">48dp</dimen>
+    <dimen name="widget_now_temperature_text">30sp</dimen>
+    <dimen name="widget_now_gap">6dp</dimen>
+    <!-- "Now" in the small bucket (D36): a lower row with a smaller image. -->
+    <dimen name="widget_now_height_compact">40dp</dimen>
+    <dimen name="widget_now_icon_compact">40dp</dimen>
+    <!-- Today's high and low in a row below "now", in the small bucket. -->
+    <dimen name="widget_today_height">18dp</dimen>
+    <!-- The flat bucket (D36): "now" in a column of its own width, its image
+         at the left and beside it its temperature, its line and today's line,
+         then the divider and its padding, and the days beside it, each at
+         least 38 dp wide with its gap of 4 (D41); the card's padding above and
+         below is less than its sides', so a day fits one row. -->
+    <dimen name="widget_flat_now_width">140dp</dimen>
+    <!-- The image beside the days, and the smaller one without them (D36). -->
+    <dimen name="widget_flat_now_icon">66dp</dimen>
+    <dimen name="widget_flat_now_icon_narrow">56dp</dimen>
+    <!-- A small gap between the flat image and its text: the images' own
+         transparent border keeps most of it (D36). -->
+    <dimen name="widget_flat_now_gap">3dp</dimen>
+    <dimen name="widget_flat_temperature_text">24sp</dimen>
+    <dimen name="widget_flat_temperature_height">30dp</dimen>
+    <!-- Today's high, low and rain, a third line below "now" (D36): their
+         size, and the least size the rain shrinks to. -->
+    <dimen name="widget_flat_today_height">16dp</dimen>
+    <dimen name="widget_flat_today_text">11sp</dimen>
+    <dimen name="widget_flat_today_text_least">7sp</dimen>
+    <dimen name="widget_flat_today_low_gap">3dp</dimen>
+    <dimen name="widget_flat_today_rain_gap">4dp</dimen>
+    <dimen name="widget_flat_padding">8dp</dimen>
+    <dimen name="widget_divider">1dp</dimen>
+    <!-- 8 dp from the divider to the first day, as "now" ends 8 dp before it:
+         the days' own 4 and that day's gap of 4 (D41). -->
+    <dimen name="widget_flat_days_padding">4dp</dimen>
+    <dimen name="widget_flat_day_width">38dp</dimen>
+    <dimen name="widget_flat_day_gap">4dp</dimen>
+    <!-- The line below "now" and its two-line form: D36. -->
+    <dimen name="widget_line_text">14sp</dimen>
+    <dimen name="widget_line_height">20dp</dimen>
+    <dimen name="widget_line_long_text">12sp</dimen>
+    <dimen name="widget_line_long_height">36dp</dimen>
+    <dimen name="widget_line_flat_text">13sp</dimen>
+    <dimen name="widget_line_long_flat_text">11sp</dimen>
+    <dimen name="widget_line_long_flat_height">32dp</dimen>
+    <!-- A flat day's image, and its high and low as a pair: their row, their
+         size and the least the app shrinks them to, and the gap between them
+         (D41). -->
+    <dimen name="widget_flat_day_icon">28dp</dimen>
+    <dimen name="widget_flat_day_degrees_height">18dp</dimen>
+    <dimen name="widget_flat_day_text">12sp</dimen>
+    <dimen name="widget_flat_day_text_least">7sp</dimen>
+    <dimen name="widget_flat_day_low_gap">3dp</dimen>
+    <!-- For a text the app sizes to fit, today's rain and the days' highs and
+         lows (D36, D41): the step between the sizes it tries, and the room it
+         leaves, since a launcher lays a view out in whole pixels, a day can
+         get a pixel less than its share and a text's view rounds its width
+         up; a dp holds those two pixels from twice the base density up. -->
+    <dimen name="widget_flat_text_step">0.5sp</dimen>
+    <dimen name="widget_flat_fit_slack">1dp</dimen>
+    <dimen name="widget_notice_height">18dp</dimen>
+    <dimen name="widget_notice_text">13sp</dimen>
+    <!-- An hour of the hours: its least width and its height. -->
+    <dimen name="widget_hour_width">48dp</dimen>
+    <dimen name="widget_hour_height">76dp</dimen>
+    <!-- A day of the days. -->
+    <dimen name="widget_day_height">28dp</dimen>
+    <dimen name="widget_small_icon">24dp</dimen>
+</resources>

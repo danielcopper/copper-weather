@@ -1,45 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter", a plain text stand-in (D33): the temperature, the
-     condition and "Neu anmelden" below them, or a plain text instead, on the
-     card. Every text starts hidden; WeatherWidgetProvider shows the ones it
-     fills and sets their colours from the palette, light and dark (D7). The
-     whole card is one tap. -->
+<!-- The widget "Wetter" (D12-D14, D33, D36): "now" (its still image, the
+     temperature, today's high and low beside it or, in the small bucket,
+     below it, then the rain hint or the condition, and "Neu anmelden" while
+     the sign-in is no longer usable), the hours and the days as the size
+     bucket shows them, or a plain text instead, on the card. Every part starts
+     hidden; WidgetViews shows the ones it fills, adds the hours and days, and
+     sets the texts' colours from the palette, light and dark (D7). The card,
+     "now" and the hours' strip take their looks from styles.xml, as the
+     picker's preview does, and so do "Neu anmelden" and the plain text but
+     for their heights; the days' list carries its own. The whole card is one
+     tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/widget_card"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="12dp">
+    style="@style/WeatherWidget.Card">
+
+    <LinearLayout
+        android:id="@+id/now"
+        style="@style/WeatherWidget.NowRow"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/now_icon"
+            style="@style/WeatherWidget.NowIcon"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/now_temperature"
+            style="@style/WeatherWidget.NowTemperature"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/now_today"
+            style="@style/WeatherWidget.NowToday"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/now_high"
+                style="@style/WeatherWidget.Degrees" />
+
+            <TextView
+                android:id="@+id/now_low"
+                style="@style/WeatherWidget.Degrees" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/now_today_below"
+        style="@style/WeatherWidget.NowTodayBelow"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/now_high_below"
+            style="@style/WeatherWidget.Degrees.Below" />
+
+        <TextView
+            android:id="@+id/now_low_below"
+            style="@style/WeatherWidget.Degrees" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/widget_temperature"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="40sp"
+        android:id="@+id/now_line"
+        style="@style/WeatherWidget.Line"
         android:visibility="gone" />
 
     <TextView
-        android:id="@+id/widget_condition"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="16sp"
+        android:id="@+id/now_line_long"
+        style="@style/WeatherWidget.Line.Long"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/widget_notice"
-        android:layout_width="wrap_content"
+        style="@style/WeatherWidget.Notice"
+        android:layout_height="@dimen/widget_notice_height"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/hours"
+        style="@style/WeatherWidget.Hours"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/days"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
+        android:layout_marginTop="@dimen/widget_gap"
+        android:orientation="vertical"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/widget_plain"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="14sp"
+        style="@style/WeatherWidget.Plain"
+        android:layout_height="match_parent"
         android:visibility="gone" />
 </LinearLayout>

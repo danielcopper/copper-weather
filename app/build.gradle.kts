@@ -74,13 +74,21 @@ android {
                 test.maxHeapSize = "1536m"
                 // Robolectric sets up API 37's shared memory through JDK internals.
                 test.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
-                // Some tests read files rather than what the build makes of them: the module's sources and
-                // version.txt. Declared as inputs, a change to them runs the tests again rather than taking their
-                // result from the build cache.
+                // Some tests read files rather than what the build makes of them: the module's sources, version.txt,
+                // and the weather icons' script and SVGs (WeatherIconsTest). Declared as inputs, a change to them runs
+                // the tests again rather than taking their result from the build cache.
                 test.inputs
                     .dir("src")
                     .withPathSensitivity(PathSensitivity.RELATIVE)
                     .withPropertyName("sources")
+                test.inputs
+                    .dir(rootProject.layout.projectDirectory.dir("scripts"))
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
+                    .withPropertyName("scripts")
+                test.inputs
+                    .dir(rootProject.layout.projectDirectory.dir("icons"))
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
+                    .withPropertyName("icons")
                 test.inputs
                     .file(rootProject.layout.projectDirectory.file("version.txt"))
                     .withPathSensitivity(PathSensitivity.RELATIVE)

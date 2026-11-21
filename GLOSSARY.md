@@ -16,8 +16,9 @@ version has one widget, whose content follows its **size bucket** (D4).
 
 ### Size bucket
 
-The size class of a widget that decides what it shows: small (**now**), wide (plus the **hours**) and tall
-(plus the **days**) (D4); where each begins: D11.
+The size class of a widget that decides what it shows: flat, one row high (**now**, and from 4 cells wide the
+**days** beside it), small (**now**), wide (plus the **hours**) and tall (plus the **days**) (D4); where each begins:
+D11.
 
 ### Snapshot
 
@@ -41,8 +42,8 @@ Home Assistant's word for the weather of a moment or a day, as its weather entit
 
 ### Now / hours / days
 
-The three parts of the weather the widget shows (D4): **now** is the weather of the moment with today's high and low;
-**hours** are the next hours; **days** are the next days.
+The three parts of the weather the widget shows (D4): **now** is the weather of the moment with today's high and low,
+in the flat size bucket also today's rain (D12, D36); **hours** are the next hours; **days** are the next days.
 
 ### Rain hint
 
@@ -68,9 +69,10 @@ The transition between day and night around sunrise and sunset, as the app senso
 
 ### Still image / animated icon
 
-The two forms of a weather icon (D6). The **animated icon** is an AnimatedVectorDrawable that runs endlessly while the
-widget is seen; the platform stops it when the widget is not seen. The **still image** is the same icon without
-motion, which a setting per widget switches it to.
+The two forms of a weather icon (D6). The **still image** is the icon without motion, a VectorDrawable generated from
+the dashboard's still SVGs (D38); the hours and the days always show it, and "now" shows it while the widget is set
+to still images or has no animated icon yet. The **animated icon** is an AnimatedVectorDrawable that runs endlessly
+while the widget is seen; the platform stops it when the widget is not seen.
 
 ### Palette role
 

@@ -22,6 +22,10 @@ internal fun JsonElement.numberContent(): String? =
 /** A field that is a finite JSON number, or none. */
 internal fun JsonObject.number(name: String): Double? = this[name]?.numberContent()?.toDouble()
 
+/** A field that is a JSON boolean, or none; the string "true" is not one. */
+internal fun JsonObject.boolean(name: String): Boolean? =
+    (this[name] as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toBooleanStrictOrNull()
+
 /** A field that is a JSON object, or none. */
 internal fun JsonObject.objectField(name: String): JsonObject? = this[name] as? JsonObject
 
