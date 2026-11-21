@@ -2,8 +2,6 @@ package dev.cupr.weather.widget
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Typeface
-import android.text.TextPaint
 import android.util.TypedValue
 import android.widget.RemoteViews
 import androidx.annotation.DimenRes
@@ -45,21 +43,4 @@ internal fun Resources.sizes(
     val from = getDimension(largest)
     val step = getDimension(R.dimen.widget_flat_text_step)
     return (0..Math.round((from - getDimension(least)) / step)).map { from - it * step }
-}
-
-/**
- * [text]'s width in dp at [px] in the system's sans-serif, the font every text of the widget is set in (`styles.xml`,
- * D36), [style] as `Typeface`'s styles.
- */
-internal fun Resources.widthOf(
-    text: String,
-    px: Float,
-    style: Int = Typeface.NORMAL,
-): Float {
-    val paint =
-        TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
-            textSize = px
-            typeface = Typeface.create("sans-serif", style)
-        }
-    return dp(paint.measureText(text))
 }

@@ -65,8 +65,8 @@ internal object WidgetRows {
     }
 
     /**
-     * A day of the flat bucket, as the dashboard's day cell (D41): its weekday, its still image, and its high and its
-     * low at [degrees] px, the size [WidgetViews] picks for every day of the strip.
+     * A day of the flat bucket (D41): its weekday, its still image, and its high and its low at [degrees] px, the size
+     * [WidgetViews] picks for every day of the strip.
      */
     fun flatDay(
         context: Context,

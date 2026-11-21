@@ -102,8 +102,8 @@ class FlatWidgetTest : WidgetTestBase() {
             assertTrue("${day.width}", day.width >= dp(38))
             if (index > 0) assertEquals(dp(4), day.left - days.getChildAt(index - 1).right)
         }
-        // The weekday's line, the 28 dp image with 1 dp above and below, and the 18 dp of the high and low, about 64 dp,
-        // within the 79 dp inside a row 95 dp high.
+        // The weekday's line, the 28 dp image with 1 dp above and below, and the 18 dp of the high and low, about
+        // 64 dp, within the 79 dp inside a row 95 dp high.
         val first = days.getChildAt(0)
         assertEquals(first.text(R.id.flat_day_weekday).height + dp(28 + 2 + 18), first.height)
         assertTrue("${days.bottom}", days.bottom <= widget.height - widget.paddingBottom)
@@ -218,7 +218,8 @@ class FlatWidgetTest : WidgetTestBase() {
         assertTrue("$group ${row.width}", group <= row.width)
         val larger = TextPaint(narrow.paint).apply { textSize = narrow.textSize + sp(0.5f) }
         val growth = larger.measureText(shown) - narrow.paint.measureText(shown)
-        assertTrue("$group $growth ${row.width}", group + growth > row.width)
+        assertTrue("$group $growth ${row.width}", group + growth > row.width - dp(1) - 1)
+        assertTrue(narrow.paint.measureText(shown) <= narrow.width)
     }
 
     @Test
@@ -233,6 +234,23 @@ class FlatWidgetTest : WidgetTestBase() {
 
         assertEquals(dp(140), wide.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(4, WidgetHost.days(wide).size)
+        val icon = wide.findViewById<View>(R.id.now_icon).layoutParams
+        assertEquals(listOf(dp(66), dp(66)), listOf(icon.width, icon.height))
+    }
+
+    @Test
+    fun `a flat widget resized from 5 to 2 cells wide gives now the card's width and the smaller image`() {
+        signIn()
+        written(SampleWeather.full())
+        val id = WidgetHost.place(application, SizeBucket.sizeOf(columns = 5, rows = 1))
+        assertEquals(4, WidgetHost.days(WidgetHost.view(application, id)).size)
+
+        val narrow = WidgetHost.resize(application, id, SizeBucket.sizeOf(columns = 2, rows = 1))
+
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, narrow.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(emptyList<List<String>>(), WidgetHost.days(narrow))
+        val icon = narrow.findViewById<View>(R.id.now_icon).layoutParams
+        assertEquals(listOf(dp(56), dp(56)), listOf(icon.width, icon.height))
     }
 
     @Test
@@ -259,7 +277,7 @@ class FlatWidgetTest : WidgetTestBase() {
         signIn()
         val size = SizeBucket.sizeOf(columns = 5, rows = 1)
 
-        // With days beside it, so "now" has its column of 130 dp and beside its image a text area of 71 dp.
+        // With days beside it, so "now" has its column of 140 dp and beside its image a text area of 71 dp.
         written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
         val long = placed(size)
         assertEquals(
@@ -401,6 +419,11 @@ class FlatWidgetTest : WidgetTestBase() {
                     kotlin.math.abs(high.left - (row.width - low.right)) <= 1,
                 )
                 // Measured by the drawn text, which a too-narrow view would cut.
+                // Each text whole in its view, as drawn: no "-15" for "-15°".
+                for (text in listOf(high, low)) {
+                    val drawn = text.paint.measureText(text.text.toString())
+                    assertTrue("$width ${text.text} $drawn ${text.width}", drawn <= text.width)
+                }
                 val pair = low.left - high.left + low.paint.measureText(low.text.toString())
                 assertTrue("$width $pair ${row.width}", pair <= row.width)
                 val larger = { text: TextView -> TextPaint(text.paint).apply { textSize = text.textSize + sp(0.5f) } }
@@ -408,8 +431,8 @@ class FlatWidgetTest : WidgetTestBase() {
                     pair - high.paint.measureText(high.text.toString()) - low.paint.measureText(low.text.toString()) +
                         larger(high).measureText(high.text.toString()) + larger(low).measureText(low.text.toString())
                 if (high.text.toString() == "-12°") {
-                    // A step larger and the -12° and -15° would not fit their day.
-                    assertTrue("$width $grown ${row.width}", grown > row.width)
+                    // A step larger and the -12° and -15° would not fit their day with the dp the app leaves free.
+                    assertTrue("$width $grown ${row.width}", grown > row.width - dp(1) - 1)
                 }
             }
         }

@@ -2,8 +2,6 @@ package dev.cupr.weather.widget
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Typeface
-import android.text.TextPaint
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
@@ -130,7 +128,7 @@ internal object WidgetViews {
                 views.setWidth(context, R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
-        // The larger image beside the days; without them the smaller one leaves the text its room at 2 cells wide.
+        // The image's size by whether days show (D36).
         val icon = if (days.isEmpty()) R.dimen.widget_flat_now_icon_narrow else R.dimen.widget_flat_now_icon
         views.setWidth(context, R.id.now_icon, icon)
         views.setHeight(context, R.id.now_icon, icon)
@@ -283,8 +281,8 @@ internal object WidgetViews {
         ): Float? {
             val text = resources.getDimension(R.dimen.widget_flat_today_text)
             val left =
-                width - resources.widthOf(today.high, text, Typeface.BOLD) - dimen(R.dimen.widget_flat_today_low_gap) -
-                    resources.widthOf(today.low, text) - dimen(R.dimen.widget_flat_today_rain_gap)
+                width - resources.widthOf(today, text, R.dimen.widget_flat_today_low_gap) -
+                    dimen(R.dimen.widget_flat_today_rain_gap) - dimen(R.dimen.widget_flat_fit_slack)
             return resources
                 .sizes(R.dimen.widget_flat_today_text, R.dimen.widget_flat_today_text_least)
                 .firstOrNull { resources.widthOf(rain, it) <= left }
@@ -295,13 +293,11 @@ internal object WidgetViews {
          * largest of the sizes in `dimens.xml` at which every pair fits its day, else the least (D41).
          */
         fun flatDayDegrees(days: List<WidgetContent.HighLow>): Float {
-            val day = flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
+            val day =
+                flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap) - dimen(R.dimen.widget_flat_fit_slack)
             val sizes = resources.sizes(R.dimen.widget_flat_day_text, R.dimen.widget_flat_day_text_least)
             return sizes.firstOrNull { size ->
-                days.all {
-                    resources.widthOf(it.high, size, Typeface.BOLD) + dimen(R.dimen.widget_flat_day_low_gap) +
-                        resources.widthOf(it.low, size) <= day
-                }
+                days.all { resources.widthOf(it, size, R.dimen.widget_flat_day_low_gap) <= day }
             } ?: sizes.last()
         }
 

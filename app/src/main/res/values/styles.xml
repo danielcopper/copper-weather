@@ -7,8 +7,9 @@
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
      sets "now"'s row and image sizes by bucket, in the flat bucket the
-     column's width by whether days show and the size of today's rain, and
-     picks the line's one- or two-line form (D36). The sizes are in dimens.xml
+     column's width and the image's size by whether days show, the size of
+     today's rain and the size of the days' highs and lows, and picks the
+     line's one- or two-line form (D36, D41). The sizes are in dimens.xml
      (D35); the colours come from the palette, set by WidgetViews or, in the
      preview, from colors.xml (D7). -->
 <resources>
@@ -292,8 +293,8 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
-    <!-- A day of the flat bucket, as the dashboard's day cell: its weekday,
-         its image and its high and low. -->
+    <!-- A day of the flat bucket: its weekday, its image and its high and
+         low (D41). -->
     <style name="WeatherWidget.FlatDay">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
