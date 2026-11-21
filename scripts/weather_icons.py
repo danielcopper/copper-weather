@@ -14,7 +14,8 @@ element, on anything else:
   corners), line, polygon, polyline;
 - transforms: translate, scale, rotate, each a nested group, in order;
 - paint: fill and stroke as #rgb, #rrggbb or none, stroke-width,
-  stroke-linecap, stroke-linejoin, stroke-miterlimit, fill-rule, fill-opacity
+  stroke-linecap (butt or round; square only on a closed shape, whose stroke
+  has no ends), stroke-linejoin, stroke-miterlimit, fill-rule, fill-opacity
   and stroke-opacity, inherited from the groups as SVG inherits them;
 - opacity on a shape: 0 leaves the shape out; else it goes into the shape's
   fill or stroke alpha when only one of them is painted, and a shape that
@@ -31,7 +32,8 @@ path: each segment's points, curves and arcs at many points along them,
 through its transforms; a stroke adds half its width, scaled with the shape,
 around every point and, at a miter join, the miter's tip; it is cut to the
 SVG's viewBox, which the dashboard draws in. A shape whose bounds cannot be
-found fails as an unsupported one does. The drawables clip to that viewBox.
+found fails as an unsupported one does, naming the file and the element. The
+drawables clip to that viewBox.
 
 Usage: python3 scripts/weather_icons.py         writes the drawables
        python3 scripts/weather_icons.py --check fails when the drawables in
@@ -340,6 +342,10 @@ def polylines(data, where):
         for x, y in points_:
             if not (math.isfinite(x) and math.isfinite(y)):
                 raise Unsupported(f"{where}: the bounds of path data {data!r} cannot be found")
+    # A closed subpath that returns to its start before Z: its start is a corner, not a point drawn twice.
+    for line in lines:
+        if line[1] and len(line[0]) > 1 and line[0][-1] == line[0][0]:
+            line[0].pop()
     return [(points_, closed) for points_, closed in lines]
 
 
@@ -396,8 +402,9 @@ def miter_tips(points_, closed, half, limit):
     return tips
 
 
-def bounds_of(shape, box, where):
+def bounds_of(shape, box):
     """The box (x0, y0, x1, y1) of what the shape draws, cut to the SVG's viewBox; None when it draws nothing there."""
+    where = shape.where
     found = []
     tips = []
     pad = 0.0
@@ -425,9 +432,9 @@ def frame_of(parsed):
     """The common frame (x, y, side) of parsed SVGs [(name, size, shapes)]: the smallest square around the union of
     what they draw, centred on it."""
     boxes = []
-    for name, size, shapes_ in parsed:
+    for _, size, shapes_ in parsed:
         for shape in shapes_:
-            box = bounds_of(shape, size, name)
+            box = bounds_of(shape, size)
             if box is not None:
                 boxes.append(box)
     if not boxes:
@@ -446,9 +453,11 @@ def fill_of(paint, tag):
 
 
 class Shape:
-    """One shape to draw: its path data, its paint, its own opacity and the transform steps above it."""
+    """One shape to draw: its path data, its paint, its own opacity and the transform steps above it; where names its
+    file and element in a message."""
 
-    def __init__(self, data, paint, opacity, steps, tag):
+    def __init__(self, data, paint, opacity, steps, tag, where):
+        self.where = where
         self.data = data
         self.paint = paint
         self.opacity = opacity
@@ -543,7 +552,7 @@ def shapes(element, inherited, steps, where, out):
     check_dashes(element.attrib, here)
     paint = paint_of(element, inherited, here)
     own = transforms(element.attrib["transform"], here) if "transform" in element.attrib else []
-    shape = Shape(path_data(tag, element.attrib, here), paint, opacity, steps + own, tag)
+    shape = Shape(path_data(tag, element.attrib, here), paint, opacity, steps + own, tag, here)
     if shape.painted:
         out.append(shape)
 

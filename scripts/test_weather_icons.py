@@ -151,7 +151,7 @@ class FrameTest(unittest.TestCase):
     @staticmethod
     def bounds(body):
         size, found = weather_icons.parse(svg(body), "t.svg")
-        boxes = [weather_icons.bounds_of(shape, size, "t.svg") for shape in found]
+        boxes = [weather_icons.bounds_of(shape, size) for shape in found]
         return [tuple(round(v, 3) for v in box) for box in boxes if box is not None]
 
     def test_every_drawable_shows_the_square_around_what_all_the_svgs_draw(self):
@@ -194,13 +194,33 @@ class FrameTest(unittest.TestCase):
             self.bounds('<path d="M10,30 L20,10 L30,30" fill="none" stroke="#000" stroke-width="2"/>'),
         )
 
+    def test_a_miter_beyond_its_limit_is_cut_flat(self):
+        # The peak's miter would reach about 10 past it, more than 4 times the stroke's half width: it is bevelled.
+        self.assertEqual(
+            [(9, 9, 15, 31)],
+            self.bounds('<path d="M10,30 L12,10 L14,30" fill="none" stroke="#000" stroke-width="2"/>'),
+        )
+
+    def test_a_closed_path_back_at_its_start_before_z_has_its_start_as_a_corner(self):
+        box = self.bounds('<path d="M20,10 L30,30 L10,30 L20,10 Z" fill="none" stroke="#000" stroke-width="2"/>')
+        self.assertEqual(7.764, box[0][1])
+
     def test_what_lies_outside_the_view_box_is_cut_off(self):
         self.assertEqual([(50, 22, 64, 42)], self.bounds('<circle cx="60" cy="32" r="10" fill="#000"/>'))
 
-    def test_path_data_whose_bounds_cannot_be_found_is_refused(self):
+    def refused(self, body, says):
         with self.assertRaises(Unsupported) as caught:
-            self.bounds('<path d="M0,0 L1"/>')
-        self.assertIn("path command L has 1 numbers", str(caught.exception))
+            self.bounds(body)
+        self.assertIn(says, str(caught.exception))
+
+    def test_path_data_whose_bounds_cannot_be_found_is_refused_naming_the_file_and_the_element(self):
+        self.refused('<path d="M0,0 L1"/>', "t.svg <path>: path command L has 1 numbers")
+        self.refused('<path d="M0,0 L1e400,1"/>', "t.svg <path>: the bounds of path data")
+        self.refused('<path d="Z"/>', "t.svg <path>: the bounds of path data 'Z' cannot be found")
+
+    def test_a_square_cap_on_an_open_line_is_refused(self):
+        self.refused('<line x1="0" y1="0" x2="1" y2="1" stroke="#000" stroke-linecap="square"/>',
+                     "t.svg <line>: stroke-linecap square is not supported")
 
 
 class OutputsTest(unittest.TestCase):

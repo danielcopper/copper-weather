@@ -449,6 +449,29 @@ class FlatWidgetTest : WidgetTestBase() {
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `where the lows are the widest, they decide the flat days' size`() {
+        signIn()
+        // Highs of 0°, narrow, and lows of -15°, too wide for their halves at 12 sp.
+        val days =
+            (1..5).joinToString(",") {
+                """{"datetime":"2026-11-${20 + it}T00:00:00+01:00","temperature":0,"templow":-15}"""
+            }
+        written(SampleWeather.data(""","days":[$days]"""))
+
+        val cells = laidOut(placed(SizeF(388f, 95f)), SizeF(388f, 95f)).findViewById<ViewGroup>(R.id.days)
+
+        val lows = (0 until cells.childCount).map { cells.getChildAt(it).text(R.id.flat_day_low) }
+        val sizes = lows.map { it.textSize }.distinct()
+        assertEquals("$sizes", listOf(sp(LOWS_BIND)), sizes)
+        for (low in lows) {
+            val drawn = low.paint.measureText(low.text.toString())
+            assertTrue("$drawn ${low.width}", drawn <= low.width)
+        }
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun `a redraw of a flat widget whose line took two lines puts Neu anmelden in its place`() {
         signIn()
         written(SampleWeather.full().replace("partlycloudy", "lightning-rainy"))
@@ -563,6 +586,9 @@ class FlatWidgetTest : WidgetTestBase() {
     private companion object {
         /** Fewer texts than a flat widget shows in the colour tests. */
         const val FLAT_TEXTS = 10
+
+        /** The size in sp of the flat days at 388 dp when their lows of -15° are the widest texts. */
+        const val LOWS_BIND = 9f
     }
 
     /** [line] takes up to [lines] lines in [height] dp, at most [largest] sp, shrinking down to 11 sp. */

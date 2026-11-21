@@ -22,7 +22,7 @@ internal fun Resources.widthOf(
     return dp(paint.measureText(text))
 }
 
-/** The width in dp of [pair] side by side at [px]: the high in bold, [gap] and the low (D36, D41). */
+/** The width in dp of [pair] side by side at [px]: the high in bold, [gap] and the low (D36). */
 internal fun Resources.widthOf(
     pair: WidgetContent.HighLow,
     px: Float,
