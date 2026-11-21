@@ -160,7 +160,8 @@ internal object WidgetViews {
 
     /**
      * The flat bucket's third line below "now" (D36): today's high in `text`, its low in `textMuted` and its rain in
-     * `rain` when it has and it fits the [text] dp wide area at its least size, or nothing without today or [now].
+     * `rain` when it has, at the largest size from 11 down to 7 sp at which the line fits the [text] dp wide area, else
+     * without it; nothing without today or [now].
      */
     private fun flatToday(
         context: Context,
@@ -175,7 +176,9 @@ internal object WidgetViews {
         views.show(R.id.now_today_flat_high, today.high, Palette::text)
         views.show(R.id.now_today_flat_low, today.low, Palette::textMuted)
         val rain = with(WidgetRows) { context.rainText(now.todayRain) }
-        views.show(R.id.now_today_flat_rain, rain?.takeIf { room.fitsFlatToday(today, it, text) }, Palette::rain)
+        val size = rain?.let { room.flatTodayRain(today, it, text) }
+        views.show(R.id.now_today_flat_rain, rain?.takeIf { size != null }, Palette::rain)
+        if (size != null) views.setTextViewTextSize(R.id.now_today_flat_rain, TypedValue.COMPLEX_UNIT_PX, size)
     }
 
     /** The app's screen while the sign-in asks to be done again, else the weather pop-up (D39). */
@@ -266,34 +269,36 @@ internal object WidgetViews {
             text: String,
             width: Float,
             @DimenRes size: Int,
-        ): Boolean = widthOf(text, size) <= width
+        ): Boolean = widthOf(text, resources.getDimension(size)) <= width
 
         /**
-         * Whether today's [rain] fits at its least size beside [today]'s high and low on the flat bucket's third line,
-         * [width] dp wide (D36).
+         * The size in px at which today's [rain] fits beside [today]'s high and low on the flat bucket's third line,
+         * [width] dp wide: the largest from the line's size down to its least, in steps of 0.5 sp, or none (D36).
          */
-        fun fitsFlatToday(
+        fun flatTodayRain(
             today: WidgetContent.HighLow,
             rain: String,
             width: Float,
-        ): Boolean {
-            val degrees =
-                widthOf(today.high, R.dimen.widget_flat_today_text, Typeface.BOLD) +
-                    dimen(R.dimen.widget_flat_today_low_gap) +
-                    widthOf(today.low, R.dimen.widget_flat_today_text) +
-                    dimen(R.dimen.widget_flat_today_rain_gap)
-            return degrees + widthOf(rain, R.dimen.widget_flat_today_text_least) <= width
+        ): Float? {
+            val text = resources.getDimension(R.dimen.widget_flat_today_text)
+            val least = resources.getDimension(R.dimen.widget_flat_today_text_least)
+            val step = resources.getDimension(R.dimen.widget_flat_today_text_step)
+            val left =
+                width - widthOf(today.high, text, Typeface.BOLD) - dimen(R.dimen.widget_flat_today_low_gap) -
+                    widthOf(today.low, text) - dimen(R.dimen.widget_flat_today_rain_gap)
+            val steps = Math.round((text - least) / step)
+            return (0..steps).map { text - it * step }.firstOrNull { widthOf(rain, it) <= left }
         }
 
-        /** [text]'s width in dp at [size] in the widget's sans-serif, [style] as `Typeface`'s styles. */
+        /** [text]'s width in dp at [px] in the widget's sans-serif, [style] as `Typeface`'s styles. */
         private fun widthOf(
             text: String,
-            @DimenRes size: Int,
+            px: Float,
             style: Int = Typeface.NORMAL,
         ): Float {
             val paint =
                 TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
-                    textSize = resources.getDimension(size)
+                    textSize = px
                     typeface = Typeface.create("sans-serif", style)
                 }
             return dp(paint.measureText(text))

@@ -63,7 +63,7 @@
         <item name="android:autoSizeMinTextSize">18sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:autoSizeTextType">uniform</item>
-        <item name="android:gravity">center_vertical</item>
+        <item name="android:gravity">center</item>
         <item name="android:textSize">@dimen/widget_flat_temperature_text</item>
     </style>
 
@@ -118,6 +118,7 @@
          language (D36). -->
     <style name="WeatherWidget.Line.Flat">
         <item name="android:autoSizeMaxTextSize">@dimen/widget_line_flat_text</item>
+        <item name="android:gravity">center</item>
         <item name="android:textSize">@dimen/widget_line_flat_text</item>
     </style>
 
@@ -125,6 +126,7 @@
         <item name="android:layout_height">@dimen/widget_line_long_flat_height</item>
         <item name="android:autoSizeMaxTextSize">@dimen/widget_line_long_flat_text</item>
         <item name="android:autoSizeMinTextSize">9sp</item>
+        <item name="android:gravity">center</item>
         <item name="android:hyphenationFrequency">normal</item>
         <item name="android:textSize">@dimen/widget_line_long_flat_text</item>
     </style>
@@ -150,6 +152,7 @@
         <item name="android:autoSizeMinTextSize">9sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">center</item>
         <item name="android:maxLines">2</item>
     </style>
 
@@ -244,13 +247,13 @@
         <item name="android:orientation">vertical</item>
     </style>
 
-    <!-- Today's high, low and rain below "now"'s line in the flat bucket: the
-         high and the low as they come, the rain in the room left (D36). -->
+    <!-- Today's high, low and rain below "now"'s line in the flat bucket,
+         centred as one group; the app sets the rain's size to fit (D36). -->
     <style name="WeatherWidget.FlatToday">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_today_height</item>
         <item name="android:baselineAligned">false</item>
-        <item name="android:gravity">center_vertical</item>
+        <item name="android:gravity">center</item>
         <item name="android:orientation">horizontal</item>
     </style>
 
@@ -270,15 +273,9 @@
     </style>
 
     <style name="WeatherWidget.FlatToday.Rain">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:layout_weight">1</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginStart">@dimen/widget_flat_today_rain_gap</item>
-        <item name="android:autoSizeMaxTextSize">@dimen/widget_flat_today_text</item>
-        <item name="android:autoSizeMinTextSize">@dimen/widget_flat_today_text_least</item>
-        <item name="android:autoSizeStepGranularity">0.5sp</item>
-        <item name="android:autoSizeTextType">uniform</item>
-        <item name="android:gravity">start|center_vertical</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">@dimen/widget_flat_today_text</item>
     </style>
