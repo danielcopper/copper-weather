@@ -204,10 +204,11 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals("2,1\u00A0mm", narrow.text.toString())
         assertTrue("${narrow.textSize}", narrow.textSize < sp(11f) && narrow.textSize >= sp(7f))
         // The group, from the high to the rain, fits the text area; with the rain a step larger it would not.
+        // The group is measured by the drawn text, since a too-large rain gets a narrower view and is cut.
         val row = narrow.parent as ViewGroup
-        val group = narrow.right - row.getChildAt(0).left
-        assertTrue("$group ${row.width}", group <= row.width)
         val shown = narrow.text.toString()
+        val group = narrow.left - row.getChildAt(0).left + narrow.paint.measureText(shown)
+        assertTrue("$group ${row.width}", group <= row.width)
         val larger = TextPaint(narrow.paint).apply { textSize = narrow.textSize + sp(0.5f) }
         val growth = larger.measureText(shown) - narrow.paint.measureText(shown)
         assertTrue("$group $growth ${row.width}", group + growth > row.width)
