@@ -57,21 +57,6 @@
     <string name="condition_sunny">Sonnig</string>
     <string name="condition_windy">Windig</string>
     <string name="condition_windy_variant">Windig, bewölkt</string>
-    <!-- The short words below a day of the flat bucket, as the dashboard's day cell names them (D41); exceptional has none. -->
-    <string name="condition_short_clear_night">klar</string>
-    <string name="condition_short_cloudy">bewölkt</string>
-    <string name="condition_short_fog">Nebel</string>
-    <string name="condition_short_hail">Hagel</string>
-    <string name="condition_short_lightning">Gewitter</string>
-    <string name="condition_short_lightning_rainy">Gewitter</string>
-    <string name="condition_short_partlycloudy">wolkig</string>
-    <string name="condition_short_pouring">Regen</string>
-    <string name="condition_short_rainy">Regen</string>
-    <string name="condition_short_snowy">Schnee</string>
-    <string name="condition_short_snowy_rainy">Schneeregen</string>
-    <string name="condition_short_sunny">sonnig</string>
-    <string name="condition_short_windy">windig</string>
-    <string name="condition_short_windy_variant">windig</string>
     <!-- The sign-in screen (D24, D25, D27, D32): the address field, the button that opens Home Assistant's login, why a sign-in did not come about, the status lines, and signing out. -->
     <string name="sign_in_address">Home-Assistant-Adresse</string>
     <string name="sign_in_address_example" translatable="false">https://…</string>

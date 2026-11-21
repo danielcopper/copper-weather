@@ -293,7 +293,7 @@
     </style>
 
     <!-- A day of the flat bucket, as the dashboard's day cell: its weekday,
-         its image, its high and low, and its rain or short word below. -->
+         its image and its high and low. -->
     <style name="WeatherWidget.FlatDay">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
@@ -311,51 +311,35 @@
     </style>
 
     <style name="WeatherWidget.FlatDayIcon" parent="WeatherWidget.SmallIcon">
+        <item name="android:layout_width">@dimen/widget_flat_day_icon</item>
+        <item name="android:layout_height">@dimen/widget_flat_day_icon</item>
         <item name="android:layout_marginTop">1dp</item>
         <item name="android:layout_marginBottom">1dp</item>
     </style>
 
-    <!-- A flat day's high and low, each half of the day's width, and the line
-         below them: D41. -->
+    <!-- A flat day's high and low as one pair, centred in the day; the app
+         sets their size to fit (D41). -->
     <style name="WeatherWidget.FlatDayDegrees">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_day_degrees_height</item>
         <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center</item>
         <item name="android:orientation">horizontal</item>
     </style>
 
-    <!-- A flat day's text that shrinks to fit: one line, down to its floor. -->
-    <style name="WeatherWidget.FlatDayFit">
-        <item name="android:autoSizeMinTextSize">@dimen/widget_flat_day_text_least</item>
-        <item name="android:autoSizeStepGranularity">0.5sp</item>
-        <item name="android:autoSizeTextType">uniform</item>
+    <style name="WeatherWidget.FlatDayDegree">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_flat_day_text</item>
     </style>
 
-    <style name="WeatherWidget.FlatDayFit.Degree">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:autoSizeMaxTextSize">12sp</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <style name="WeatherWidget.FlatDayFit.Degree.High">
-        <item name="android:gravity">end|center_vertical</item>
+    <style name="WeatherWidget.FlatDayDegree.High">
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="WeatherWidget.FlatDayFit.Degree.Low">
-        <item name="android:layout_marginStart">3dp</item>
-        <item name="android:gravity">start|center_vertical</item>
-    </style>
-
-    <style name="WeatherWidget.FlatDayFit.Note">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">@dimen/widget_flat_day_note_height</item>
-        <item name="android:autoSizeMaxTextSize">11sp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:textSize">11sp</item>
+    <style name="WeatherWidget.FlatDayDegree.Low">
+        <item name="android:layout_marginStart">@dimen/widget_flat_day_low_gap</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

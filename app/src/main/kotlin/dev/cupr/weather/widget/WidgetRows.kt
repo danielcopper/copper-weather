@@ -1,8 +1,10 @@
 package dev.cupr.weather.widget
 
 import android.content.Context
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.annotation.Px
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import java.text.NumberFormat
@@ -63,29 +65,21 @@ internal object WidgetRows {
     }
 
     /**
-     * A day of the flat bucket, as the dashboard's day cell (D41): its weekday, its still image, its high and its low,
-     * and below them its rain when it has, else its condition's short word, else nothing in that line's room.
+     * A day of the flat bucket, as the dashboard's day cell (D41): its weekday, its still image, and its high and its
+     * low at [degrees] px, the size [WidgetViews] picks for every day of the strip.
      */
     fun flatDay(
         context: Context,
         day: WidgetContent.Day,
+        @Px degrees: Float,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_flat_day)
         views.show(R.id.flat_day_weekday, context.weekday(day.weekday), Palette::textMuted)
         views.setImageViewResource(R.id.flat_day_icon, day.icon)
         views.show(R.id.flat_day_high, day.highLow.high, Palette::text)
         views.show(R.id.flat_day_low, day.highLow.low, Palette::textMuted)
-        val rain = context.rainText(day.rain)
-        if (rain != null) {
-            views.show(R.id.flat_day_note, rain, Palette::rain)
-        } else {
-            views.show(
-                R.id.flat_day_note,
-                day.short?.let(context::getString),
-                Palette::textMuted,
-                hidden = View.INVISIBLE,
-            )
-        }
+        views.setTextViewTextSize(R.id.flat_day_high, TypedValue.COMPLEX_UNIT_PX, degrees)
+        views.setTextViewTextSize(R.id.flat_day_low, TypedValue.COMPLEX_UNIT_PX, degrees)
         return views
     }
 }

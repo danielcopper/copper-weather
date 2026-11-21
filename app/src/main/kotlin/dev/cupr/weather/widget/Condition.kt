@@ -6,16 +6,13 @@ import dev.cupr.weather.R
 
 /**
  * Home Assistant's conditions (GLOSSARY.md, Condition) and everything the widget shows of one: its German [word], as
- * Home Assistant shows it (D34); its [short] word, as the dashboard's day cell shows it (D41); its still images by
- * [day] and by [night] (D38); and whether its image draws falling rain, snow or hail ([wet]), which shows a trace of
- * rain as "< 0,1 mm" (D37).
+ * Home Assistant shows it (D34); its still images by [day] and by [night] (D38); and whether its image draws falling
+ * rain, snow or hail ([wet]), which shows a trace of rain as "< 0,1 mm" (D37).
  */
 enum class Condition(
     /** The condition as Home Assistant states it. */
     val key: String,
     @param:StringRes val word: Int,
-    /** The short word below a day of the flat bucket (D41), none for `exceptional`. */
-    @param:StringRes val short: Int?,
     @param:DrawableRes val day: Int,
     @param:DrawableRes val night: Int,
     val wet: Boolean = false,
@@ -24,35 +21,30 @@ enum class Condition(
     CLEAR_NIGHT(
         "clear-night",
         R.string.condition_clear_night,
-        R.string.condition_short_clear_night,
         R.drawable.weather_sunny_day,
         R.drawable.weather_sunny_night,
     ),
     CLOUDY(
         "cloudy",
         R.string.condition_cloudy,
-        R.string.condition_short_cloudy,
         R.drawable.weather_cloudy_day,
         R.drawable.weather_cloudy_night,
     ),
     EXCEPTIONAL(
         "exceptional",
         R.string.condition_exceptional,
-        null,
         R.drawable.weather_exceptional_day,
         R.drawable.weather_exceptional_night,
     ),
     FOG(
         "fog",
         R.string.condition_fog,
-        R.string.condition_short_fog,
         R.drawable.weather_fog_day,
         R.drawable.weather_fog_night,
     ),
     HAIL(
         "hail",
         R.string.condition_hail,
-        R.string.condition_short_hail,
         R.drawable.weather_hail_day,
         R.drawable.weather_hail_night,
         wet = true,
@@ -60,14 +52,12 @@ enum class Condition(
     LIGHTNING(
         "lightning",
         R.string.condition_lightning,
-        R.string.condition_short_lightning,
         R.drawable.weather_lightning_day,
         R.drawable.weather_lightning_night,
     ),
     LIGHTNING_RAINY(
         "lightning-rainy",
         R.string.condition_lightning_rainy,
-        R.string.condition_short_lightning_rainy,
         R.drawable.weather_lightning_rainy_day,
         R.drawable.weather_lightning_rainy_night,
         wet = true,
@@ -75,14 +65,12 @@ enum class Condition(
     PARTLYCLOUDY(
         "partlycloudy",
         R.string.condition_partlycloudy,
-        R.string.condition_short_partlycloudy,
         R.drawable.weather_partlycloudy_day,
         R.drawable.weather_partlycloudy_night,
     ),
     POURING(
         "pouring",
         R.string.condition_pouring,
-        R.string.condition_short_pouring,
         R.drawable.weather_pouring_day,
         R.drawable.weather_pouring_night,
         wet = true,
@@ -90,7 +78,6 @@ enum class Condition(
     RAINY(
         "rainy",
         R.string.condition_rainy,
-        R.string.condition_short_rainy,
         R.drawable.weather_rainy_day,
         R.drawable.weather_rainy_night,
         wet = true,
@@ -98,7 +85,6 @@ enum class Condition(
     SNOWY(
         "snowy",
         R.string.condition_snowy,
-        R.string.condition_short_snowy,
         R.drawable.weather_snowy_day,
         R.drawable.weather_snowy_night,
         wet = true,
@@ -106,7 +92,6 @@ enum class Condition(
     SNOWY_RAINY(
         "snowy-rainy",
         R.string.condition_snowy_rainy,
-        R.string.condition_short_snowy_rainy,
         R.drawable.weather_snowy_rainy_day,
         R.drawable.weather_snowy_rainy_night,
         wet = true,
@@ -114,21 +99,18 @@ enum class Condition(
     SUNNY(
         "sunny",
         R.string.condition_sunny,
-        R.string.condition_short_sunny,
         R.drawable.weather_sunny_day,
         R.drawable.weather_sunny_night,
     ),
     WINDY(
         "windy",
         R.string.condition_windy,
-        R.string.condition_short_windy,
         R.drawable.weather_windy_day,
         R.drawable.weather_windy_night,
     ),
     WINDY_VARIANT(
         "windy-variant",
         R.string.condition_windy_variant,
-        R.string.condition_short_windy_variant,
         R.drawable.weather_windy_variant_day,
         R.drawable.weather_windy_variant_night,
     ),

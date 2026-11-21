@@ -24,14 +24,14 @@ import org.robolectric.annotation.GraphicsMode
 @Config(qualifiers = "+xxhdpi")
 class StaleResourcesTest : WidgetTestBase() {
     @Test
-    fun `a launcher with an earlier build's resources still draws the flat now column 130 dp wide`() {
+    fun `a launcher with an earlier build's resources still draws the flat now column 140 dp wide`() {
         signIn()
         written(SampleWeather.full())
         val size = SizeF(388f, 95f)
 
         val widget = drawnByStaleLauncher(size)
 
-        assertEquals(dp(130), widget.findViewById<View>(R.id.now_column).width)
+        assertEquals(dp(140), widget.findViewById<View>(R.id.now_column).width)
         assertEquals(dp(71), widget.findViewById<View>(R.id.now_text).width)
     }
 

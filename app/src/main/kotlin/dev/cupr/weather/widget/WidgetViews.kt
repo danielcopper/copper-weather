@@ -130,7 +130,11 @@ internal object WidgetViews {
                 views.setWidth(context, R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
-        val text = room.flatText(column)
+        // The larger image beside the days; without them the smaller one leaves the text its room at 2 cells wide.
+        val icon = if (days.isEmpty()) R.dimen.widget_flat_now_icon_narrow else R.dimen.widget_flat_now_icon
+        views.setWidth(context, R.id.now_icon, icon)
+        views.setHeight(context, R.id.now_icon, icon)
+        val text = room.flatText(column, icon)
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
@@ -142,7 +146,8 @@ internal object WidgetViews {
 
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
-        views.rows(R.id.days, days) { WidgetRows.flatDay(context, it) }
+        val degrees = room.flatDayDegrees(days.map { it.highLow })
+        views.rows(R.id.days, days) { WidgetRows.flatDay(context, it, degrees) }
         rest(context, views, content)
     }
 
@@ -265,7 +270,7 @@ internal object WidgetViews {
             text: String,
             width: Float,
             @DimenRes size: Int,
-        ): Boolean = widthOf(text, resources.getDimension(size)) <= width
+        ): Boolean = resources.widthOf(text, resources.getDimension(size)) <= width
 
         /**
          * The size in px at which today's [rain] fits beside [today]'s high and low on the flat bucket's third line,
@@ -277,27 +282,27 @@ internal object WidgetViews {
             width: Float,
         ): Float? {
             val text = resources.getDimension(R.dimen.widget_flat_today_text)
-            val least = resources.getDimension(R.dimen.widget_flat_today_text_least)
-            val step = resources.getDimension(R.dimen.widget_flat_today_text_step)
             val left =
-                width - widthOf(today.high, text, Typeface.BOLD) - dimen(R.dimen.widget_flat_today_low_gap) -
-                    widthOf(today.low, text) - dimen(R.dimen.widget_flat_today_rain_gap)
-            val steps = Math.round((text - least) / step)
-            return (0..steps).map { text - it * step }.firstOrNull { widthOf(rain, it) <= left }
+                width - resources.widthOf(today.high, text, Typeface.BOLD) - dimen(R.dimen.widget_flat_today_low_gap) -
+                    resources.widthOf(today.low, text) - dimen(R.dimen.widget_flat_today_rain_gap)
+            return resources
+                .sizes(R.dimen.widget_flat_today_text, R.dimen.widget_flat_today_text_least)
+                .firstOrNull { resources.widthOf(rain, it) <= left }
         }
 
-        /** [text]'s width in dp at [px] in the widget's sans-serif, [style] as `Typeface`'s styles. */
-        private fun widthOf(
-            text: String,
-            px: Float,
-            style: Int = Typeface.NORMAL,
-        ): Float {
-            val paint =
-                TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
-                    textSize = px
-                    typeface = Typeface.create("sans-serif", style)
+        /**
+         * The size in px for the highs and lows of the flat bucket's [days], each a day's pair side by side: the
+         * largest of the sizes in `dimens.xml` at which every pair fits its day, else the least (D41).
+         */
+        fun flatDayDegrees(days: List<WidgetContent.HighLow>): Float {
+            val day = flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
+            val sizes = resources.sizes(R.dimen.widget_flat_day_text, R.dimen.widget_flat_day_text_least)
+            return sizes.firstOrNull { size ->
+                days.all {
+                    resources.widthOf(it.high, size, Typeface.BOLD) + dimen(R.dimen.widget_flat_day_low_gap) +
+                        resources.widthOf(it.low, size) <= day
                 }
-            return resources.dp(paint.measureText(text))
+            } ?: sizes.last()
         }
 
         private val padding = dimen(R.dimen.widget_padding)
@@ -309,9 +314,11 @@ internal object WidgetViews {
         /** The width of "now"'s column in the flat bucket beside its days. */
         fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
 
-        /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
-        fun flatText(column: Float): Float =
-            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_flat_now_gap)
+        /** The text area beside the image, [icon] large, in a flat "now" column [column] dp wide (D36). */
+        fun flatText(
+            column: Float,
+            @DimenRes icon: Int,
+        ): Float = column - dimen(icon) - dimen(R.dimen.widget_flat_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))
@@ -320,11 +327,16 @@ internal object WidgetViews {
          * The days that fit beside "now" in the flat bucket: after its column, the gap and the divider with its
          * padding, each day at least its least width with the gap before it (D41).
          */
-        fun flatDays(): Int {
-            val left =
+        fun flatDays(): Int =
+            fit(
+                flatDaysRoom,
+                dimen(R.dimen.widget_flat_day_width) + dimen(R.dimen.widget_flat_day_gap),
+            )
+
+        /** The width the flat bucket's days share, each with the gap before it. */
+        private val flatDaysRoom
+            get() =
                 inside() - flatNow() - gap - dimen(R.dimen.widget_divider) - dimen(R.dimen.widget_flat_days_padding)
-            return fit(left, dimen(R.dimen.widget_flat_day_width) + dimen(R.dimen.widget_flat_day_gap))
-        }
 
         /** The days that fit the height below "now" and, when they show ([withHours]), the hours. */
         fun days(withHours: Boolean): Int {

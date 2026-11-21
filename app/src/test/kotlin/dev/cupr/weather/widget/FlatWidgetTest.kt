@@ -39,19 +39,21 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(listOf("7°", "Teilweise bewölkt", "9°", "3°"), widget.shown().take(4))
         assertEquals(
             listOf(
-                listOf("Sa", "10°", "1°", "sonnig"),
-                listOf("So", "11°", "2°", "2,5\u00A0mm"),
-                listOf("Mo", "12°", "3°", "sonnig"),
-                listOf("Di", "13°", "4°", "2,5\u00A0mm"),
+                listOf("Sa", "10°", "1°"),
+                listOf("So", "11°", "2°"),
+                listOf("Mo", "12°", "3°"),
+                listOf("Di", "13°", "4°"),
             ),
             WidgetHost.days(widget),
         )
         val days = widget.findViewById<ViewGroup>(R.id.days)
         assertEquals(R.drawable.weather_sunny_day, days.getChildAt(0).image(R.id.flat_day_icon))
+        val icon = days.getChildAt(0).findViewById<View>(R.id.flat_day_icon).layoutParams
+        assertEquals(listOf(dp(28), dp(28)), listOf(icon.width, icon.height))
         val high = days.getChildAt(0).text(R.id.flat_day_high)
         assertEquals(Typeface.BOLD, high.typeface?.style)
         assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
-        assertFlatNow(widget)
+        assertFlatNow(widget, icon = 66)
         // "Now" in its column, the divider and the days side by side on the card.
         assertEquals(LinearLayout.HORIZONTAL, (widget as LinearLayout).orientation)
         assertEquals(
@@ -64,7 +66,7 @@ class FlatWidgetTest : WidgetTestBase() {
                 }.filter { WidgetHost.visible(it, widget) }
                 .map { it.id },
         )
-        assertEquals(dp(130), widget.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(140), widget.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.divider).layoutParams.height)
         assertEquals(TapActivity::class.java.name, widget.tapped().component?.className)
     }
@@ -74,7 +76,7 @@ class FlatWidgetTest : WidgetTestBase() {
         signIn()
         written(SampleWeather.full())
 
-        // 387 dp leave 220 dp for the days, five of 40 dp and their gaps of 4; 386 dp a dp less.
+        // 387 dp leave 210 dp for the days, five of 38 dp and their gaps of 4; 386 dp a dp less.
         val sizes = listOf(SizeF(349f, 102f), SizeF(386f, 95f), SizeF(387f, 95f), SizeF(388f, 95f), SizeF(410f, 95f))
         assertEquals(listOf(4, 4, 5, 5, 5), sizes.map { WidgetHost.days(placed(it)).size })
     }
@@ -82,7 +84,7 @@ class FlatWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
-    fun `a flat day is at least 40 dp wide with 4 dp before it, the first 8 after the divider, five fit 388 dp`() {
+    fun `a flat day is at least 38 dp wide with 4 dp before it, the first 8 after the divider, five fit 388 dp`() {
         signIn()
         written(SampleWeather.full())
         val size = SizeF(388f, 95f)
@@ -97,9 +99,14 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(5, days.childCount)
         for (index in 0 until days.childCount) {
             val day = days.getChildAt(index)
-            assertTrue("${day.width}", day.width >= dp(40))
+            assertTrue("${day.width}", day.width >= dp(38))
             if (index > 0) assertEquals(dp(4), day.left - days.getChildAt(index - 1).right)
         }
+        // The weekday's line, the 28 dp image with 1 dp above and below, and the 18 dp of the high and low, about 64 dp,
+        // within the 79 dp inside a row 95 dp high.
+        val first = days.getChildAt(0)
+        assertEquals(first.text(R.id.flat_day_weekday).height + dp(28 + 2 + 18), first.height)
+        assertTrue("${days.bottom}", days.bottom <= widget.height - widget.paddingBottom)
     }
 
     @Test
@@ -224,7 +231,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         val wide = WidgetHost.resize(application, id, SizeBucket.sizeOf(columns = 5, rows = 1))
 
-        assertEquals(dp(130), wide.findViewById<View>(R.id.now_column).layoutParams.width)
+        assertEquals(dp(140), wide.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(4, WidgetHost.days(wide).size)
     }
 
@@ -238,9 +245,9 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(listOf("7°", "Regen in 25 min", "9°", "3°"), widget.shown())
         assertEquals(emptyList<List<String>>(), WidgetHost.days(widget))
         assertFalse(WidgetHost.visible(widget.findViewById(R.id.divider), widget))
-        // Without days "now" takes the card's width, its image at the left as with days.
+        // Without days "now" takes the card's width, its image at the left as with days, smaller.
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, widget.findViewById<View>(R.id.now_column).layoutParams.width)
-        assertFlatNow(widget)
+        assertFlatNow(widget, icon = 56)
         // 3 cells wide on a phone with wider cells, room for a day beside "now": still no days (D11).
         assertEquals(listOf("7°", "Regen in 25 min", "9°", "3°"), placed(SizeF(272f, 100f)).shown())
     }
@@ -358,62 +365,68 @@ class FlatWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
-    fun `a flat day's texts shrink to fit its cell instead of being cut`() {
+    fun `a flat day's high and low stand centred as a pair, all at the largest size at which every pair fits`() {
         signIn()
-        // Five days of -12° and -15°, the rain a trace, "< 0,1 mm", on every other one, sleet without an amount, so its
-        // short word, on the rest.
+        // Every other day 0° and -4°, the rest -12° and -15°, too wide for a day at 12 sp.
         val days =
             (1..5).joinToString(",") { index ->
-                val wet = index % 2 == 1
-                val condition = if (wet) "rainy" else "snowy-rainy"
-                val rain = if (wet) ",\"precipitation\":0.04" else ""
-                """{"datetime":"2026-11-${20 + index}T00:00:00+01:00","condition":"$condition",""" +
-                    """"temperature":-12,"templow":-15$rain}"""
+                val (high, low) = if (index % 2 == 1) 0 to -4 else -12 to -15
+                """{"datetime":"2026-11-${20 + index}T00:00:00+01:00","condition":"rainy",""" +
+                    """"temperature":$high,"templow":$low}"""
             }
         written(SampleWeather.data(""","days":[$days]"""))
-        var tooWide = 0
 
         for ((width, count) in listOf(349f to 4, 388f to 5, 410f to 5)) {
-            val widget = laidOut(placed(SizeF(width, 102f)), SizeF(width, 102f))
+            val widget = laidOut(placed(SizeF(width, 95f)), SizeF(width, 95f))
             val cells = widget.findViewById<ViewGroup>(R.id.days)
             assertEquals("$width", count, cells.childCount)
-            for (index in 0 until cells.childCount) {
-                val cell = cells.getChildAt(index)
-                val note = if (index % 2 == 0) "<\u00A00,1\u00A0mm" else "Schneeregen"
-                assertEquals(
-                    listOf(
-                        "-12°",
-                        "-15°",
-                        note,
-                    ),
-                    listOf(R.id.flat_day_high, R.id.flat_day_low, R.id.flat_day_note).map {
-                        cell.text(it).text.toString()
-                    },
+            val pairs = (0 until cells.childCount).map { cells.getChildAt(it) }
+            val sizes =
+                pairs
+                    .flatMap {
+                        listOf(
+                            it.text(R.id.flat_day_high),
+                            it.text(R.id.flat_day_low),
+                        )
+                    }.map { it.textSize }
+            assertEquals("$width $sizes", 1, sizes.distinct().size)
+            assertTrue("$width $sizes", sizes[0] < sp(12f) && sizes[0] >= sp(7f))
+            for (cell in pairs) {
+                val high = cell.text(R.id.flat_day_high)
+                val low = cell.text(R.id.flat_day_low)
+                val row = high.parent as View
+                // As much room before the pair as after it, within a pixel.
+                assertTrue(
+                    "$width ${high.left} ${row.width - low.right}",
+                    kotlin.math.abs(high.left - (row.width - low.right)) <= 1,
                 )
-                // The high and the low each take half the day, less the low's 3 dp before it.
-                val high = cell.text(R.id.flat_day_high).width
-                val low = cell.text(R.id.flat_day_low).width
-                assertTrue("$width $high $low", kotlin.math.abs(high - low) <= 1)
-                assertTrue("$width $high", kotlin.math.abs(high - (cell.width - dp(3)) / 2f) <= 1)
-                for (id in listOf(R.id.flat_day_high, R.id.flat_day_low, R.id.flat_day_note)) {
-                    val text = cell.text(id)
-                    val shown = text.text.toString()
-                    assertEquals("$width $shown", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, text.autoSizeTextType)
-                    assertEquals("$width $shown", Math.round(sp(6.5f)), text.autoSizeMinTextSize)
-                    val most = if (id == R.id.flat_day_note) 11f else 12f
-                    assertEquals("$width $shown", Math.round(sp(most)), text.autoSizeMaxTextSize)
-                    assertEquals("$width $shown", 1, text.maxLines)
-                    assertTrue(
-                        "$width $shown",
-                        TextPaint(text.paint).apply { textSize = sp(6.5f) }.measureText(shown) <= text.width,
-                    )
-                    val largest = TextPaint(text.paint).apply { textSize = text.autoSizeMaxTextSize.toFloat() }
-                    if (largest.measureText(shown) > text.width) tooWide++
+                // Measured by the drawn text, which a too-narrow view would cut.
+                val pair = low.left - high.left + low.paint.measureText(low.text.toString())
+                assertTrue("$width $pair ${row.width}", pair <= row.width)
+                val larger = { text: TextView -> TextPaint(text.paint).apply { textSize = text.textSize + sp(0.5f) } }
+                val grown =
+                    pair - high.paint.measureText(high.text.toString()) - low.paint.measureText(low.text.toString()) +
+                        larger(high).measureText(high.text.toString()) + larger(low).measureText(low.text.toString())
+                if (high.text.toString() == "-12°") {
+                    // A step larger and the -12° and -15° would not fit their day.
+                    assertTrue("$width $grown ${row.width}", grown > row.width)
                 }
             }
         }
-        // Some of them need the shrink: at their largest size they would not fit.
-        assertTrue("$tooWide", tooWide > 0)
+
+        // Days of 0° and -4° alone keep the largest size, 12 sp.
+        val short =
+            (1..5).joinToString(",") {
+                """{"datetime":"2026-11-${20 + it}T00:00:00+01:00","temperature":0,"templow":-4}"""
+            }
+        written(SampleWeather.data(""","days":[$short]"""))
+        val day = laidOut(placed(SizeF(388f, 95f)), SizeF(388f, 95f)).findViewById<ViewGroup>(R.id.days).getChildAt(0)
+        assertEquals(sp(12f), day.text(R.id.flat_day_high).textSize, 0.5f)
+        assertEquals(sp(12f), day.text(R.id.flat_day_low).textSize, 0.5f)
+        val row = day.text(R.id.flat_day_high).parent as View
+        assertTrue(
+            kotlin.math.abs(day.text(R.id.flat_day_high).left - (row.width - day.text(R.id.flat_day_low).right)) <= 1,
+        )
     }
 
     @Test
@@ -452,47 +465,10 @@ class FlatWidgetTest : WidgetTestBase() {
         val days = placed(SizeBucket.sizeOf(columns = 5, rows = 1)).findViewById<ViewGroup>(R.id.days)
 
         val palette = Palette.LIGHT
-        val dry = days.getChildAt(0)
-        val wet = days.getChildAt(1)
-        assertEquals(palette.textMuted, dry.text(R.id.flat_day_weekday).currentTextColor)
-        assertEquals(palette.text, dry.text(R.id.flat_day_high).currentTextColor)
-        assertEquals(palette.textMuted, dry.text(R.id.flat_day_low).currentTextColor)
-        assertEquals("sonnig", dry.text(R.id.flat_day_note).text.toString())
-        assertEquals(palette.textMuted, dry.text(R.id.flat_day_note).currentTextColor)
-        assertEquals("2,5\u00A0mm", wet.text(R.id.flat_day_note).text.toString())
-        assertEquals(palette.rain, wet.text(R.id.flat_day_note).currentTextColor)
-    }
-
-    @Test
-    fun `a day of the flat bucket names its condition with the dashboard's short word when no rain falls`() {
-        val words =
-            mapOf(
-                "sunny" to "sonnig",
-                "clear-night" to "klar",
-                "partlycloudy" to "wolkig",
-                "cloudy" to "bewölkt",
-                "fog" to "Nebel",
-                "rainy" to "Regen",
-                "pouring" to "Regen",
-                "snowy" to "Schnee",
-                "snowy-rainy" to "Schneeregen",
-                "hail" to "Hagel",
-                "lightning" to "Gewitter",
-                "lightning-rainy" to "Gewitter",
-                "windy" to "windig",
-                "windy-variant" to "windig",
-            )
-
-        assertEquals(words, words.keys.associateWith { application.getString(checkNotNull(Condition.of(it)?.short)) })
-        assertNull(Condition.EXCEPTIONAL.short)
-
-        signIn()
-        val day = """{"datetime":"2026-11-21T00:00:00+01:00","condition":"exceptional","temperature":4,"templow":1}"""
-        written(SampleWeather.data(""","days":[$day]"""))
-        assertEquals(
-            listOf(listOf("Sa", "4°", "1°")),
-            WidgetHost.days(placed(SizeBucket.sizeOf(columns = 5, rows = 1))),
-        )
+        val day = days.getChildAt(0)
+        assertEquals(palette.textMuted, day.text(R.id.flat_day_weekday).currentTextColor)
+        assertEquals(palette.text, day.text(R.id.flat_day_high).currentTextColor)
+        assertEquals(palette.textMuted, day.text(R.id.flat_day_low).currentTextColor)
     }
 
     @Test
@@ -610,14 +586,17 @@ class FlatWidgetTest : WidgetTestBase() {
         }
     }
 
-    /** "Now" of a flat widget: its 56 dp image at the left of its column, beside it temperature, line and today. */
-    private fun assertFlatNow(widget: View) {
+    /** "Now" of a flat widget: its [icon] dp image at the left of its column, beside it temperature, line and today. */
+    private fun assertFlatNow(
+        widget: View,
+        icon: Int,
+    ) {
         val column = widget.findViewById<LinearLayout>(R.id.now_column)
         val text = widget.findViewById<ViewGroup>(R.id.now_text)
         assertEquals(LinearLayout.HORIZONTAL, column.orientation)
         assertEquals(listOf(R.id.now_icon, R.id.now_text), (0 until column.childCount).map { column.getChildAt(it).id })
-        assertEquals(dp(56), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
-        assertEquals(dp(56), widget.findViewById<View>(R.id.now_icon).layoutParams.height)
+        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.height)
         assertEquals(
             listOf(R.id.now_temperature, R.id.now_line, R.id.now_line_long, R.id.widget_notice, R.id.now_today_flat),
             (0 until text.childCount).map { text.getChildAt(it).id },

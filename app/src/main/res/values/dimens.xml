@@ -21,21 +21,23 @@
     <!-- The flat bucket (D36): "now" in a column of its own width, its image
          at the left and beside it its temperature, its line and today's line,
          then the divider and its padding, and the days beside it, each at
-         least 40 dp wide with its gap of 4 (D41); the card's padding above and
+         least 38 dp wide with its gap of 4 (D41); the card's padding above and
          below is less than its sides', so a day fits one row. -->
-    <dimen name="widget_flat_now_width">130dp</dimen>
-    <dimen name="widget_flat_now_icon">56dp</dimen>
+    <dimen name="widget_flat_now_width">140dp</dimen>
+    <!-- The image beside the days, and without them, so the text keeps its
+         room at 2 cells wide (D36). -->
+    <dimen name="widget_flat_now_icon">66dp</dimen>
+    <dimen name="widget_flat_now_icon_narrow">56dp</dimen>
     <!-- A small gap between the flat image and its text: the images' own
          transparent border keeps most of it (D36). -->
     <dimen name="widget_flat_now_gap">3dp</dimen>
     <dimen name="widget_flat_temperature_text">24sp</dimen>
     <dimen name="widget_flat_temperature_height">30dp</dimen>
     <!-- Today's high, low and rain, a third line below "now" (D36): their
-         size, and the least size and the step the rain shrinks by. -->
+         size, and the least size the rain shrinks to. -->
     <dimen name="widget_flat_today_height">16dp</dimen>
     <dimen name="widget_flat_today_text">11sp</dimen>
     <dimen name="widget_flat_today_text_least">7sp</dimen>
-    <dimen name="widget_flat_today_text_step">0.5sp</dimen>
     <dimen name="widget_flat_today_low_gap">3dp</dimen>
     <dimen name="widget_flat_today_rain_gap">4dp</dimen>
     <dimen name="widget_flat_padding">8dp</dimen>
@@ -43,7 +45,7 @@
     <!-- 8 dp from the divider to the first day, as "now" ends 8 dp before it:
          the days' own 4 and that day's gap of 4 (D41). -->
     <dimen name="widget_flat_days_padding">4dp</dimen>
-    <dimen name="widget_flat_day_width">40dp</dimen>
+    <dimen name="widget_flat_day_width">38dp</dimen>
     <dimen name="widget_flat_day_gap">4dp</dimen>
     <!-- The line below "now" and its two-line form: D36. -->
     <dimen name="widget_line_text">14sp</dimen>
@@ -53,10 +55,17 @@
     <dimen name="widget_line_flat_text">13sp</dimen>
     <dimen name="widget_line_long_flat_text">11sp</dimen>
     <dimen name="widget_line_long_flat_height">32dp</dimen>
-    <!-- A flat day's high and low and the line below them (D41). -->
+    <!-- A flat day's image, and its high and low as a pair: their row, their
+         size and the least the app shrinks them to, and the gap between them
+         (D41). -->
+    <dimen name="widget_flat_day_icon">28dp</dimen>
     <dimen name="widget_flat_day_degrees_height">18dp</dimen>
-    <dimen name="widget_flat_day_note_height">16dp</dimen>
-    <dimen name="widget_flat_day_text_least">6.5sp</dimen>
+    <dimen name="widget_flat_day_text">12sp</dimen>
+    <dimen name="widget_flat_day_text_least">7sp</dimen>
+    <dimen name="widget_flat_day_low_gap">3dp</dimen>
+    <!-- The step between the sizes the app tries for a text it sizes to fit:
+         today's rain and the days' highs and lows (D36, D41). -->
+    <dimen name="widget_flat_text_step">0.5sp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
