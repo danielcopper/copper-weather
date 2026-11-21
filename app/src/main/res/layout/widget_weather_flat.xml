@@ -2,7 +2,8 @@
 <!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" as
      the dashboard's today (its still image at the left, and beside it the
      temperature over the rain hint or the condition, or "Neu anmelden" in
-     that line's place while the sign-in is no longer usable), and beside it,
+     that line's place while the sign-in is no longer usable, and today's
+     high, low and rain below them), and beside it,
      after a divider, as many of the next days as fit (D41), or a plain text
      instead, on the card. Every part starts hidden; WidgetViews shows the
      ones it fills, adds the days, and sets the colours from the palette,
@@ -64,7 +65,7 @@
 
                 <TextView
                     android:id="@+id/now_today_flat_rain"
-                    style="@style/WeatherWidget.FlatToday.Rain"
+                    style="@style/WeatherWidget.FlatToday.Degree.Rain"
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>

@@ -16,7 +16,8 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * The widget drawn by a launcher that kept an earlier build's resources (D42): there each dimension's number names the
- * dimension after it in this build, as when this build added one before it. The sizes the app sets still hold.
+ * dimension after it in this build, as when this build added one before it in name
+ * order (the numbers follow the names). The sizes the app sets still hold.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -56,20 +57,8 @@ class StaleResourcesTest : WidgetTestBase() {
 
                 override fun getResources(): Resources = stale
             }
-        val widget = views.apply(launcher, FrameLayout(launcher))
-        val width = dp(size.width)
-        val height = dp(size.height)
-        widget.measure(
-            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
-        )
-        widget.layout(0, 0, width, height)
-        return widget
+        return laidOut(views.apply(launcher, FrameLayout(launcher)), size)
     }
-
-    private fun dp(value: Float): Int = Math.round(value * application.resources.displayMetrics.density)
-
-    private fun dp(value: Int): Int = dp(value.toFloat())
 
     /**
      * This build's resources, but each of the app's dimensions looked up by number gives the one numbered after it. It

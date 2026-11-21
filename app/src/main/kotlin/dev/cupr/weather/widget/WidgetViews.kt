@@ -100,10 +100,10 @@ internal object WidgetViews {
     }
 
     /**
-     * The flat bucket (D36): "now" as the dashboard's today, its image at the left and its temperature over its line
-     * beside it, without today's high and low, "Neu anmelden" in its line's place while it shows; and beside it, after
-     * a divider in the palette's `border`, as many of the next days as fit, from 4 cells wide (D41); without days "now"
-     * takes the card's width.
+     * The flat bucket (D36): "now" as the dashboard's today, its image at the left and beside it its temperature over
+     * its line and today's high, low and rain, "Neu anmelden" in its line's place while it shows; and beside it, after
+     * a divider in the palette's `border`, as many of the next days as fit, from 4 cells wide (D41); without days
+     * "now" takes the card's width.
      */
     private fun flatWeather(
         context: Context,
@@ -127,7 +127,7 @@ internal object WidgetViews {
                 )
                 room.inside()
             } else {
-                views.width(context, R.id.now_column, R.dimen.widget_flat_now_width)
+                views.setWidth(context, R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
         val text = room.flatText(column)
@@ -137,7 +137,7 @@ internal object WidgetViews {
         } else {
             line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
-        // Today's high, low and rain below; with "Neu anmelden", which takes two lines, there is no room left for it.
+        // Today's high, low and rain below; with "Neu anmelden", 36 dp high, today's line gives way (D36).
         flatToday(context, views, content.now.takeUnless { content.signInAgain }, room, text)
 
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
@@ -159,9 +159,9 @@ internal object WidgetViews {
     }
 
     /**
-     * The flat bucket's third line below "now" (D36): today's high in `text`, its low in `textMuted` and its rain in
-     * `rain` when it has, at the largest size from 11 down to 7 sp at which the line fits the [text] dp wide area, else
-     * without it; nothing without today or [now].
+     * The flat bucket's third line below "now" (D36): today's high and low as [today] shows them, and today's rain in
+     * `rain` at the size [Room.flatTodayRain] finds for the [text] dp wide area, or without it where none fits; nothing
+     * without today or without [now].
      */
     private fun flatToday(
         context: Context,
@@ -170,11 +170,8 @@ internal object WidgetViews {
         room: Room,
         text: Float,
     ) {
-        val today = now?.today
-        views.setViewVisibility(R.id.now_today_flat, if (today == null) View.GONE else View.VISIBLE)
-        if (today == null) return
-        views.show(R.id.now_today_flat_high, today.high, Palette::text)
-        views.show(R.id.now_today_flat_low, today.low, Palette::textMuted)
+        views.today(R.id.now_today_flat, R.id.now_today_flat_high, R.id.now_today_flat_low, now?.today)
+        val today = now?.today ?: return
         val rain = with(WidgetRows) { context.rainText(now.todayRain) }
         val size = rain?.let { room.flatTodayRain(today, it, text) }
         views.show(R.id.now_today_flat_rain, rain?.takeIf { size != null }, Palette::rain)
@@ -195,11 +192,15 @@ internal object WidgetViews {
         compact: Boolean,
     ) {
         views.setViewVisibility(R.id.now, View.VISIBLE)
-        views.height(context, R.id.now, if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height)
+        views.setHeight(
+            context,
+            R.id.now,
+            if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height,
+        )
         views.setImageViewResource(R.id.now_icon, now.icon)
         val icon = if (compact) R.dimen.widget_now_icon_compact else R.dimen.widget_now_icon
-        views.width(context, R.id.now_icon, icon)
-        views.height(context, R.id.now_icon, icon)
+        views.setWidth(context, R.id.now_icon, icon)
+        views.setHeight(context, R.id.now_icon, icon)
         views.show(R.id.now_temperature, now.temperature, Palette::text)
     }
 
@@ -254,10 +255,7 @@ internal object WidgetViews {
         private val size: SizeF,
         private val notice: Boolean,
     ) {
-        private val density = resources.displayMetrics.density
-        private val dimen = { id: Int -> dp(resources.getDimension(id)) }
-
-        private fun dp(px: Float): Float = px / density
+        private val dimen = resources::dimen
 
         /**
          * Whether [text] fits [width] dp on one line at [size], the size of the line below "now" in its bucket, in the
@@ -271,7 +269,7 @@ internal object WidgetViews {
 
         /**
          * The size in px at which today's [rain] fits beside [today]'s high and low on the flat bucket's third line,
-         * [width] dp wide: the largest from the line's size down to its least, in steps of 0.5 sp, or none (D36).
+         * [width] dp wide: the largest of the rain's sizes in `dimens.xml`, or none (D36).
          */
         fun flatTodayRain(
             today: WidgetContent.HighLow,
@@ -299,7 +297,7 @@ internal object WidgetViews {
                     textSize = px
                     typeface = Typeface.create("sans-serif", style)
                 }
-            return dp(paint.measureText(text))
+            return resources.dp(paint.measureText(text))
         }
 
         private val padding = dimen(R.dimen.widget_padding)

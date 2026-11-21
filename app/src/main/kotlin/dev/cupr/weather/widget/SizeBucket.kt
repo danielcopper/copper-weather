@@ -4,10 +4,10 @@ import android.util.SizeF
 import kotlin.math.floor
 
 /**
- * The size buckets of D11, read from a widget's size in dp (D35): flat, one row high, shows "now" without today's high
- * and low and, from 4 cells wide, the days beside it; small, from 2 rows high, shows "now"; wide, from 4 cells wide
- * and 2 high, adds the hours; tall, from 4 wide and 3 high, adds the days. A widget 3 cells wide or less and 2 rows or
- * more high stays small however high it is.
+ * The size buckets of D11, read from a widget's size in dp (D35): flat, one row high, shows "now" with today's high,
+ * low and rain below it and, from 4 cells wide, the days beside it; small, from 2 rows high, shows "now"; wide, from 4
+ * cells wide and 2 high, adds the hours; tall, from 4 wide and 3 high, adds the days. A widget 3 cells wide or less and
+ * 2 rows or more high stays small however high it is.
  */
 enum class SizeBucket {
     FLAT,

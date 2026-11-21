@@ -7,8 +7,8 @@
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
      sets "now"'s row and image sizes by bucket, in the flat bucket the
-     image's by whether days show, and picks the line's one- or two-line
-     form (D36). The sizes are in dimens.xml
+     column's width by whether days show and the size of today's rain, and
+     picks the line's one- or two-line form (D36). The sizes are in dimens.xml
      (D35); the colours come from the palette, set by WidgetViews or, in the
      preview, from colors.xml (D7). -->
 <resources>
@@ -225,8 +225,8 @@
     </style>
 
     <!-- "Now" in the flat bucket, as the dashboard's today: the image at the
-         left, as high as the temperature over a one-line line, and beside it
-         the temperature over the line (D36). -->
+         left, and beside it the temperature over the line and today's line
+         (D36). -->
     <style name="WeatherWidget.FlatNow">
         <item name="android:layout_width">@dimen/widget_flat_now_width</item>
         <item name="android:layout_height">wrap_content</item>
@@ -272,12 +272,8 @@
         <item name="android:layout_marginStart">@dimen/widget_flat_today_low_gap</item>
     </style>
 
-    <style name="WeatherWidget.FlatToday.Rain">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+    <style name="WeatherWidget.FlatToday.Degree.Rain">
         <item name="android:layout_marginStart">@dimen/widget_flat_today_rain_gap</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:textSize">@dimen/widget_flat_today_text</item>
     </style>
 
     <!-- The divider before the days, as the dashboard's border on its days. -->

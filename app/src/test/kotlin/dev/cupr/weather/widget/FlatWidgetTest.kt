@@ -29,13 +29,6 @@ import java.time.Duration
 /** The widget one row high, the flat bucket (D11, D35, D36, D41): "now" and the days beside it, texts and colours. */
 @RunWith(RobolectricTestRunner::class)
 class FlatWidgetTest : WidgetTestBase() {
-    private val density get() = application.resources.displayMetrics.density
-
-    private fun dp(value: Int) = (value * density).toInt()
-
-    private fun sp(value: Float) =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, application.resources.displayMetrics)
-
     @Test
     fun `a widget 5 cells wide and 1 high shows now with today below it and the days that fit beside it`() {
         signIn()
@@ -77,14 +70,13 @@ class FlatWidgetTest : WidgetTestBase() {
     }
 
     @Test
-    fun `a flat strip shows four days at 349 dp and five at 388 and 410`() {
+    fun `a flat strip shows four days at 349 and 386 dp and five from 387 dp, at 388 and 410`() {
         signIn()
         written(SampleWeather.full())
 
-        assertEquals(
-            listOf(4, 5, 5),
-            listOf(SizeF(349f, 102f), SizeF(388f, 95f), SizeF(410f, 95f)).map { WidgetHost.days(placed(it)).size },
-        )
+        // 387 dp leave 220 dp for the days, five of 40 dp and their gaps of 4; 386 dp a dp less.
+        val sizes = listOf(SizeF(349f, 102f), SizeF(386f, 95f), SizeF(387f, 95f), SizeF(388f, 95f), SizeF(410f, 95f))
+        assertEquals(listOf(4, 4, 5, 5, 5), sizes.map { WidgetHost.days(placed(it)).size })
     }
 
     @Test
@@ -124,6 +116,8 @@ class FlatWidgetTest : WidgetTestBase() {
         val palette = Palette.LIGHT
         assertEquals(palette.text, widget.text(R.id.now_today_flat_high).currentTextColor)
         assertEquals(Typeface.BOLD, widget.text(R.id.now_today_flat_high).typeface?.style)
+        assertEquals(sp(11f), widget.text(R.id.now_today_flat_high).textSize, 0.5f)
+        assertEquals(sp(11f), widget.text(R.id.now_today_flat_low).textSize, 0.5f)
         assertEquals(palette.textMuted, widget.text(R.id.now_today_flat_low).currentTextColor)
         assertEquals(palette.rain, widget.text(R.id.now_today_flat_rain).currentTextColor)
         // Without days, 2 cells wide, the rain does not fit beside the high and the low even at 7 sp; 3 wide it does.
@@ -209,12 +203,14 @@ class FlatWidgetTest : WidgetTestBase() {
         val narrow = rainAt(SizeF(140f, 100f))
         assertEquals("2,1\u00A0mm", narrow.text.toString())
         assertTrue("${narrow.textSize}", narrow.textSize < sp(11f) && narrow.textSize >= sp(7f))
-        val row = narrow.parent as View
-        assertTrue("${narrow.right} ${row.width}", narrow.right <= row.width)
-        assertTrue(narrow.paint.measureText(narrow.text.toString()) <= narrow.width)
-        // A step larger would not fit.
+        // The group, from the high to the rain, fits the text area; with the rain a step larger it would not.
+        val row = narrow.parent as ViewGroup
+        val group = narrow.right - row.getChildAt(0).left
+        assertTrue("$group ${row.width}", group <= row.width)
+        val shown = narrow.text.toString()
         val larger = TextPaint(narrow.paint).apply { textSize = narrow.textSize + sp(0.5f) }
-        assertTrue(narrow.left + larger.measureText(narrow.text.toString()) > row.width)
+        val growth = larger.measureText(shown) - narrow.paint.measureText(shown)
+        assertTrue("$group $growth ${row.width}", group + growth > row.width)
     }
 
     @Test
@@ -306,7 +302,6 @@ class FlatWidgetTest : WidgetTestBase() {
         val icon = widget.findViewById<View>(R.id.now_icon)
         val area = widget.findViewById<View>(R.id.now_text)
         assertTrue("${area.width}", kotlin.math.abs(area.width - 71 * density) <= 1)
-        // The image's own transparent border keeps most of the gap (D36).
         assertEquals(dp(3), area.left - icon.right)
         val temperature = widget.text(R.id.now_temperature)
         assertEquals("-12°", temperature.text.toString())
@@ -404,6 +399,8 @@ class FlatWidgetTest : WidgetTestBase() {
                     val shown = text.text.toString()
                     assertEquals("$width $shown", TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM, text.autoSizeTextType)
                     assertEquals("$width $shown", Math.round(sp(6.5f)), text.autoSizeMinTextSize)
+                    val most = if (id == R.id.flat_day_note) 11f else 12f
+                    assertEquals("$width $shown", Math.round(sp(most)), text.autoSizeMaxTextSize)
                     assertEquals("$width $shown", 1, text.maxLines)
                     assertTrue(
                         "$width $shown",
@@ -463,22 +460,6 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(palette.textMuted, dry.text(R.id.flat_day_note).currentTextColor)
         assertEquals("2,5\u00A0mm", wet.text(R.id.flat_day_note).text.toString())
         assertEquals(palette.rain, wet.text(R.id.flat_day_note).currentTextColor)
-    }
-
-    /** [widget] measured and laid out at [size], as a launcher does before it draws it. */
-    private fun laidOut(
-        widget: View,
-        size: SizeF,
-    ): View {
-        val density = application.resources.displayMetrics.density
-        val width = (size.width * density).toInt()
-        val height = (size.height * density).toInt()
-        widget.measure(
-            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
-        )
-        widget.layout(0, 0, width, height)
-        return widget
     }
 
     @Test

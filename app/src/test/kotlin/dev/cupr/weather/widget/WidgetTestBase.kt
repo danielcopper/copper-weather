@@ -3,6 +3,7 @@ package dev.cupr.weather.widget
 import android.app.Application
 import android.content.Intent
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -53,6 +54,30 @@ abstract class WidgetTestBase {
     fun tearDown() {
         Services.cipher = keystoreCipher
         WeatherWidgetProvider.clock = clock
+    }
+
+    protected val density get() = application.resources.displayMetrics.density
+
+    /** [value] dp in px on the test's display. */
+    protected fun dp(value: Int): Int = Math.round(value * density)
+
+    /** [value] sp in px on the test's display. */
+    protected fun sp(value: Float): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, application.resources.displayMetrics)
+
+    /** [widget] measured and laid out at [size], as a launcher does before it draws it. */
+    protected fun laidOut(
+        widget: View,
+        size: SizeF,
+    ): View {
+        val width = Math.round(size.width * density)
+        val height = Math.round(size.height * density)
+        widget.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+        )
+        widget.layout(0, 0, width, height)
+        return widget
     }
 
     protected fun signIn() = Services.account(application).signIn(address, SignInRequest.CLIENT_ID, RefreshToken("r"))

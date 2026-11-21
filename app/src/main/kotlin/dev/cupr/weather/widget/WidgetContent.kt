@@ -47,7 +47,7 @@ sealed interface WidgetContent {
         val temperature: String?,
         val today: HighLow?,
         val line: Line?,
-        val todayRain: Rain? = null,
+        val todayRain: Rain?,
     )
 
     /** A day's high and low as "9°", "–" for one the forecast lacks (D37); shown or left out together. */
