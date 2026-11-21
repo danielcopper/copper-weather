@@ -43,7 +43,7 @@ Home Assistant's word for the weather of a moment or a day, as its weather entit
 ### Now / hours / days
 
 The three parts of the weather the widget shows (D4): **now** is the weather of the moment with today's high and low,
-except in the flat size bucket (D12); **hours** are the next hours; **days** are the next days.
+in the flat size bucket also today's rain (D12, D36); **hours** are the next hours; **days** are the next days.
 
 ### Rain hint
 

@@ -24,18 +24,24 @@
          at least as wide as the dashboard's day cell, with its gap; the
          card's padding above and below is less than its sides', so a day fits
          one row. -->
-    <dimen name="widget_flat_now_width">144dp</dimen>
-    <dimen name="widget_flat_now_icon">72dp</dimen>
-    <dimen name="widget_flat_now_icon_narrow">56dp</dimen>
+    <dimen name="widget_flat_now_width">126dp</dimen>
+    <dimen name="widget_flat_now_icon">56dp</dimen>
     <dimen name="widget_flat_temperature_text">24sp</dimen>
     <dimen name="widget_flat_temperature_height">30dp</dimen>
+    <!-- Today's high, low and rain, a third line below "now"; the rain shrinks
+         to its least size and leaves out what does not fit then (D36). -->
+    <dimen name="widget_flat_today_height">16dp</dimen>
+    <dimen name="widget_flat_today_text">11sp</dimen>
+    <dimen name="widget_flat_today_text_least">7sp</dimen>
+    <dimen name="widget_flat_today_low_gap">3dp</dimen>
+    <dimen name="widget_flat_today_rain_gap">4dp</dimen>
     <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_divider">1dp</dimen>
-    <!-- 14 dp from the divider to the first day, as the dashboard's padding:
-         the days' own 8 and that day's gap of 6. -->
+    <!-- 12 dp from the divider to the first day: the days' own 8 and that
+         day's gap of 4 (D41). -->
     <dimen name="widget_flat_days_padding">8dp</dimen>
-    <dimen name="widget_flat_day_width">44dp</dimen>
-    <dimen name="widget_flat_day_gap">6dp</dimen>
+    <dimen name="widget_flat_day_width">40dp</dimen>
+    <dimen name="widget_flat_day_gap">4dp</dimen>
     <!-- The line below "now" and its two-line form: D36. -->
     <dimen name="widget_line_text">14sp</dimen>
     <dimen name="widget_line_height">20dp</dimen>
@@ -47,7 +53,7 @@
     <!-- A flat day's high and low and the line below them (D41). -->
     <dimen name="widget_flat_day_degrees_height">18dp</dimen>
     <dimen name="widget_flat_day_note_height">16dp</dimen>
-    <dimen name="widget_flat_day_text_least">7.5sp</dimen>
+    <dimen name="widget_flat_day_text_least">6.5sp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
     <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->

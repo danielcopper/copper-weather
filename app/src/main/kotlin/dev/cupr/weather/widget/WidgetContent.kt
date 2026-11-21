@@ -47,6 +47,7 @@ sealed interface WidgetContent {
         val temperature: String?,
         val today: HighLow?,
         val line: Line?,
+        val todayRain: Rain? = null,
     )
 
     /** A day's high and low as "9°", "–" for one the forecast lacks (D37); shown or left out together. */
@@ -160,6 +161,7 @@ sealed interface WidgetContent {
                         temperature = data.temperature?.let(::degrees),
                         today = todays?.let { HighLow(forecastDegrees(it.high), forecastDegrees(it.low)) },
                         line = rainHint(data.rainAt, now) ?: Condition.of(data.condition)?.word?.let(Line::Word),
+                        todayRain = todays?.let { rainAmount(it.precipitation, it.condition) },
                     ),
                 hours =
                     data.hours

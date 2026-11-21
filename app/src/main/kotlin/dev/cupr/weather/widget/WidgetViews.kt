@@ -116,8 +116,8 @@ internal object WidgetViews {
         views.show(R.id.now_temperature, content.now.temperature, Palette::text)
         val room = Room(context.resources, size, content.signInAgain)
         val days = if (SizeBucket.wide(size)) content.days.take(room.flatDays()) else emptyList()
-        // With days "now" has its column and its large image; without them the card's width and the smaller image,
-        // which leaves 2 cells room for the text. The line is measured against the text area beside the image.
+        // With days "now" has its column, without them the card's width; the line is measured against the text area
+        // beside the image.
         val column =
             if (days.isEmpty()) {
                 views.setViewLayoutWidth(
@@ -130,16 +130,15 @@ internal object WidgetViews {
                 views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
-        val icon = if (days.isEmpty()) R.dimen.widget_flat_now_icon_narrow else R.dimen.widget_flat_now_icon
-        views.setViewLayoutWidthDimen(R.id.now_icon, icon)
-        views.setViewLayoutHeightDimen(R.id.now_icon, icon)
+        val text = room.flatText(column)
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
         } else {
-            val text = room.flatText(column, icon)
             line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
+        // Today's high, low and rain below; with "Neu anmelden", which takes two lines, there is no room left for it.
+        flatToday(context, views, content.now.takeUnless { content.signInAgain }, room, text)
 
         views.setViewVisibility(R.id.divider, if (days.isEmpty()) View.GONE else View.VISIBLE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
@@ -157,6 +156,26 @@ internal object WidgetViews {
         views.show(R.id.widget_notice, again, Palette::accent)
         views.show(R.id.widget_plain, null, Palette::text)
         views.setOnClickPendingIntent(R.id.widget, tap(context, content))
+    }
+
+    /**
+     * The flat bucket's third line below "now" (D36): today's high in `text`, its low in `textMuted` and its rain in
+     * `rain` when it has and it fits the [text] dp wide area at its least size, or nothing without today or [now].
+     */
+    private fun flatToday(
+        context: Context,
+        views: RemoteViews,
+        now: WidgetContent.Now?,
+        room: Room,
+        text: Float,
+    ) {
+        val today = now?.today
+        views.setViewVisibility(R.id.now_today_flat, if (today == null) View.GONE else View.VISIBLE)
+        if (today == null) return
+        views.show(R.id.now_today_flat_high, today.high, Palette::text)
+        views.show(R.id.now_today_flat_low, today.low, Palette::textMuted)
+        val rain = with(WidgetRows) { context.rainText(now.todayRain) }
+        views.show(R.id.now_today_flat_rain, rain?.takeIf { room.fitsFlatToday(today, it, text) }, Palette::rain)
     }
 
     /** The app's screen while the sign-in asks to be done again, else the weather pop-up (D39). */
@@ -247,13 +266,37 @@ internal object WidgetViews {
             text: String,
             width: Float,
             @DimenRes size: Int,
+        ): Boolean = widthOf(text, size) <= width
+
+        /**
+         * Whether today's [rain] fits at its least size beside [today]'s high and low on the flat bucket's third line,
+         * [width] dp wide (D36).
+         */
+        fun fitsFlatToday(
+            today: WidgetContent.HighLow,
+            rain: String,
+            width: Float,
         ): Boolean {
+            val degrees =
+                widthOf(today.high, R.dimen.widget_flat_today_text, Typeface.BOLD) +
+                    dimen(R.dimen.widget_flat_today_low_gap) +
+                    widthOf(today.low, R.dimen.widget_flat_today_text) +
+                    dimen(R.dimen.widget_flat_today_rain_gap)
+            return degrees + widthOf(rain, R.dimen.widget_flat_today_text_least) <= width
+        }
+
+        /** [text]'s width in dp at [size] in the widget's sans-serif, [style] as `Typeface`'s styles. */
+        private fun widthOf(
+            text: String,
+            @DimenRes size: Int,
+            style: Int = Typeface.NORMAL,
+        ): Float {
             val paint =
                 TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
                     textSize = resources.getDimension(size)
-                    typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+                    typeface = Typeface.create("sans-serif", style)
                 }
-            return dp(paint.measureText(text)) <= width
+            return dp(paint.measureText(text))
         }
 
         private val padding = dimen(R.dimen.widget_padding)
@@ -265,11 +308,9 @@ internal object WidgetViews {
         /** The width of "now"'s column in the flat bucket beside its days. */
         fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
 
-        /** The text area beside the image, [icon] wide, in a flat "now" column [column] dp wide (D36). */
-        fun flatText(
-            column: Float,
-            @DimenRes icon: Int,
-        ): Float = column - dimen(icon) - dimen(R.dimen.widget_now_gap)
+        /** The text area beside the image in a flat "now" column [column] dp wide (D36). */
+        fun flatText(column: Float): Float =
+            column - dimen(R.dimen.widget_flat_now_icon) - dimen(R.dimen.widget_now_gap)
 
         /** The hours that fit the width, each at least its least width. */
         fun hours(): Int = fit(inside(), dimen(R.dimen.widget_hour_width))

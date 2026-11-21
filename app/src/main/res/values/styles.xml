@@ -244,6 +244,45 @@
         <item name="android:orientation">vertical</item>
     </style>
 
+    <!-- Today's high, low and rain below "now"'s line in the flat bucket: the
+         high and the low as they come, the rain in the room left (D36). -->
+    <style name="WeatherWidget.FlatToday">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_flat_today_height</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.FlatToday.Degree">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_flat_today_text</item>
+    </style>
+
+    <style name="WeatherWidget.FlatToday.Degree.High">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="WeatherWidget.FlatToday.Degree.Low">
+        <item name="android:layout_marginStart">@dimen/widget_flat_today_low_gap</item>
+    </style>
+
+    <style name="WeatherWidget.FlatToday.Rain">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">@dimen/widget_flat_today_rain_gap</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_flat_today_text</item>
+        <item name="android:autoSizeMinTextSize">@dimen/widget_flat_today_text_least</item>
+        <item name="android:autoSizeStepGranularity">0.5sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:gravity">start|center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_flat_today_text</item>
+    </style>
+
     <!-- The divider before the days, as the dashboard's border on its days. -->
     <style name="WeatherWidget.FlatDivider">
         <item name="android:layout_width">@dimen/widget_divider</item>
@@ -304,8 +343,8 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:autoSizeMaxTextSize">13sp</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:autoSizeMaxTextSize">12sp</item>
+        <item name="android:textSize">12sp</item>
     </style>
 
     <style name="WeatherWidget.FlatDayFit.Degree.High">
@@ -321,9 +360,9 @@
     <style name="WeatherWidget.FlatDayFit.Note">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_day_note_height</item>
-        <item name="android:autoSizeMaxTextSize">11.5sp</item>
+        <item name="android:autoSizeMaxTextSize">11sp</item>
         <item name="android:gravity">center</item>
-        <item name="android:textSize">11.5sp</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

@@ -48,6 +48,25 @@
                 android:id="@+id/widget_notice"
                 style="@style/WeatherWidget.Notice.Flat"
                 android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/now_today_flat"
+                style="@style/WeatherWidget.FlatToday"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/now_today_flat_high"
+                    style="@style/WeatherWidget.FlatToday.Degree.High" />
+
+                <TextView
+                    android:id="@+id/now_today_flat_low"
+                    style="@style/WeatherWidget.FlatToday.Degree.Low" />
+
+                <TextView
+                    android:id="@+id/now_today_flat_rain"
+                    style="@style/WeatherWidget.FlatToday.Rain"
+                    android:visibility="gone" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
