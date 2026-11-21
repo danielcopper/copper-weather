@@ -76,7 +76,7 @@ internal object WidgetViews {
         bucket: SizeBucket,
     ) {
         val small = bucket == SizeBucket.SMALL
-        now(views, content.now, compact = small)
+        now(context, views, content.now, compact = small)
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
         val room = Room(context.resources, size, content.signInAgain)
@@ -127,7 +127,7 @@ internal object WidgetViews {
                 )
                 room.inside()
             } else {
-                views.setViewLayoutWidthDimen(R.id.now_column, R.dimen.widget_flat_now_width)
+                views.width(context, R.id.now_column, R.dimen.widget_flat_now_width)
                 room.flatNow()
             }
         val text = room.flatText(column)
@@ -189,19 +189,17 @@ internal object WidgetViews {
 
     /** "Now"'s row outside the flat bucket (D36): [compact] in the small bucket, lower and with a smaller image. */
     private fun now(
+        context: Context,
         views: RemoteViews,
         now: WidgetContent.Now,
         compact: Boolean,
     ) {
         views.setViewVisibility(R.id.now, View.VISIBLE)
-        views.setViewLayoutHeightDimen(
-            R.id.now,
-            if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height,
-        )
+        views.height(context, R.id.now, if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height)
         views.setImageViewResource(R.id.now_icon, now.icon)
         val icon = if (compact) R.dimen.widget_now_icon_compact else R.dimen.widget_now_icon
-        views.setViewLayoutWidthDimen(R.id.now_icon, icon)
-        views.setViewLayoutHeightDimen(R.id.now_icon, icon)
+        views.width(context, R.id.now_icon, icon)
+        views.height(context, R.id.now_icon, icon)
         views.show(R.id.now_temperature, now.temperature, Palette::text)
     }
 
