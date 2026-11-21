@@ -318,29 +318,32 @@
         <item name="android:layout_marginBottom">1dp</item>
     </style>
 
-    <!-- A flat day's high and low as one pair, centred in the day; the app
-         sets their size to fit (D41). -->
+    <!-- A flat day's high and low, each in its half of the day, the gap
+         between them in the day's middle; the app sets their size to fit
+         (D41). -->
     <style name="WeatherWidget.FlatDayDegrees">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_flat_day_degrees_height</item>
         <item name="android:baselineAligned">false</item>
-        <item name="android:gravity">center</item>
         <item name="android:orientation">horizontal</item>
     </style>
 
     <style name="WeatherWidget.FlatDayDegree">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">@dimen/widget_flat_day_text</item>
     </style>
 
     <style name="WeatherWidget.FlatDayDegree.High">
+        <item name="android:gravity">end|center_vertical</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="WeatherWidget.FlatDayDegree.Low">
         <item name="android:layout_marginStart">@dimen/widget_flat_day_low_gap</item>
+        <item name="android:gravity">start|center_vertical</item>
     </style>
 
     <!-- The days: a row each, the highs and lows in columns. -->

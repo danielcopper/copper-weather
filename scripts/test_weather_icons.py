@@ -145,6 +145,64 @@ class RefuseTest(unittest.TestCase):
         self.refused('<path d="M0,0 L1,1; x"/>', "is not plain SVG path commands")
 
 
+class FrameTest(unittest.TestCase):
+    """The frame every drawable shows: the smallest square around what all the SVGs draw (D38)."""
+
+    @staticmethod
+    def bounds(body):
+        size, found = weather_icons.parse(svg(body), "t.svg")
+        boxes = [weather_icons.bounds_of(shape, size, "t.svg") for shape in found]
+        return [tuple(round(v, 3) for v in box) for box in boxes if box is not None]
+
+    def test_every_drawable_shows_the_square_around_what_all_the_svgs_draw(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            bodies = {
+                "light": '<rect x="10" y="10" width="10" height="20" fill="#000"/>',
+                "dark": '<circle cx="40" cy="20" r="5" fill="#000"/>',
+            }
+            for mode, body in bodies.items():
+                (root / "svg" / mode).mkdir(parents=True)
+                (root / "svg" / mode / "fog-day-still.svg").write_text(svg(body))
+            written = weather_icons.outputs(root / "svg", root / "res")
+        # x from 10 to 45 and y from 10 to 30: a square of 35, centred on y 20.
+        for xml in written.values():
+            self.assertIn('android:viewportWidth="35"', xml)
+            self.assertIn('android:viewportHeight="35"', xml)
+            self.assertIn('android:width="35dp"', xml)
+            self.assertIn('<group android:translateX="-10" android:translateY="-2.5">', xml)
+            self.assertIn('<clip-path android:pathData="M0,0 H64 V64 H0 Z" />', xml)
+
+    def test_a_stroke_adds_half_its_width_scaled_with_the_shape(self):
+        self.assertEqual(
+            [(18, 18, 42, 22)],
+            self.bounds('<g transform="scale(2)"><line x1="10" y1="10" x2="20" y2="10" stroke="#000" '
+                        'stroke-width="2" stroke-linecap="round"/></g>'),
+        )
+
+    def test_a_rotation_and_an_arc_are_followed(self):
+        # A quarter turn about (32, 32) moves the circle at (42, 32) to (32, 42).
+        self.assertEqual(
+            [(27, 37, 37, 47)],
+            self.bounds('<circle cx="42" cy="32" r="5" fill="#000" transform="rotate(90 32 32)"/>'),
+        )
+
+    def test_a_miter_join_reaches_past_half_the_width(self):
+        # The peak's miter points up by 1 / cos(half the angle) = sqrt(5), past the stroke's half width of 1.
+        self.assertEqual(
+            [(9, 7.764, 31, 31)],
+            self.bounds('<path d="M10,30 L20,10 L30,30" fill="none" stroke="#000" stroke-width="2"/>'),
+        )
+
+    def test_what_lies_outside_the_view_box_is_cut_off(self):
+        self.assertEqual([(50, 22, 64, 42)], self.bounds('<circle cx="60" cy="32" r="10" fill="#000"/>'))
+
+    def test_path_data_whose_bounds_cannot_be_found_is_refused(self):
+        with self.assertRaises(Unsupported) as caught:
+            self.bounds('<path d="M0,0 L1"/>')
+        self.assertIn("path command L has 1 numbers", str(caught.exception))
+
+
 class OutputsTest(unittest.TestCase):
     def test_light_goes_to_drawable_and_dark_to_drawable_night_under_one_name(self):
         with tempfile.TemporaryDirectory() as folder:

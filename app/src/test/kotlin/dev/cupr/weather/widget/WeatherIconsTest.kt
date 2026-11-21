@@ -101,6 +101,7 @@ class WeatherIconsTest {
         for (icon in icons) {
             val drawable = checkNotNull(application.getDrawable(icon.getInt(null))) { icon.name }
             assertEquals(icon.name, (ICON_DP * density).toInt(), drawable.intrinsicWidth)
+            assertEquals(icon.name, (ICON_DP * density).toInt(), drawable.intrinsicHeight)
         }
     }
 
@@ -141,7 +142,8 @@ class WeatherIconsTest {
     }
 
     private companion object {
-        const val ICON_DP = 64
+        /** The common frame every icon shows, the square around what all of them draw, of the SVGs' 64 (D38). */
+        const val ICON_DP = 59.21f
         const val TIMEOUT_SECONDS = 60L
     }
 }

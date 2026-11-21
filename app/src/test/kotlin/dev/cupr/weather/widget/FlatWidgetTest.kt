@@ -384,9 +384,9 @@ class FlatWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
-    fun `a flat day's high and low stand centred as a pair, all at the largest size at which every pair fits`() {
+    fun `a flat day's high and low stand each in its half, all at the largest size at which every one fits`() {
         signIn()
-        // Every other day 0° and -4°, the rest -12° and -15°, too wide for a day at 12 sp.
+        // Every other day 0° and -4°, the rest -12° and -15°, too wide for their halves at 12 sp.
         val days =
             (1..5).joinToString(",") { index ->
                 val (high, low) = if (index % 2 == 1) 0 to -4 else -12 to -15
@@ -399,53 +399,52 @@ class FlatWidgetTest : WidgetTestBase() {
             val widget = laidOut(placed(SizeF(width, 95f)), SizeF(width, 95f))
             val cells = widget.findViewById<ViewGroup>(R.id.days)
             assertEquals("$width", count, cells.childCount)
-            val pairs = (0 until cells.childCount).map { cells.getChildAt(it) }
-            val sizes =
-                pairs.flatMap { listOf(it.text(R.id.flat_day_high), it.text(R.id.flat_day_low)) }.map { it.textSize }
+            val texts =
+                (0 until cells.childCount).flatMap { index ->
+                    val cell = cells.getChildAt(index)
+                    listOf(cell.text(R.id.flat_day_high), cell.text(R.id.flat_day_low))
+                }
+            val sizes = texts.map { it.textSize }
             assertEquals("$width $sizes", 1, sizes.distinct().size)
             assertTrue("$width $sizes", sizes[0] < sp(12f) && sizes[0] >= sp(7f))
-            if (width == 388f) assertEquals("9.5 sp fits only without the free dp: $sizes", sp(9f), sizes[0], 0.5f)
-            for (cell in pairs) {
-                val high = cell.text(R.id.flat_day_high)
-                val low = cell.text(R.id.flat_day_low)
+            if (width == 388f) assertEquals("9 sp fits only without the free dp: $sizes", sp(8.5f), sizes[0], 0.5f)
+            for (index in 0 until cells.childCount) {
+                val high = cells.getChildAt(index).text(R.id.flat_day_high)
+                val low = cells.getChildAt(index).text(R.id.flat_day_low)
                 val row = high.parent as View
-                // As much room before the pair as after it, within a pixel.
-                assertTrue(
-                    "$width ${high.left} ${row.width - low.right}",
-                    kotlin.math.abs(high.left - (row.width - low.right)) <= 1,
-                )
-                // Each text whole in its view, as drawn: no "-15" for "-15°".
-                for (text in listOf(high, low)) {
-                    val drawn = text.paint.measureText(text.text.toString())
-                    assertTrue("$width ${text.text} $drawn ${text.width}", drawn <= text.width)
-                }
-                // Measured by the drawn text, which a too-narrow view would cut.
-                val pair = low.left - high.left + low.paint.measureText(low.text.toString())
-                assertTrue("$width $pair ${row.width}", pair <= row.width)
-                val larger = { text: TextView -> TextPaint(text.paint).apply { textSize = text.textSize + sp(0.5f) } }
-                val grown =
-                    pair - high.paint.measureText(high.text.toString()) - low.paint.measureText(low.text.toString()) +
-                        larger(high).measureText(high.text.toString()) + larger(low).measureText(low.text.toString())
-                if (high.text.toString() == "-12°") {
-                    // A step larger and the -12° and -15° would not fit their day with the dp the app leaves free.
-                    assertTrue("$width $grown ${row.width}", grown > row.width - dp(1) - 1)
-                }
+                // The gap between the drawn high and the drawn low, 3 dp, sits at the day's middle, within a pixel.
+                val highEnd = high.left + high.totalPaddingLeft + high.layout.getLineRight(0)
+                val lowStart = low.left + low.totalPaddingLeft + low.layout.getLineLeft(0)
+                assertEquals("$width", dp(3).toFloat(), lowStart - highEnd, 1f)
+                assertEquals("$width", row.width / 2f, (highEnd + lowStart) / 2f, 1f)
             }
+            // Each text whole in its view, as drawn: no "-15" for "-15°". A step larger and one of them would not fit
+            // its half with the dp the app leaves free.
+            for (text in texts) {
+                val drawn = text.paint.measureText(text.text.toString())
+                assertTrue("$width ${text.text} $drawn ${text.width}", drawn <= text.width)
+            }
+            val larger = { text: TextView -> TextPaint(text.paint).apply { textSize = text.textSize + sp(0.5f) } }
+            assertTrue(
+                "$width",
+                texts.any { larger(it).measureText(it.text.toString()) > it.width - dp(1) - 1 },
+            )
         }
 
-        // Days of 0° and -4° alone keep the largest size, 12 sp.
+        // Days of 0° and -4° alone keep the largest size, 12 sp, the gap still in the middle.
         val short =
             (1..5).joinToString(",") {
                 """{"datetime":"2026-11-${20 + it}T00:00:00+01:00","temperature":0,"templow":-4}"""
             }
         written(SampleWeather.data(""","days":[$short]"""))
         val day = laidOut(placed(SizeF(388f, 95f)), SizeF(388f, 95f)).findViewById<ViewGroup>(R.id.days).getChildAt(0)
-        assertEquals(sp(12f), day.text(R.id.flat_day_high).textSize, 0.5f)
-        assertEquals(sp(12f), day.text(R.id.flat_day_low).textSize, 0.5f)
-        val row = day.text(R.id.flat_day_high).parent as View
-        assertTrue(
-            kotlin.math.abs(day.text(R.id.flat_day_high).left - (row.width - day.text(R.id.flat_day_low).right)) <= 1,
-        )
+        val high = day.text(R.id.flat_day_high)
+        val low = day.text(R.id.flat_day_low)
+        assertEquals(sp(12f), high.textSize, 0.5f)
+        assertEquals(sp(12f), low.textSize, 0.5f)
+        val highEnd = high.left + high.totalPaddingLeft + high.layout.getLineRight(0)
+        val lowStart = low.left + low.totalPaddingLeft + low.layout.getLineLeft(0)
+        assertEquals((high.parent as View).width / 2f, (highEnd + lowStart) / 2f, 1f)
     }
 
     @Test

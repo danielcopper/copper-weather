@@ -2,6 +2,7 @@ package dev.cupr.weather.widget
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Typeface
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
@@ -289,15 +290,17 @@ internal object WidgetViews {
         }
 
         /**
-         * The size in px for the highs and lows of the flat bucket's [days], each a day's pair side by side: the
-         * largest of the sizes in `dimens.xml` at which every pair fits its day, else the least (D41).
+         * The size in px for the highs and lows of the flat bucket's [days], each in its half of its day: the largest
+         * of the sizes in `dimens.xml` at which every high and every low fits its half, else the least (D41).
          */
         fun flatDayDegrees(days: List<WidgetContent.HighLow>): Float {
-            val day =
-                flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap) - dimen(R.dimen.widget_flat_fit_slack)
+            val day = flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
+            val half = (day - dimen(R.dimen.widget_flat_day_low_gap)) / 2 - dimen(R.dimen.widget_flat_fit_slack)
             val sizes = resources.sizes(R.dimen.widget_flat_day_text, R.dimen.widget_flat_day_text_least)
             return sizes.firstOrNull { size ->
-                days.all { resources.widthOf(it, size, R.dimen.widget_flat_day_low_gap) <= day }
+                days.all {
+                    resources.widthOf(it.high, size, Typeface.BOLD) <= half && resources.widthOf(it.low, size) <= half
+                }
             } ?: sizes.last()
         }
 
