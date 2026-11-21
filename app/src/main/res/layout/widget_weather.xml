@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter" (D12-D14, D33, D36): "now" (its still image, the
-     temperature, today's high and low beside it or, in the small bucket,
-     below it, then the rain hint or the condition, and "Neu anmelden" while
-     the sign-in is no longer usable), the hours and the days as the size
-     bucket shows them, or a plain text instead, on the card. Every part starts
-     hidden; WidgetViews shows the ones it fills, adds the hours and days, and
-     sets the texts' colours from the palette, light and dark (D7). The card,
-     "now" and the hours' strip take their looks from styles.xml, as the
-     picker's preview does, and so do "Neu anmelden" and the plain text but
-     for their heights; the days' list carries its own. The whole card is one
-     tap. -->
+<!-- The widget "Wetter" (D12-D14, D33, D36): "now" (its image, still or
+     animated in the frame beside it (D43, D44), the temperature, today's
+     high and low beside it or, in the small bucket, below it, then the rain
+     hint or the condition, and "Neu anmelden" while the sign-in is no longer
+     usable), the hours and the days as the size bucket shows them, or a
+     plain text instead, on the card. Every part starts hidden; WidgetViews
+     shows the ones it fills, adds the hours and days, and sets the texts'
+     colours from the palette, light and dark (D7). The card, "now" and the
+     hours' strip take their looks from styles.xml, as the picker's preview
+     does, and so do "Neu anmelden" and the plain text but for their heights;
+     the days' list carries its own. The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">
@@ -24,6 +24,11 @@
             style="@style/WeatherWidget.NowIcon"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter" />
+
+        <FrameLayout
+            android:id="@+id/now_icon_animated"
+            style="@style/WeatherWidget.NowIcon"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/now_temperature"

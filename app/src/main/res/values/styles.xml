@@ -37,6 +37,17 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
+    <!-- An animated icon (D43): the ProgressBar of a generated layout
+         weather_*_animated.xml, as large as the slot WidgetViews adds it to
+         beside the still image; its indeterminate drawable is the icon, which
+         it runs while the widget is seen (D6). -->
+    <style name="WeatherWidget.AnimatedIcon">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="android:indeterminate">true</item>
+    </style>
+
     <!-- Its scale type stands on each element, where Android Lint reads it. -->
     <style name="WeatherWidget.NowIcon">
         <item name="android:layout_width">@dimen/widget_now_icon</item>
@@ -292,6 +303,10 @@
         <item name="android:baselineAligned">false</item>
         <item name="android:orientation">horizontal</item>
     </style>
+
+    <!-- The hours in the flat bucket's place of the days, each an hour of the
+         wide bucket's strip, sharing its width (D46). -->
+    <style name="WeatherWidget.FlatHours" parent="WeatherWidget.FlatDays" />
 
     <!-- A day of the flat bucket: its weekday, its image and its high and
          low (D41). -->

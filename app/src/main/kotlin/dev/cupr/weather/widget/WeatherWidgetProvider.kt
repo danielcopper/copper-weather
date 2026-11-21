@@ -10,13 +10,16 @@ import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.annotation.VisibleForTesting
 import androidx.core.os.BundleCompat
+import dev.cupr.weather.app.Services
+import dev.cupr.weather.store.WidgetSettings
 import java.time.Clock
 
 /**
  * The widget "Wetter" (D19): the snapshot's weather by its size bucket (D11–D14), or why there is none, on a card in
- * the palette's colours, light and dark with the system (D7). Its views are built anew on each update and whenever the
- * launcher reports new sizes, one set of views for each size the launcher shows it at (D35); the launcher's own
- * updates read what to show as the app's do ([Widgets]).
+ * the palette's colours, light and dark with the system (D7), as each widget's settings say (D44). Its views are built
+ * anew on each update and whenever the launcher reports new sizes, one set of views for each size the launcher shows it
+ * at (D35); the launcher's own updates read what to show as the app's do ([Widgets]). A widget removed from the home
+ * screen takes its settings with it.
  */
 class WeatherWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -36,6 +39,13 @@ class WeatherWidgetProvider : AppWidgetProvider() {
         Widgets.withContent(context) { content -> update(context, appWidgetManager, intArrayOf(appWidgetId), content) }
     }
 
+    override fun onDeleted(
+        context: Context,
+        appWidgetIds: IntArray,
+    ) {
+        Services.widgetSettings(context).remove(appWidgetIds)
+    }
+
     companion object {
         private const val TAG = "WeatherWidget"
 
@@ -53,24 +63,33 @@ class WeatherWidgetProvider : AppWidgetProvider() {
         @VisibleForTesting
         internal var clock: () -> Clock = { Clock.systemDefaultZone() }
 
-        /** Hands each of the widgets [ids] the views of [content] for the sizes the launcher shows it at. */
+        /**
+         * Hands each of the widgets [ids] the views of [content] with its settings, for the sizes the launcher shows it
+         * at.
+         */
         internal fun update(
             context: Context,
             manager: AppWidgetManager,
             ids: IntArray,
             content: WidgetContent,
         ) {
+            val settings = Services.widgetSettings(context)
             ids.forEach { id ->
-                manager.updateAppWidget(id, views(context, content, sizes(manager.getAppWidgetOptions(id), id)))
+                val sizes = sizes(manager.getAppWidgetOptions(id), id)
+                manager.updateAppWidget(id, views(context, content, settings.read(id), sizes))
             }
         }
 
-        /** The views of [content], one set for each of the [sizes] a widget is shown at; the launcher picks by size. */
+        /**
+         * The views of [content] with [settings], one set for each of the [sizes] a widget is shown at; the launcher
+         * picks by size.
+         */
         internal fun views(
             context: Context,
             content: WidgetContent,
+            settings: WidgetSettings,
             sizes: List<SizeF>,
-        ): RemoteViews = RemoteViews(sizes.associateWith { WidgetViews.of(context, content, it) })
+        ): RemoteViews = RemoteViews(sizes.associateWith { WidgetViews.of(context, content, it, settings) })
 
         /** This app's widgets on the home screen. */
         internal fun ids(

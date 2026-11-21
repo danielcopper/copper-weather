@@ -83,6 +83,18 @@
     <string name="fetch_cause_phone">Fehler auf diesem Handy</string>
     <string name="fetch_cause_newer_schema">Home Assistant liefert ein neueres Format – App aktualisieren</string>
     <string name="sign_out">Abmelden</string>
+    <!-- A widget's configuration screen (D44, D45): its title with the widget's name, which icons move, what one row high shows beside "now", the card's opacity and its value in percent, and saving. -->
+    <string name="setup_title">Widget „%1$s“</string>
+    <string name="setup_animation">Bewegte Wettersymbole</string>
+    <string name="setup_animation_off">Aus</string>
+    <string name="setup_animation_now">Nur „jetzt“</string>
+    <string name="setup_animation_all">Alle: „jetzt“, Stunden und Tage</string>
+    <string name="setup_flat_strip">Eine Zeile hoch, neben „jetzt“</string>
+    <string name="setup_flat_strip_days">Die nächsten Tage</string>
+    <string name="setup_flat_strip_hours">Die nächsten Stunden</string>
+    <string name="setup_opacity">Deckkraft des Hintergrunds</string>
+    <string name="setup_opacity_value">%1$d\u00A0%%</string>
+    <string name="setup_save">Speichern</string>
     <!-- The fetch interval, set once for the app on its screen (D28), and its options. -->
     <string name="fetch_interval">Abruf</string>
     <string name="every_15_minutes">Alle 15 Minuten</string>

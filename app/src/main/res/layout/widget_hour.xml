@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An hour of the hours (D13): its time, its still image (the night form at
-     night), its temperature and its rain when it has; WidgetRows fills it,
-     and WidgetViews adds as many as fit the width, each an equal share of
-     it. Its looks are styles.xml's, which the picker's preview shares. -->
+<!-- An hour of the hours (D13): its time, its image (the night form at
+     night), still or animated in the frame beside it (D43, D44), its
+     temperature and its rain when it has; WidgetRows fills it, and
+     WidgetViews adds as many as fit the width, each an equal share of it.
+     Its looks are styles.xml's, which the picker's preview shares. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/WeatherWidget.Hour">
 
@@ -14,6 +15,11 @@
         android:id="@+id/hour_icon"
         style="@style/WeatherWidget.HourIcon"
         android:importantForAccessibility="no" />
+
+    <FrameLayout
+        android:id="@+id/hour_icon_animated"
+        style="@style/WeatherWidget.HourIcon"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/hour_temperature"

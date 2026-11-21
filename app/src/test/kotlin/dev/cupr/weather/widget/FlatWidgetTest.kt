@@ -52,7 +52,8 @@ class FlatWidgetTest : WidgetTestBase() {
         assertEquals(listOf(dp(28), dp(28)), listOf(icon.width, icon.height))
         val high = days.getChildAt(0).text(R.id.flat_day_high)
         assertEquals(Typeface.BOLD, high.typeface?.style)
-        assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
+        // Without settings "now" animates, the days are still (D44).
+        assertEquals(R.drawable.weather_partlycloudy_day_animated, widget.icon(R.id.now_icon))
         assertFlatNow(widget, icon = 66)
         // "Now" in its column, the divider and the days side by side on the card.
         assertEquals(LinearLayout.HORIZONTAL, (widget as LinearLayout).orientation)
@@ -235,7 +236,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         assertEquals(dp(140), wide.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(4, WidgetHost.days(wide).size)
-        val icon = wide.findViewById<View>(R.id.now_icon).layoutParams
+        val icon = wide.iconSlot(R.id.now_icon).layoutParams
         assertEquals(listOf(dp(66), dp(66)), listOf(icon.width, icon.height))
     }
 
@@ -250,7 +251,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, narrow.findViewById<View>(R.id.now_column).layoutParams.width)
         assertEquals(emptyList<List<String>>(), WidgetHost.days(narrow))
-        val icon = narrow.findViewById<View>(R.id.now_icon).layoutParams
+        val icon = narrow.iconSlot(R.id.now_icon).layoutParams
         assertEquals(listOf(dp(56), dp(56)), listOf(icon.width, icon.height))
     }
 
@@ -326,7 +327,7 @@ class FlatWidgetTest : WidgetTestBase() {
 
         val widget = laidOut(placed(size), size)
 
-        val icon = widget.findViewById<View>(R.id.now_icon)
+        val icon = widget.iconSlot(R.id.now_icon)
         val area = widget.findViewById<View>(R.id.now_text)
         assertTrue("${area.width}", kotlin.math.abs(area.width - 71 * density) <= 1)
         assertEquals(dp(3), area.left - icon.right)
@@ -630,7 +631,10 @@ class FlatWidgetTest : WidgetTestBase() {
         }
     }
 
-    /** "Now" of a flat widget: its [icon] dp image at the left of its column, beside it temperature, line and today. */
+    /**
+     * "Now" of a flat widget: its [icon] dp image, still or in the frame beside it animated, at the left of its column,
+     * beside it temperature, line and today.
+     */
     private fun assertFlatNow(
         widget: View,
         icon: Int,
@@ -638,9 +642,12 @@ class FlatWidgetTest : WidgetTestBase() {
         val column = widget.findViewById<LinearLayout>(R.id.now_column)
         val text = widget.findViewById<ViewGroup>(R.id.now_text)
         assertEquals(LinearLayout.HORIZONTAL, column.orientation)
-        assertEquals(listOf(R.id.now_icon, R.id.now_text), (0 until column.childCount).map { column.getChildAt(it).id })
-        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.width)
-        assertEquals(dp(icon), widget.findViewById<View>(R.id.now_icon).layoutParams.height)
+        assertEquals(
+            listOf(R.id.now_icon, R.id.now_icon_animated, R.id.now_text),
+            (0 until column.childCount).map { column.getChildAt(it).id },
+        )
+        assertEquals(dp(icon), widget.iconSlot(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(icon), widget.iconSlot(R.id.now_icon).layoutParams.height)
         assertEquals(
             listOf(R.id.now_temperature, R.id.now_line, R.id.now_line_long, R.id.widget_notice, R.id.now_today_flat),
             (0 until text.childCount).map { text.getChildAt(it).id },

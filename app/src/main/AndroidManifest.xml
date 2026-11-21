@@ -66,6 +66,20 @@
             </intent-filter>
         </activity>
 
+        <!-- A widget's configuration screen (D44): the launcher opens it from the
+             widget's settings; placing a widget opens nothing, it draws with the
+             defaults (configuration_optional), and it can be set up again
+             (reconfigurable) (widget_weather_info.xml). Exported, as the launcher
+             starts it; it shows only this app's widgets. -->
+        <activity
+            android:name=".setup.SetupActivity"
+            android:exported="true"
+            android:theme="@style/Theme.CopperWeather">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- Shows nothing: opens the weather pop-up a tap on the widget asks for and finishes (D39). -->
         <activity
             android:name=".tap.TapActivity"

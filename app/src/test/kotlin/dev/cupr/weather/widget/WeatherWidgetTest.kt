@@ -15,6 +15,7 @@ import dev.cupr.weather.R
 import dev.cupr.weather.app.MainActivity
 import dev.cupr.weather.app.Services
 import dev.cupr.weather.palette.Palette
+import dev.cupr.weather.store.WidgetSettings
 import dev.cupr.weather.tap.TapActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -44,7 +45,7 @@ class WeatherWidgetTest : WidgetTestBase() {
         val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
 
         assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), widget.shown())
-        assertEquals(R.drawable.weather_partlycloudy_day, widget.image(R.id.now_icon))
+        assertEquals(R.drawable.weather_partlycloudy_day_animated, widget.icon(R.id.now_icon))
     }
 
     @Test
@@ -55,13 +56,13 @@ class WeatherWidgetTest : WidgetTestBase() {
         val small = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
         assertTrue(WidgetHost.visible(small.findViewById(R.id.now_today_below), small))
         assertFalse(WidgetHost.visible(small.findViewById(R.id.now_today), small))
-        assertEquals(dp(40), small.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(40), small.iconSlot(R.id.now_icon).layoutParams.width)
         assertEquals(dp(40), small.findViewById<View>(R.id.now).layoutParams.height)
 
         val wide = placed(SizeBucket.sizeOf(columns = 4, rows = 2))
         assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_today), wide))
         assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_today_below), wide))
-        assertEquals(dp(48), wide.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(48), wide.iconSlot(R.id.now_icon).layoutParams.width)
         assertEquals(dp(48), wide.findViewById<View>(R.id.now).layoutParams.height)
         assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), wide.shown().take(4))
     }
@@ -126,7 +127,7 @@ class WeatherWidgetTest : WidgetTestBase() {
         val wide = SizeBucket.sizeOf(columns = 4, rows = 2)
         val content = WidgetContent.read(application, SampleWeather.CLOCK)
 
-        val views = WeatherWidgetProvider.views(application, content, listOf(small, wide))
+        val views = WeatherWidgetProvider.views(application, content, WidgetSettings.DEFAULT, listOf(small, wide))
 
         // What a launcher applies at a size: RemoteViews' own choice among its sizes (hidden in the SDK, public at run
         // time).
@@ -168,13 +169,13 @@ class WeatherWidgetTest : WidgetTestBase() {
     fun `now shows the night form at night and in the morning's twilight, and the day form otherwise`() {
         signIn()
         for ((twilight, icon) in listOf(
-            "night" to R.drawable.weather_partlycloudy_night,
-            "sunrise" to R.drawable.weather_partlycloudy_night,
-            "sunset" to R.drawable.weather_partlycloudy_day,
-            "day" to R.drawable.weather_partlycloudy_day,
+            "night" to R.drawable.weather_partlycloudy_night_animated,
+            "sunrise" to R.drawable.weather_partlycloudy_night_animated,
+            "sunset" to R.drawable.weather_partlycloudy_day_animated,
+            "day" to R.drawable.weather_partlycloudy_day_animated,
         )) {
             written(SampleWeather.data().replace(""""twilight":"day"""", """"twilight":"$twilight""""))
-            assertEquals(twilight, icon, placed().image(R.id.now_icon))
+            assertEquals(twilight, icon, placed().icon(R.id.now_icon))
         }
     }
 
@@ -369,7 +370,7 @@ class WeatherWidgetTest : WidgetTestBase() {
         snapshot("""{"condition":"sandstorm","temperature":-0.4}""")
         val unknown = placed()
         assertEquals(listOf("0°"), unknown.shown())
-        assertEquals(R.drawable.weather_exceptional_day, unknown.image(R.id.now_icon))
+        assertEquals(R.drawable.weather_exceptional_day_animated, unknown.icon(R.id.now_icon))
 
         snapshot("""{"condition":"fog"}""")
         assertEquals(listOf("Nebel"), placed().shown())

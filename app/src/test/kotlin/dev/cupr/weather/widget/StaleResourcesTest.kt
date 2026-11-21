@@ -7,6 +7,7 @@ import android.util.SizeF
 import android.view.View
 import android.widget.FrameLayout
 import dev.cupr.weather.R
+import dev.cupr.weather.store.WidgetSettings
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,13 +45,14 @@ class StaleResourcesTest : WidgetTestBase() {
         val widget = drawnByStaleLauncher(size)
 
         assertEquals(dp(40), widget.findViewById<View>(R.id.now).height)
-        assertEquals(dp(40), widget.findViewById<View>(R.id.now_icon).width)
-        assertEquals(dp(40), widget.findViewById<View>(R.id.now_icon).height)
+        assertEquals(dp(40), widget.iconSlot(R.id.now_icon).width)
+        assertEquals(dp(40), widget.iconSlot(R.id.now_icon).height)
     }
 
     /** The views for [size] applied and laid out as a launcher with [StaleResources] does. */
     private fun drawnByStaleLauncher(size: SizeF): View {
-        val views = WidgetViews.of(application, WidgetContent.read(application, WeatherWidgetProvider.clock()), size)
+        val content = WidgetContent.read(application, WeatherWidgetProvider.clock())
+        val views = WidgetViews.of(application, content, size, WidgetSettings.DEFAULT)
         val launcher =
             object : ContextWrapper(application) {
                 private val stale = StaleResources(application)
