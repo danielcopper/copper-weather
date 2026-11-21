@@ -51,19 +51,18 @@ class WeatherWidgetTest : WidgetTestBase() {
     fun `in the small bucket today's high and low stand below the temperature, in a lower row with a smaller image`() {
         signIn()
         written(SampleWeather.full())
-        val density = application.resources.displayMetrics.density
 
         val small = placed(SizeBucket.sizeOf(columns = 2, rows = 2))
         assertTrue(WidgetHost.visible(small.findViewById(R.id.now_today_below), small))
         assertFalse(WidgetHost.visible(small.findViewById(R.id.now_today), small))
-        assertEquals((40 * density).toInt(), small.findViewById<View>(R.id.now_icon).layoutParams.width)
-        assertEquals((40 * density).toInt(), small.findViewById<View>(R.id.now).layoutParams.height)
+        assertEquals(dp(40), small.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(40), small.findViewById<View>(R.id.now).layoutParams.height)
 
         val wide = placed(SizeBucket.sizeOf(columns = 4, rows = 2))
         assertTrue(WidgetHost.visible(wide.findViewById(R.id.now_today), wide))
         assertFalse(WidgetHost.visible(wide.findViewById(R.id.now_today_below), wide))
-        assertEquals((48 * density).toInt(), wide.findViewById<View>(R.id.now_icon).layoutParams.width)
-        assertEquals((48 * density).toInt(), wide.findViewById<View>(R.id.now).layoutParams.height)
+        assertEquals(dp(48), wide.findViewById<View>(R.id.now_icon).layoutParams.width)
+        assertEquals(dp(48), wide.findViewById<View>(R.id.now).layoutParams.height)
         assertEquals(listOf("7°", "9°", "3°", "Teilweise bewölkt"), wide.shown().take(4))
     }
 
