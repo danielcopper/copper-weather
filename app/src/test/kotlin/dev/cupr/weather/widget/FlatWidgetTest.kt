@@ -210,7 +210,8 @@ class FlatWidgetTest : WidgetTestBase() {
         val narrow = rainAt(SizeF(140f, 100f))
         assertEquals("2,1\u00A0mm", narrow.text.toString())
         assertTrue("${narrow.textSize}", narrow.textSize < sp(11f) && narrow.textSize >= sp(7f))
-        // The group, from the high to the rain, fits the text area; with the rain a step larger it would not.
+        // The group, from the high to the rain, fits the text area; with the rain a step larger it would not, with the
+        // dp the app leaves free.
         // The group is measured by the drawn text, since a too-large rain gets a narrower view and is cut.
         val row = narrow.parent as ViewGroup
         val shown = narrow.text.toString()
@@ -400,15 +401,10 @@ class FlatWidgetTest : WidgetTestBase() {
             assertEquals("$width", count, cells.childCount)
             val pairs = (0 until cells.childCount).map { cells.getChildAt(it) }
             val sizes =
-                pairs
-                    .flatMap {
-                        listOf(
-                            it.text(R.id.flat_day_high),
-                            it.text(R.id.flat_day_low),
-                        )
-                    }.map { it.textSize }
+                pairs.flatMap { listOf(it.text(R.id.flat_day_high), it.text(R.id.flat_day_low)) }.map { it.textSize }
             assertEquals("$width $sizes", 1, sizes.distinct().size)
             assertTrue("$width $sizes", sizes[0] < sp(12f) && sizes[0] >= sp(7f))
+            if (width == 388f) assertEquals("9.5 sp fits only without the free dp: $sizes", sp(9f), sizes[0], 0.5f)
             for (cell in pairs) {
                 val high = cell.text(R.id.flat_day_high)
                 val low = cell.text(R.id.flat_day_low)
@@ -418,12 +414,12 @@ class FlatWidgetTest : WidgetTestBase() {
                     "$width ${high.left} ${row.width - low.right}",
                     kotlin.math.abs(high.left - (row.width - low.right)) <= 1,
                 )
-                // Measured by the drawn text, which a too-narrow view would cut.
                 // Each text whole in its view, as drawn: no "-15" for "-15°".
                 for (text in listOf(high, low)) {
                     val drawn = text.paint.measureText(text.text.toString())
                     assertTrue("$width ${text.text} $drawn ${text.width}", drawn <= text.width)
                 }
+                // Measured by the drawn text, which a too-narrow view would cut.
                 val pair = low.left - high.left + low.paint.measureText(low.text.toString())
                 assertTrue("$width $pair ${row.width}", pair <= row.width)
                 val larger = { text: TextView -> TextPaint(text.paint).apply { textSize = text.textSize + sp(0.5f) } }
