@@ -1,7 +1,6 @@
 package dev.cupr.weather.setup
 
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -24,9 +23,8 @@ class SetupActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
         setResult(RESULT_CANCELED, result())
-        val provider = AppWidgetManager.getInstance(this).getAppWidgetInfo(id)?.provider
-        if (provider != ComponentName(this, WeatherWidgetProvider::class.java)) {
-            Log.w(TAG, "Configuration opened for widget $id, which is none of this app's widgets (provider $provider)")
+        if (id !in WeatherWidgetProvider.ids(this, AppWidgetManager.getInstance(this))) {
+            Log.w(TAG, "Configuration opened for widget $id, which is none of this app's widgets")
             finish()
             return
         }
