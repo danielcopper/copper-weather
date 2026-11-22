@@ -268,6 +268,24 @@ class OutputsTest(unittest.TestCase):
         self.assertIn('style="@style/WeatherWidget.AnimatedIcon"', layout)
         self.assertIn('android:indeterminateDrawable="@drawable/weather_fog_day_animated"', layout)
 
+    def test_the_interpolators_the_animated_icons_name_are_written_once_each(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            pulse = ('<animate attributeName="opacity" dur="2s" repeatCount="indefinite" calcMode="spline" '
+                     'keySplines=".42 0 .58 1; .42 0 .58 1" values="1;.5;1"/>')
+            for mode in ("light", "dark"):
+                (root / "svg" / mode).mkdir(parents=True)
+                for name in ("fog-day", "rainy-day"):
+                    (root / "svg" / mode / f"{name}-still.svg").write_text(svg('<path d="M0,0 L1,1 Z"/>'))
+                    (root / "svg" / mode / f"{name}.svg").write_text(svg(f'<path d="M0,0 L1,1 Z">{pulse}</path>'))
+            written = weather_icons.outputs(root / "svg", root / "res")
+        interpolators = {path.name: text for path, text in written.items() if path.parent.name == "interpolator"}
+        self.assertEqual(["weather_spline_04200_00000_05800_10000.xml"], list(interpolators))
+        text = interpolators["weather_spline_04200_00000_05800_10000.xml"]
+        for part in ("<pathInterpolator", 'android:controlX1="0.42"', 'android:controlY1="0"',
+                     'android:controlX2="0.58"', 'android:controlY2="1" />'):
+            self.assertIn(part, text)
+
     def test_a_source_named_otherwise_is_refused(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -335,10 +353,14 @@ class CheckTest(unittest.TestCase):
         changed.write_text(changed.read_text().replace('android:duration="1000"', 'android:duration="900"'))
         stray = self.res / "layout" / "weather_sandstorm_day_animated.xml"
         stray.write_text("<ProgressBar />")
+        interpolator = self.res / "interpolator" / "weather_spline_00000_00000_10000_10000.xml"
+        interpolator.parent.mkdir(parents=True, exist_ok=True)
+        interpolator.write_text("<pathInterpolator />")
         code, said = self.check()
         self.assertEqual(1, code)
         self.assertIn(f"{changed} is not what the script writes", said)
         self.assertIn(f"{stray} has no source SVG", said)
+        self.assertIn(f"{interpolator} has no source SVG", said)
 
 
 EASE = 'calcMode="spline" keySplines=".42 0 .58 1; .42 0 .58 1"'
@@ -371,8 +393,7 @@ class AnimatedTest(unittest.TestCase):
         animation = target(xml, "p1")
         for part in ('android:propertyName="fillAlpha"', 'android:valueFrom="0.12"', 'android:valueTo="0.28"',
                      'android:duration="2000"', 'android:repeatCount="infinite"', 'android:repeatMode="reverse"',
-                     '<pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" '
-                     'android:controlY2="1" />'):
+                     'android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />'):
             self.assertIn(part, animation)
 
     def test_a_negative_begin_starts_keyframes_at_its_phase_with_the_spline_cut_there(self):
@@ -383,10 +404,9 @@ class AnimatedTest(unittest.TestCase):
         self.assertIn('android:pathData="M22,10.5 L22,5"', xml)
         self.assertIn('android:trimPathEnd="0.8636" />', xml)
         self.assertEqual([(0, 0.8636), (0.25, 1), (0.75, 0.7273), (1, 0.8636)], keyframes(target(xml, "p1")))
-        self.assertIn('android:controlX1="0.29" android:controlY1="0.5" android:controlX2="0.58" '
-                      'android:controlY2="1"', xml)
-        self.assertIn('android:controlX1="0.42" android:controlY1="0" android:controlX2="0.71" '
-                      'android:controlY2="0.5"', xml)
+        # The ease cut in half: its second half before the peak, its first half at the end.
+        self.assertIn('android:interpolator="@interpolator/weather_spline_02900_05000_05800_10000"', xml)
+        self.assertIn('android:interpolator="@interpolator/weather_spline_04200_00000_07100_05000"', xml)
 
     def test_a_disk_whose_radius_changes_is_scaled_about_its_centre(self):
         xml = animated(f'<circle cx="22" cy="21" r="9.5" fill="#f0a000"><animate attributeName="r" dur="4s" '

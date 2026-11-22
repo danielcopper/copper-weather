@@ -96,21 +96,9 @@
                     android:interpolator="@android:interpolator/linear">
                     <propertyValuesHolder android:propertyName="scaleX" android:valueType="floatType">
                         <keyframe android:fraction="0" android:value="0.4396" />
-                        <keyframe android:fraction="0.370968" android:value="1">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3379" android:controlY1="0.3181" android:controlX2="0.566" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="0.870968" android:value="0.35">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="1" android:value="0.4396">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3796" android:controlY1="0" android:controlX2="0.7044" android:controlY2="0.3947" />
-                            </aapt:attr>
-                        </keyframe>
+                        <keyframe android:fraction="0.370968" android:value="1" android:interpolator="@interpolator/weather_spline_03379_03181_05660_10000" />
+                        <keyframe android:fraction="0.870968" android:value="0.35" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                        <keyframe android:fraction="1" android:value="0.4396" android:interpolator="@interpolator/weather_spline_03796_00000_07044_03947" />
                     </propertyValuesHolder>
                 </objectAnimator>
                 <objectAnimator
@@ -119,21 +107,9 @@
                     android:interpolator="@android:interpolator/linear">
                     <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
                         <keyframe android:fraction="0" android:value="0.4396" />
-                        <keyframe android:fraction="0.370968" android:value="1">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3379" android:controlY1="0.3181" android:controlX2="0.566" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="0.870968" android:value="0.35">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="1" android:value="0.4396">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3796" android:controlY1="0" android:controlX2="0.7044" android:controlY2="0.3947" />
-                            </aapt:attr>
-                        </keyframe>
+                        <keyframe android:fraction="0.370968" android:value="1" android:interpolator="@interpolator/weather_spline_03379_03181_05660_10000" />
+                        <keyframe android:fraction="0.870968" android:value="0.35" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                        <keyframe android:fraction="1" android:value="0.4396" android:interpolator="@interpolator/weather_spline_03796_00000_07044_03947" />
                     </propertyValuesHolder>
                 </objectAnimator>
             </set>
@@ -147,21 +123,9 @@
                 android:interpolator="@android:interpolator/linear">
                 <propertyValuesHolder android:propertyName="fillAlpha" android:valueType="floatType">
                     <keyframe android:fraction="0" android:value="0.3965" />
-                    <keyframe android:fraction="0.370968" android:value="1">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.3379" android:controlY1="0.3181" android:controlX2="0.566" android:controlY2="1" />
-                        </aapt:attr>
-                    </keyframe>
-                    <keyframe android:fraction="0.870968" android:value="0.3">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                        </aapt:attr>
-                    </keyframe>
-                    <keyframe android:fraction="1" android:value="0.3965">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.3796" android:controlY1="0" android:controlX2="0.7044" android:controlY2="0.3947" />
-                        </aapt:attr>
-                    </keyframe>
+                    <keyframe android:fraction="0.370968" android:value="1" android:interpolator="@interpolator/weather_spline_03379_03181_05660_10000" />
+                    <keyframe android:fraction="0.870968" android:value="0.3" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                    <keyframe android:fraction="1" android:value="0.3965" android:interpolator="@interpolator/weather_spline_03796_00000_07044_03947" />
                 </propertyValuesHolder>
             </objectAnimator>
         </aapt:attr>
@@ -175,21 +139,9 @@
                     android:interpolator="@android:interpolator/linear">
                     <propertyValuesHolder android:propertyName="scaleX" android:valueType="floatType">
                         <keyframe android:fraction="0" android:value="0.9547" />
-                        <keyframe android:fraction="0.407407" android:value="0.35">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3599" android:controlY1="0.244" android:controlX2="0.5677" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="0.907407" android:value="1">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="1" android:value="0.9547">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.366" android:controlY1="0" android:controlX2="0.6954" android:controlY2="0.3735" />
-                            </aapt:attr>
-                        </keyframe>
+                        <keyframe android:fraction="0.407407" android:value="0.35" android:interpolator="@interpolator/weather_spline_03599_02440_05677_10000" />
+                        <keyframe android:fraction="0.907407" android:value="1" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                        <keyframe android:fraction="1" android:value="0.9547" android:interpolator="@interpolator/weather_spline_03660_00000_06954_03735" />
                     </propertyValuesHolder>
                 </objectAnimator>
                 <objectAnimator
@@ -198,21 +150,9 @@
                     android:interpolator="@android:interpolator/linear">
                     <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
                         <keyframe android:fraction="0" android:value="0.9547" />
-                        <keyframe android:fraction="0.407407" android:value="0.35">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.3599" android:controlY1="0.244" android:controlX2="0.5677" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="0.907407" android:value="1">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                            </aapt:attr>
-                        </keyframe>
-                        <keyframe android:fraction="1" android:value="0.9547">
-                            <aapt:attr name="android:interpolator">
-                                <pathInterpolator android:controlX1="0.366" android:controlY1="0" android:controlX2="0.6954" android:controlY2="0.3735" />
-                            </aapt:attr>
-                        </keyframe>
+                        <keyframe android:fraction="0.407407" android:value="0.35" android:interpolator="@interpolator/weather_spline_03599_02440_05677_10000" />
+                        <keyframe android:fraction="0.907407" android:value="1" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                        <keyframe android:fraction="1" android:value="0.9547" android:interpolator="@interpolator/weather_spline_03660_00000_06954_03735" />
                     </propertyValuesHolder>
                 </objectAnimator>
             </set>
@@ -226,21 +166,9 @@
                 android:interpolator="@android:interpolator/linear">
                 <propertyValuesHolder android:propertyName="fillAlpha" android:valueType="floatType">
                     <keyframe android:fraction="0" android:value="0.9512" />
-                    <keyframe android:fraction="0.407407" android:value="0.3">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.3599" android:controlY1="0.244" android:controlX2="0.5677" android:controlY2="1" />
-                        </aapt:attr>
-                    </keyframe>
-                    <keyframe android:fraction="0.907407" android:value="1">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                        </aapt:attr>
-                    </keyframe>
-                    <keyframe android:fraction="1" android:value="0.9512">
-                        <aapt:attr name="android:interpolator">
-                            <pathInterpolator android:controlX1="0.366" android:controlY1="0" android:controlX2="0.6954" android:controlY2="0.3735" />
-                        </aapt:attr>
-                    </keyframe>
+                    <keyframe android:fraction="0.407407" android:value="0.3" android:interpolator="@interpolator/weather_spline_03599_02440_05677_10000" />
+                    <keyframe android:fraction="0.907407" android:value="1" android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
+                    <keyframe android:fraction="1" android:value="0.9512" android:interpolator="@interpolator/weather_spline_03660_00000_06954_03735" />
                 </propertyValuesHolder>
             </objectAnimator>
         </aapt:attr>
@@ -254,11 +182,8 @@
                 android:valueTo="5"
                 android:duration="3500"
                 android:repeatCount="infinite"
-                android:repeatMode="reverse">
-                <aapt:attr name="android:interpolator">
-                    <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                </aapt:attr>
-            </objectAnimator>
+                android:repeatMode="reverse"
+                android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
         </aapt:attr>
     </target>
     <target android:name="g6">
@@ -270,11 +195,8 @@
                 android:valueTo="3"
                 android:duration="4000"
                 android:repeatCount="infinite"
-                android:repeatMode="reverse">
-                <aapt:attr name="android:interpolator">
-                    <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                </aapt:attr>
-            </objectAnimator>
+                android:repeatMode="reverse"
+                android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
         </aapt:attr>
     </target>
     <target android:name="g7">
@@ -287,11 +209,8 @@
                     android:valueTo="1.1294"
                     android:duration="3000"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -299,11 +218,8 @@
                     android:valueTo="1.1294"
                     android:duration="3000"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
@@ -317,11 +233,8 @@
                     android:valueTo="1.0917"
                     android:duration="3750"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -329,11 +242,8 @@
                     android:valueTo="1.0917"
                     android:duration="3750"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
@@ -347,11 +257,8 @@
                     android:valueTo="0.9"
                     android:duration="3400"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -359,11 +266,8 @@
                     android:valueTo="0.9"
                     android:duration="3400"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
@@ -377,11 +281,8 @@
                     android:valueTo="1.1571"
                     android:duration="3000"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -389,11 +290,8 @@
                     android:valueTo="1.1571"
                     android:duration="3000"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
@@ -407,11 +305,8 @@
                     android:valueTo="1.1048"
                     android:duration="3750"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -419,11 +314,8 @@
                     android:valueTo="1.1048"
                     android:duration="3750"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
@@ -437,11 +329,8 @@
                     android:valueTo="0.8824"
                     android:duration="3400"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
                 <objectAnimator
                     android:propertyName="scaleY"
                     android:valueType="floatType"
@@ -449,11 +338,8 @@
                     android:valueTo="0.8824"
                     android:duration="3400"
                     android:repeatCount="infinite"
-                    android:repeatMode="reverse">
-                    <aapt:attr name="android:interpolator">
-                        <pathInterpolator android:controlX1="0.42" android:controlY1="0" android:controlX2="0.58" android:controlY2="1" />
-                    </aapt:attr>
-                </objectAnimator>
+                    android:repeatMode="reverse"
+                    android:interpolator="@interpolator/weather_spline_04200_00000_05800_10000" />
             </set>
         </aapt:attr>
     </target>
