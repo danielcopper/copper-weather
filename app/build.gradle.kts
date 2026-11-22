@@ -109,7 +109,8 @@ android {
     }
 }
 
-// The unit tests' coverage, written by `createDebugUnitTestCoverageReport`.
+// The unit tests' coverage, written by `createDebugUnitTestCoverageReport`. No Android Lint report: Lint runs in its
+// own CI job, warnings as errors (D10), so the scan's job has no report to import and main has no finding to show.
 extensions.configure<SonarExtension> {
     properties {
         property(
@@ -119,6 +120,7 @@ extensions.configure<SonarExtension> {
                 .get()
                 .asFile.absolutePath,
         )
+        property("sonar.androidLint.reportPaths", "")
     }
 }
 
