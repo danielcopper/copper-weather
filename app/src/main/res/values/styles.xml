@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
-     plain text, the hours, the days and the flat bucket's divider and days,
-     used by widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
-     widget_day.xml and widget_flat_day.xml. The picker's preview
+     plain text, the hours, the days, the flat bucket's divider, its strip of
+     days or hours and its days, and the animated icons' ProgressBar, used by
+     widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
+     widget_day.xml, widget_flat_day.xml and the generated
+     weather_*_animated.xml. The picker's preview
      (widget_weather_preview.xml, D40) uses the same styles for the card,
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
      sets "now"'s row and image sizes by bucket, in the flat bucket the
-     column's width and the image's size by whether days show, the size of
-     today's rain and the size of the days' highs and lows, and picks the
-     line's one- or two-line form (D36, D41). The sizes are in dimens.xml
+     column's width and the image's size by whether days or hours show, the
+     size of today's rain and the size of the days' highs and lows, and picks
+     the line's one- or two-line form (D36, D41, D46). The sizes are in dimens.xml
      (D35); the colours come from the palette, set by WidgetViews or, in the
      preview, from colors.xml (D7). -->
 <resources>
@@ -35,6 +37,17 @@
         <item name="android:layout_height">@dimen/widget_now_height</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- An animated icon (D43): the ProgressBar of a generated layout
+         weather_*_animated.xml, as large as the slot WidgetViews adds it to
+         beside the still image; its indeterminate drawable is the icon, which
+         it runs while the widget is seen (D6). -->
+    <style name="WeatherWidget.AnimatedIcon">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="android:indeterminate">true</item>
     </style>
 
     <!-- Its scale type stands on each element, where Android Lint reads it. -->
@@ -212,7 +225,8 @@
         <item name="android:textSize">11sp</item>
     </style>
 
-    <!-- The flat bucket: "now" and the days side by side in one row. -->
+    <!-- The flat bucket: "now" and the days or the hours side by side in one
+         row (D46). -->
     <style name="WeatherWidget.FlatCard">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -284,7 +298,10 @@
         <item name="android:layout_marginStart">@dimen/widget_gap</item>
     </style>
 
-    <style name="WeatherWidget.FlatDays">
+    <!-- The strip beside "now" in the flat bucket: the days (D41), or the
+         hours, each an hour of the wide bucket's strip (D46); both lists take
+         this style, and the widget shows one of them. -->
+    <style name="WeatherWidget.FlatStrip">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>

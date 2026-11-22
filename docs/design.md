@@ -7,7 +7,8 @@ A skeleton that grows as the design does. What is decided stands in [decisions.m
 
 Its content by size bucket, the warning band, "Stand …" and a tap: D4, D11–D17. How it is drawn: D5; its sizes, "now",
 the hours and the days in detail: D33–D37, D41; the tap: D39; the picker's preview: D40.
-Weather icons: D6; the still images and where they come from: D38.
+Weather icons: D6; the still images and where they come from: D38; the animated icons: D43. A widget's settings
+and its configuration screen: D44; the card's opacity: D45; the hours one row high: D46.
 
 ## Data
 

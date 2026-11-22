@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A day of the days (D14): its weekday, its still image in the day form,
-     its rain when it has, its high and its low; WidgetRows fills it, and
-     WidgetViews adds as many as fit the height. Its looks are styles.xml's. -->
+<!-- A day of the days (D14): its weekday, its image in the day form, still or
+     animated in the frame beside it (D43, D44), its rain when it has, its
+     high and its low; WidgetRows fills it, and WidgetViews adds as many as
+     fit the height. Its looks are styles.xml's. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/WeatherWidget.Day">
 
@@ -13,6 +14,11 @@
         android:id="@+id/day_icon"
         style="@style/WeatherWidget.DayIcon"
         android:importantForAccessibility="no" />
+
+    <FrameLayout
+        android:id="@+id/day_icon_animated"
+        style="@style/WeatherWidget.DayIcon"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/day_rain"

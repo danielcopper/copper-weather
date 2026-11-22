@@ -17,8 +17,8 @@ version has one widget, whose content follows its **size bucket** (D4).
 ### Size bucket
 
 The size class of a widget that decides what it shows: flat, one row high (**now**, and from 4 cells wide the
-**days** beside it), small (**now**), wide (plus the **hours**) and tall (plus the **days**) (D4); where each begins:
-D11.
+**days** or, as the widget is set, the **hours** beside it), small (**now**), wide (plus the **hours**) and tall (plus
+the **days**) (D4); where each begins: D11.
 
 ### Snapshot
 
@@ -70,9 +70,16 @@ The transition between day and night around sunrise and sunset, as the app senso
 ### Still image / animated icon
 
 The two forms of a weather icon (D6). The **still image** is the icon without motion, a VectorDrawable generated from
-the dashboard's still SVGs (D38); the hours and the days always show it, and "now" shows it while the widget is set
-to still images or has no animated icon yet. The **animated icon** is an AnimatedVectorDrawable that runs endlessly
-while the widget is seen; the platform stops it when the widget is not seen.
+the dashboard's still SVGs (D38). The **animated icon** is an AnimatedVectorDrawable generated from the dashboard's
+animated SVGs (D43), the indeterminate drawable of a ProgressBar that runs it endlessly while the widget is seen; the
+platform stops it when the widget is not seen. Which icons a widget animates is its **animation level** (D44): off,
+only "now" (the default), or all, "now", the hours and the days.
+
+### Widget settings
+
+A widget's own settings, set on its **configuration screen**, which the launcher's widget settings open (D44): its
+animation level, the days or the hours in the flat size bucket (D46), and its card's opacity (D45). A widget without
+settings uses the defaults.
 
 ### Palette role
 

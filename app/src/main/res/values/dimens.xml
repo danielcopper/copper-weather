@@ -20,11 +20,13 @@
     <dimen name="widget_today_height">18dp</dimen>
     <!-- The flat bucket (D36): "now" in a column of its own width, its image
          at the left and beside it its temperature, its line and today's line,
-         then the divider and its padding, and the days beside it, each at
-         least 38 dp wide with its gap of 4 (D41); the card's padding above and
-         below is less than its sides', so a day fits one row. -->
+         then the divider and its padding, and the days or, as it is set, the
+         hours (D46) beside it, each day at least 38 dp wide with its gap of 4
+         (D41); the card's padding above and below is less than its sides', so
+         a day fits one row. -->
     <dimen name="widget_flat_now_width">140dp</dimen>
-    <!-- The image beside the days, and the smaller one without them (D36). -->
+    <!-- The image beside the days or, as it is set, the hours (D46), and the
+         smaller one without them (D36). -->
     <dimen name="widget_flat_now_icon">66dp</dimen>
     <dimen name="widget_flat_now_icon_narrow">56dp</dimen>
     <!-- A small gap between the flat image and its text: the images' own
@@ -42,7 +44,8 @@
     <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_divider">1dp</dimen>
     <!-- 8 dp from the divider to the first day, as "now" ends 8 dp before it:
-         the days' own 4 and that day's gap of 4 (D41). -->
+         the days' own 4 and that day's gap of 4 (D41); the hours, which have
+         no gap, start 4 dp after it (D46). -->
     <dimen name="widget_flat_days_padding">4dp</dimen>
     <dimen name="widget_flat_day_width">38dp</dimen>
     <dimen name="widget_flat_day_gap">4dp</dimen>

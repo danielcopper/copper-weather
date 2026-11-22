@@ -3,8 +3,11 @@
      least size (D11). Sizes in dp by D35: 2 x 1 is 129 x 50, 4 x 2
      275 x 116. updatePeriodMillis 0: the app updates it (D33). The picker
      shows previewLayout (D40); previewImage stands in where a launcher shows
-     no layout. -->
+     no layout. Placed, it draws at once with the defaults; its configuration
+     screen opens only from the launcher's widget settings
+     (configuration_optional, reconfigurable; D44). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="dev.cupr.weather.setup.SetupActivity"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_weather"
     android:minWidth="275dp"
@@ -17,4 +20,5 @@
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional" />

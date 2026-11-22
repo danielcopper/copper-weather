@@ -84,7 +84,7 @@ rm -f gradle/verification-metadata.xml
 """
 
 [tasks.icons]
-description = "Write the weather icons' VectorDrawables from the dashboard's still SVGs in icons/weather (D38)"
+description = "Write the weather icons from the dashboard's SVGs in icons/weather: the still images' VectorDrawables (D38) and the animated icons' AnimatedVectorDrawables with their layouts (D43)"
 run = "python3 scripts/weather_icons.py"
 
 [tasks.install]

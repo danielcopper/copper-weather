@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" as
-     the dashboard's today (its still image at the left, and beside it the
-     temperature over the rain hint or the condition, or "Neu anmelden" in
-     that line's place while the sign-in is no longer usable, and today's
-     high, low and rain below them), and beside it,
-     after a divider, as many of the next days as fit (D41), or a plain text
-     instead, on the card. Every part starts hidden; WidgetViews shows the
-     ones it fills, adds the days, and sets the colours from the palette,
-     light and dark (D7). Every part takes its looks from styles.xml, as in
+     the dashboard's today (its image at the left, still or animated in the
+     frame beside it (D43, D44), and beside it the temperature over the rain
+     hint or the condition, or "Neu anmelden" in that line's place while the
+     sign-in is no longer usable, and today's high, low and rain below them),
+     and beside it, after a divider, as many of the next days (D41) or hours
+     (D46) as fit, as the widget is set (D44), or a plain text instead, on the
+     card. Every part starts hidden; WidgetViews shows the ones it fills, adds
+     the days or the hours, and sets the colours from the palette, light and
+     dark (D7). Every part takes its looks from styles.xml, as in
      widget_weather.xml, "Neu anmelden" and the plain text but for their
-     heights; without days WidgetViews widens "now" to the card. The whole
-     card is one tap. -->
+     heights; without days or hours WidgetViews widens "now" to the card. The
+     whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.FlatCard">
@@ -25,6 +26,11 @@
             style="@style/WeatherWidget.FlatNowIcon"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter" />
+
+        <FrameLayout
+            android:id="@+id/now_icon_animated"
+            style="@style/WeatherWidget.FlatNowIcon"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/now_text"
@@ -79,7 +85,12 @@
 
     <LinearLayout
         android:id="@+id/days"
-        style="@style/WeatherWidget.FlatDays"
+        style="@style/WeatherWidget.FlatStrip"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/hours"
+        style="@style/WeatherWidget.FlatStrip"
         android:visibility="gone" />
 
     <TextView

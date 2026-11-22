@@ -5,8 +5,8 @@ import android.content.Context
 
 /**
  * The app's own updates of all its widgets (D33): after each fetch, whatever its outcome, after a new sign-in and after
- * signing out. The launcher's own updates (a new widget) go through the provider and leave WorkManager alone, so it
- * does not start with every process they start (D28).
+ * signing out; and of one widget whose settings were saved (D44). The launcher's own updates (a new widget) go through
+ * the provider and leave WorkManager alone, so it does not start with every process they start (D28).
  */
 object Widgets {
     private val lock = Any()
@@ -16,6 +16,20 @@ object Widgets {
         val manager = AppWidgetManager.getInstance(context)
         val ids = WeatherWidgetProvider.ids(context, manager)
         withContent(context) { WeatherWidgetProvider.update(context, manager, ids, it) }
+    }
+
+    /**
+     * Draws the widget [id] anew, and only it, after its settings were saved (D44); false, drawing nothing, when [id]
+     * is none of this app's widgets, removed while its configuration screen was open.
+     */
+    fun saved(
+        context: Context,
+        id: Int,
+    ): Boolean {
+        val manager = AppWidgetManager.getInstance(context)
+        if (id !in WeatherWidgetProvider.ids(context, manager)) return false
+        withContent(context) { WeatherWidgetProvider.update(context, manager, intArrayOf(id), it) }
+        return true
     }
 
     /**

@@ -1,6 +1,9 @@
 package dev.cupr.weather.widget
 
 import android.app.Application
+import android.graphics.drawable.AnimatedVectorDrawable
+import android.view.LayoutInflater
+import android.widget.ProgressBar
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.R
 import org.junit.Assert.assertEquals
@@ -8,13 +11,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
- * The weather icons (D38): the drawables in the repo are what `scripts/weather_icons.py` writes from the SVGs in
- * `icons/weather`, the script converts what it should and refuses the rest, and each condition finds its image.
+ * The weather icons (D38, D43): the drawables and the animated icons' layouts in the repo are what
+ * `scripts/weather_icons.py` writes from the SVGs in `icons/weather`, the script converts what it should and refuses
+ * the rest, and each condition finds its image, still and animated.
  */
 @RunWith(RobolectricTestRunner::class)
 class WeatherIconsTest {
@@ -60,7 +65,9 @@ class WeatherIconsTest {
         for (condition in conditions) {
             for (night in listOf(false, true)) {
                 val name = "weather_${condition.replace('-', '_')}_${if (night) "night" else "day"}"
-                assertEquals(name, name, application.resources.getResourceEntryName(WeatherIcons.of(condition, night)))
+                val icon = WeatherIcons.of(condition, night)
+                assertEquals(name, name, application.resources.getResourceEntryName(icon.still))
+                assertEquals(name, name + "_animated", application.resources.getResourceEntryName(icon.animated))
             }
         }
         for (night in listOf(false, true)) {
@@ -68,7 +75,7 @@ class WeatherIconsTest {
             assertEquals(WeatherIcons.of("exceptional", night), WeatherIcons.of("sandstorm", night))
             assertEquals(WeatherIcons.of("exceptional", night), WeatherIcons.of(null, night))
         }
-        assertEquals(R.drawable.weather_sunny_night, WeatherIcons.of("clear-night", night = true))
+        assertEquals(R.drawable.weather_sunny_night, WeatherIcons.of("clear-night", night = true).still)
     }
 
     @Test
@@ -94,14 +101,33 @@ class WeatherIconsTest {
         assertLoads()
     }
 
+    /** Every still image and every animated icon loads, each as large as the common frame (D38, D43). */
     private fun assertLoads() {
         val icons = R.drawable::class.java.fields.filter { it.name.startsWith("weather_") }
-        assertEquals(28, icons.size)
+        val (animated, still) = icons.partition { it.name.endsWith("_animated") }
+        assertEquals(28, still.size)
+        assertEquals(still.map { it.name + "_animated" }.toSet(), animated.map { it.name }.toSet())
         val density = application.resources.displayMetrics.density
         for (icon in icons) {
             val drawable = checkNotNull(application.getDrawable(icon.getInt(null))) { icon.name }
+            assertEquals(icon.name, icon in animated, drawable is AnimatedVectorDrawable)
             assertEquals(icon.name, (ICON_DP * density).toInt(), drawable.intrinsicWidth)
             assertEquals(icon.name, (ICON_DP * density).toInt(), drawable.intrinsicHeight)
+        }
+    }
+
+    @Test
+    fun `each still image has its animated icon, a progress bar's indeterminate drawable of the same name`() {
+        for (condition in Condition.entries) {
+            val forms = listOf(condition.day to condition.dayAnimated, condition.night to condition.nightAnimated)
+            for ((still, layout) in forms) {
+                val name = application.resources.getResourceEntryName(still) + "_animated"
+                assertEquals(name, application.resources.getResourceEntryName(layout))
+                val bar = LayoutInflater.from(application).inflate(layout, null) as ProgressBar
+                assertTrue(name, bar.isIndeterminate)
+                val drawable = shadowOf(bar.indeterminateDrawable).createdFromResId
+                assertEquals(name, application.resources.getResourceEntryName(drawable))
+            }
         }
     }
 

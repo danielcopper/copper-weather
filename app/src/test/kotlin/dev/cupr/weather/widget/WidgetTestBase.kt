@@ -5,7 +5,9 @@ import android.content.Intent
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import dev.cupr.weather.R
@@ -58,6 +60,17 @@ abstract class WidgetTestBase {
 
     protected val density get() = application.resources.displayMetrics.density
 
+    private companion object {
+        /** Each image view of an icon and the frame beside it for its animated icon (D43). */
+        val ANIMATED =
+            mapOf(
+                R.id.now_icon to R.id.now_icon_animated,
+                R.id.hour_icon to R.id.hour_icon_animated,
+                R.id.day_icon to R.id.day_icon_animated,
+                R.id.flat_day_icon to R.id.flat_day_icon_animated,
+            )
+    }
+
     /** [value] dp in px on the test's display. */
     protected fun dp(value: Int): Int = Math.round(value * density)
 
@@ -100,6 +113,33 @@ abstract class WidgetTestBase {
 
     /** The drawable resource an image view shows. */
     protected fun View.image(id: Int): Int = shadowOf(findViewById<ImageView>(id).drawable).createdFromResId
+
+    /**
+     * Where the icon of the image view [still] shows: that view, or the frame beside it that holds its animated icon
+     * (D43), whichever is visible; the other is hidden.
+     */
+    protected fun View.iconSlot(still: Int): View =
+        listOf(still, ANIMATED.getValue(still))
+            .map { findViewById<View>(it) }
+            .filter { it.visibility == View.VISIBLE }
+            .single()
+
+    /**
+     * The drawable resource the icon of the image view [still] shows: its still image, or the animated icon a
+     * ProgressBar in the frame beside it runs (D43).
+     */
+    protected fun View.icon(still: Int): Int =
+        when (val slot = iconSlot(still)) {
+            is ImageView -> {
+                shadowOf(slot.drawable).createdFromResId
+            }
+
+            else -> {
+                val bar = (slot as ViewGroup).getChildAt(0) as ProgressBar
+                assertEquals(1, slot.childCount)
+                shadowOf(bar.indeterminateDrawable).createdFromResId
+            }
+        }
 
     /** The activity a tap on the widget starts. */
     protected fun View.tapped(): Intent {

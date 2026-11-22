@@ -15,6 +15,7 @@ import dev.cupr.weather.store.FailedFetchStore
 import dev.cupr.weather.store.KeystoreKey
 import dev.cupr.weather.store.SnapshotStore
 import dev.cupr.weather.store.TokenCipher
+import dev.cupr.weather.store.WidgetSettingsStore
 import dev.cupr.weather.widget.Widgets
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -24,12 +25,13 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 /**
- * The app's one sign-in, snapshot, settings and HTTP client, and what the app's screen and the fetch do with them, with
- * the fetches scheduled and the widgets updated to match (D27, D28, D31, D33).
+ * The app's one sign-in, snapshot, settings, widgets' settings and HTTP client, and what the app's screen and the
+ * fetch do with them, with the fetches scheduled and the widgets updated to match (D27, D28, D31, D33).
  */
 object Services {
     private const val ACCOUNT = "account"
     private const val SETTINGS = "settings"
+    private const val WIDGETS = "widgets"
     private const val SNAPSHOT = "snapshot.json"
     private const val CALL_TIMEOUT_SECONDS = 30L
 
@@ -56,6 +58,10 @@ object Services {
 
     /** The settings set once for the app, which signing out keeps (D28). */
     fun settings(context: Context) = AppSettingsStore(context.getSharedPreferences(SETTINGS, Context.MODE_PRIVATE))
+
+    /** Each widget's settings from its configuration screen (D44). */
+    fun widgetSettings(context: Context) =
+        WidgetSettingsStore(context.getSharedPreferences(WIDGETS, Context.MODE_PRIVATE))
 
     fun fetcher(context: Context) =
         Fetcher(account(context), snapshots(context), failures(context), http, Clock.systemDefaultZone()) {
