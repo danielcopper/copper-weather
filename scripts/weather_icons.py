@@ -83,15 +83,13 @@ phase or a trim's turn falls (de Casteljau) and each piece scaled to a
 pathInterpolator, a jump back to its first value where it repeats. The
 pathInterpolators are shared: one weather_spline_<x1>_<y1>_<x2>_<y2>.xml each
 in interpolator/, its control points in ten-thousandths, for every spline the
-drawables use. A shape's data takes only the first kind, since Android's render thread plays only a
-path animator's first and last value; a changing outline with a negative
-begin fails. Each number's animator is checked against its SMIL animation
-at 400 points of two periods, within a thousandth of its values' range or
-of 1 where that is smaller, allowing a slip of a ten-thousandth of its
-duration (FOLLOW, SLIP); one that does not follow it fails, naming the file
-and the element. A path's changing shape is not sampled; it may only run
-from one value to another or there and back. The drawable's
-vector shows each value at the start, so the first frame does not jump.
+drawables use. A shape's data takes only the first kind, since Android's
+render thread plays only a path animator's first and last value; a changing
+outline with a negative begin fails. Each number's animator is checked
+against its SMIL animation at 400 points of two periods, within the
+tolerance FOLLOW and SLIP set; one that does not follow it fails, naming the
+file and the element. A shape's data is not sampled. The drawable's vector
+shows each value at the start, so the first frame does not jump.
 
 Usage: python3 scripts/weather_icons.py         writes the drawables
        python3 scripts/weather_icons.py --check fails when the drawables in
@@ -842,7 +840,7 @@ class Track:
                      lambda t: function(reference(t)), self.where)
 
     def split_at_time(self, time, value=None):
-        """The track with a key time added at time, inside interval, the spline cut there, and its value there, or
+        """The track with a key time added at time, inside an interval, the spline cut there, and its value there, or
         value when given; time must lie strictly inside an interval."""
         for i in range(len(self.times) - 1):
             start, end = self.times[i], self.times[i + 1]
@@ -857,8 +855,7 @@ class Track:
                     for piece in pieces:
                         if piece is not None and not all(0 <= v <= 1 for v in piece):
                             raise Unsupported(f"{self.where}: the spline {' '.join(fmt(v) for v in spline)} cut at "
-                                              f"{fmt(u)} of its interval leaves 0..1, which a shared interpolator's "
-                                              "name cannot hold")
+                                              f"{fmt(u)} of its interval leaves 0..1")
                 if value is None:
                     value = self.values[i] + (self.values[i + 1] - self.values[i]) * moved
                 return Track(self.times[:i + 1] + (time,) + self.times[i + 1:],
@@ -880,6 +877,7 @@ class Track:
                 share = (value - a) / (b - a)
                 spline = track.splines[i]
                 u = share if spline is None else cubic(0.0, spline[0], spline[2], 1.0, parameter(spline, share, 1))
+                # Kept off the interval's ends, where rounding could put it, so the cut falls inside it.
                 track = track.split_at_time(start + (end - start) * min(max(u, 1e-9), 1 - 1e-9), value)
             i += 1
         return track
