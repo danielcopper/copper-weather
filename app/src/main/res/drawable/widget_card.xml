@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The widget's card: the palette's surface, light or dark with the
-     system (values-night), with rounded corners. -->
+     system (values-night), with rounded corners. The widget tints it to the
+     opacity its settings set (Card.kt, D45); the picker's preview shows it as
+     written here. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="@color/palette_surface" />

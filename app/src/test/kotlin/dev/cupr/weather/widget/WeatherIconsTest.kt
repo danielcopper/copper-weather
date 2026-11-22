@@ -65,7 +65,9 @@ class WeatherIconsTest {
         for (condition in conditions) {
             for (night in listOf(false, true)) {
                 val name = "weather_${condition.replace('-', '_')}_${if (night) "night" else "day"}"
-                assertEquals(name, name, application.resources.getResourceEntryName(WeatherIcons.of(condition, night)))
+                val icon = WeatherIcons.of(condition, night)
+                assertEquals(name, name, application.resources.getResourceEntryName(icon.still))
+                assertEquals(name, name + "_animated", application.resources.getResourceEntryName(icon.animated))
             }
         }
         for (night in listOf(false, true)) {
@@ -73,7 +75,7 @@ class WeatherIconsTest {
             assertEquals(WeatherIcons.of("exceptional", night), WeatherIcons.of("sandstorm", night))
             assertEquals(WeatherIcons.of("exceptional", night), WeatherIcons.of(null, night))
         }
-        assertEquals(R.drawable.weather_sunny_night, WeatherIcons.of("clear-night", night = true))
+        assertEquals(R.drawable.weather_sunny_night, WeatherIcons.of("clear-night", night = true).still)
     }
 
     @Test
@@ -117,9 +119,9 @@ class WeatherIconsTest {
     @Test
     fun `each still image has its animated icon, a progress bar's indeterminate drawable of the same name`() {
         for (condition in Condition.entries) {
-            for (still in listOf(condition.day, condition.night)) {
+            val forms = listOf(condition.day to condition.dayAnimated, condition.night to condition.nightAnimated)
+            for ((still, layout) in forms) {
                 val name = application.resources.getResourceEntryName(still) + "_animated"
-                val layout = WeatherIcons.animated(still)
                 assertEquals(name, application.resources.getResourceEntryName(layout))
                 val bar = LayoutInflater.from(application).inflate(layout, null) as ProgressBar
                 assertTrue(name, bar.isIndeterminate)

@@ -42,7 +42,8 @@
     <dimen name="widget_flat_padding">8dp</dimen>
     <dimen name="widget_divider">1dp</dimen>
     <!-- 8 dp from the divider to the first day, as "now" ends 8 dp before it:
-         the days' own 4 and that day's gap of 4 (D41). -->
+         the days' own 4 and that day's gap of 4 (D41); the hours, which have
+         no gap, start 4 dp after it (D46). -->
     <dimen name="widget_flat_days_padding">4dp</dimen>
     <dimen name="widget_flat_day_width">38dp</dimen>
     <dimen name="widget_flat_day_gap">4dp</dimen>

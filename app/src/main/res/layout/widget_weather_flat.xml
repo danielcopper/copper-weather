@@ -85,12 +85,12 @@
 
     <LinearLayout
         android:id="@+id/days"
-        style="@style/WeatherWidget.FlatDays"
+        style="@style/WeatherWidget.FlatStrip"
         android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/hours"
-        style="@style/WeatherWidget.FlatHours"
+        style="@style/WeatherWidget.FlatStrip"
         android:visibility="gone" />
 
     <TextView

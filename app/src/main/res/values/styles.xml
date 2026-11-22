@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
-     plain text, the hours, the days and the flat bucket's divider and days,
-     used by widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
-     widget_day.xml and widget_flat_day.xml. The picker's preview
+     plain text, the hours, the days, the flat bucket's divider, its strip of
+     days or hours and its days, and the animated icons' ProgressBar, used by
+     widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
+     widget_day.xml, widget_flat_day.xml and the generated
+     weather_*_animated.xml. The picker's preview
      (widget_weather_preview.xml, D40) uses the same styles for the card,
      "now" and the hours, and WidgetPreviewTest keeps the preview and the
      widget's layouts from adding looks of their own beside them; WidgetViews
      sets "now"'s row and image sizes by bucket, in the flat bucket the
-     column's width and the image's size by whether days show, the size of
-     today's rain and the size of the days' highs and lows, and picks the
-     line's one- or two-line form (D36, D41). The sizes are in dimens.xml
+     column's width and the image's size by whether days or hours show, the
+     size of today's rain and the size of the days' highs and lows, and picks
+     the line's one- or two-line form (D36, D41, D46). The sizes are in dimens.xml
      (D35); the colours come from the palette, set by WidgetViews or, in the
      preview, from colors.xml (D7). -->
 <resources>
@@ -223,7 +225,8 @@
         <item name="android:textSize">11sp</item>
     </style>
 
-    <!-- The flat bucket: "now" and the days side by side in one row. -->
+    <!-- The flat bucket: "now" and the days or the hours side by side in one
+         row (D46). -->
     <style name="WeatherWidget.FlatCard">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -295,18 +298,10 @@
         <item name="android:layout_marginStart">@dimen/widget_gap</item>
     </style>
 
-    <style name="WeatherWidget.FlatDays">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:paddingStart">@dimen/widget_flat_days_padding</item>
-        <item name="android:baselineAligned">false</item>
-        <item name="android:orientation">horizontal</item>
-    </style>
-
-    <!-- The hours in the flat bucket's place of the days, each an hour of the
-         wide bucket's strip, sharing its width (D46). -->
-    <style name="WeatherWidget.FlatHours">
+    <!-- The strip beside "now" in the flat bucket: the days (D41), or the
+         hours, each an hour of the wide bucket's strip (D46); both lists take
+         this style, and the widget shows one of them. -->
+    <style name="WeatherWidget.FlatStrip">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>

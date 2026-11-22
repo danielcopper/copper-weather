@@ -147,7 +147,7 @@ internal val SettingsSaver =
             val animation = Animation.entries.firstOrNull { it.stored == saved.getOrNull(0) }
             val strip = FlatStrip.entries.firstOrNull { it.stored == saved.getOrNull(1) }
             val opacity =
-                saved.getOrNull(2)?.toIntOrNull()?.takeIf { it in 0..WidgetSettings.FULL && step(it.toFloat()) == it }
+                saved.getOrNull(2)?.toIntOrNull()?.takeIf(WidgetSettings::isOpacity)
             if (animation == null || strip == null || opacity == null) {
                 null
             } else {

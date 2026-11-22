@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RemoteViews
 import androidx.annotation.DimenRes
-import androidx.annotation.DrawableRes
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.store.Animation
@@ -41,7 +40,7 @@ internal object WidgetViews {
         // layout is the same.
         views.removeAllViews(R.id.hours)
         views.removeAllViews(R.id.days)
-        views.card(settings.opacity)
+        views.card(settings)
         when (content) {
             is WidgetContent.Plain -> plain(context, views, content, flat)
             is WidgetContent.Weather if flat -> flatWeather(context, views, content, size, settings)
@@ -83,7 +82,7 @@ internal object WidgetViews {
         animation: Animation,
     ) {
         val small = bucket == SizeBucket.SMALL
-        now(context, views, content.now, compact = small, animate = animation != Animation.OFF)
+        now(context, views, content.now, compact = small, animation)
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
         val room = Room(context.resources, size, content.signInAgain)
@@ -99,12 +98,11 @@ internal object WidgetViews {
             lineText = R.dimen.widget_line_text,
         )
 
-        val rows = animation == Animation.ALL
         val hours = if (small) emptyList() else content.hours.take(room.hours())
-        views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, rows) }
+        views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, animation) }
         rest(context, views, content)
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
-        views.rows(R.id.days, days) { WidgetRows.day(context, it, rows) }
+        views.rows(R.id.days, days) { WidgetRows.day(context, it, animation) }
     }
 
     /**
@@ -144,7 +142,7 @@ internal object WidgetViews {
             }
         // The image's size by whether days or hours show (D36).
         val icon = if (strip) R.dimen.widget_flat_now_icon else R.dimen.widget_flat_now_icon_narrow
-        views.nowIcon(context, content.now.icon, icon, settings.animation != Animation.OFF)
+        views.nowIcon(context, content.now.icon, icon, settings.animation)
         val text = room.flatText(column, icon)
         if (content.signInAgain) {
             views.setViewVisibility(R.id.now_line, View.GONE)
@@ -157,10 +155,9 @@ internal object WidgetViews {
 
         views.setViewVisibility(R.id.divider, if (strip) View.VISIBLE else View.GONE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
-        val rows = settings.animation == Animation.ALL
         val degrees = room.flatDayDegrees(days.map { it.highLow })
-        views.rows(R.id.days, days) { WidgetRows.flatDay(context, it, degrees, rows) }
-        views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, rows) }
+        views.rows(R.id.days, days) { WidgetRows.flatDay(context, it, degrees, settings.animation) }
+        views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, settings.animation) }
         rest(context, views, content)
     }
 
@@ -204,14 +201,14 @@ internal object WidgetViews {
 
     /**
      * "Now"'s row outside the flat bucket (D36): [compact] in the small bucket, lower and with a smaller image; its
-     * image animated when [animate] (D44).
+     * image moving as [animation] says (D44).
      */
     private fun now(
         context: Context,
         views: RemoteViews,
         now: WidgetContent.Now,
         compact: Boolean,
-        animate: Boolean,
+        animation: Animation,
     ) {
         views.setViewVisibility(R.id.now, View.VISIBLE)
         views.setHeight(
@@ -220,7 +217,7 @@ internal object WidgetViews {
             if (compact) R.dimen.widget_now_height_compact else R.dimen.widget_now_height,
         )
         val icon = if (compact) R.dimen.widget_now_icon_compact else R.dimen.widget_now_icon
-        views.nowIcon(context, now.icon, icon, animate)
+        views.nowIcon(context, now.icon, icon, animation)
         views.show(R.id.now_temperature, now.temperature, Palette::text)
     }
 
@@ -310,7 +307,7 @@ internal object WidgetViews {
          * of the sizes in `dimens.xml` at which every high and every low fits its half, else the least (D41).
          */
         fun flatDayDegrees(days: List<WidgetContent.HighLow>): Float {
-            val day = flatDaysRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
+            val day = flatStripRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
             val half = (day - dimen(R.dimen.widget_flat_day_low_gap)) / 2 - dimen(R.dimen.widget_flat_fit_slack)
             val sizes = resources.sizes(R.dimen.widget_flat_day_text, R.dimen.widget_flat_day_text_least)
             return sizes.firstOrNull { size ->
@@ -326,7 +323,7 @@ internal object WidgetViews {
         /** The width inside the card's padding. */
         fun inside(): Float = size.width - 2 * padding
 
-        /** The width of "now"'s column in the flat bucket beside its days. */
+        /** The width of "now"'s column in the flat bucket beside its days or hours. */
         fun flatNow(): Float = dimen(R.dimen.widget_flat_now_width)
 
         /** The text area beside the image, [icon] large, in a flat "now" column [column] dp wide (D36). */
@@ -344,7 +341,7 @@ internal object WidgetViews {
          */
         fun flatDays(): Int =
             fit(
-                flatDaysRoom,
+                flatStripRoom,
                 dimen(R.dimen.widget_flat_day_width) + dimen(R.dimen.widget_flat_day_gap),
             )
 
@@ -352,10 +349,10 @@ internal object WidgetViews {
          * The hours that fit beside "now" in the flat bucket, in the days' room: each at least its least width, as in
          * the wide bucket's strip, without a gap (D46).
          */
-        fun flatHours(): Int = fit(flatDaysRoom, dimen(R.dimen.widget_hour_width))
+        fun flatHours(): Int = fit(flatStripRoom, dimen(R.dimen.widget_hour_width))
 
-        /** The width the flat bucket's days or hours share, each day with the gap before it. */
-        private val flatDaysRoom
+        /** The width the flat bucket's days or hours share beside "now", each day with the gap before it (D41, D46). */
+        private val flatStripRoom
             get() =
                 inside() - flatNow() - gap - dimen(R.dimen.widget_divider) - dimen(R.dimen.widget_flat_days_padding)
 
@@ -376,18 +373,18 @@ internal object WidgetViews {
 }
 
 /**
- * "Now"'s image, [size] large: its still image, or, when [animate], its animated icon in the frame beside it, both
- * sized as values (D42, D43).
+ * "Now"'s image, [size] large: its still image, or, where [animation] has "now" move, its animated icon in the frame
+ * beside it, both sized as values (D42, D43).
  */
 private fun RemoteViews.nowIcon(
     context: Context,
-    @DrawableRes still: Int,
+    icon: WeatherIcon,
     @DimenRes size: Int,
-    animate: Boolean,
+    animation: Animation,
 ) {
     for (id in intArrayOf(R.id.now_icon, R.id.now_icon_animated)) {
         setWidth(context, id, size)
         setHeight(context, id, size)
     }
-    icon(context, R.id.now_icon, R.id.now_icon_animated, still, animate)
+    icon(context, R.id.now_icon, R.id.now_icon_animated, icon, animation.now)
 }

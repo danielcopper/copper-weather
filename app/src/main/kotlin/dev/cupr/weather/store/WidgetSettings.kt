@@ -11,6 +11,23 @@ enum class Animation(
     OFF("off"),
     NOW("now"),
     ALL("all"),
+    ;
+
+    /** Whether "now"'s icon moves at this level. */
+    val now: Boolean
+        get() =
+            when (this) {
+                OFF -> false
+                NOW, ALL -> true
+            }
+
+    /** Whether the icons of the hours and the days move at this level. */
+    val rows: Boolean
+        get() =
+            when (this) {
+                OFF, NOW -> false
+                ALL -> true
+            }
 }
 
 /** What the flat size bucket shows beside "now" (D46): the next days or the next hours. */
@@ -32,7 +49,7 @@ data class WidgetSettings(
     val opacity: Int = FULL,
 ) {
     init {
-        require(opacity in 0..FULL && opacity % OPACITY_STEP == 0) { "opacity $opacity" }
+        require(isOpacity(opacity)) { "opacity $opacity" }
     }
 
     companion object {
@@ -43,6 +60,9 @@ data class WidgetSettings(
 
         /** The slider's step, in percent. */
         const val OPACITY_STEP = 10
+
+        /** Whether [value] is an opacity the slider can set: 0 to [FULL] percent in steps of [OPACITY_STEP] (D45). */
+        fun isOpacity(value: Int): Boolean = value in 0..FULL && value % OPACITY_STEP == 0
     }
 }
 
@@ -96,9 +116,9 @@ class WidgetSettingsStore(
     ): Int {
         val key = key(id, OPACITY)
         val stored = if (prefs.contains(key)) runCatching { prefs.getInt(key, default) }.getOrNull() else default
-        val step = stored != null && stored in 0..WidgetSettings.FULL && stored % WidgetSettings.OPACITY_STEP == 0
-        if (!step) Log.w(TAG, "${what(id, OPACITY)} is no step of the slider; it reads as $default")
-        return if (step) checkNotNull(stored) else default
+        val opacity = stored?.takeIf(WidgetSettings::isOpacity)
+        if (opacity == null) Log.w(TAG, "${what(id, OPACITY)} is no step of the slider; it reads as $default")
+        return opacity ?: default
     }
 
     private companion object {

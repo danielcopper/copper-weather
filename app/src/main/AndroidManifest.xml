@@ -66,10 +66,7 @@
             </intent-filter>
         </activity>
 
-        <!-- A widget's configuration screen (D44): the launcher opens it from the
-             widget's settings; placing a widget opens nothing, it draws with the
-             defaults (configuration_optional), and it can be set up again
-             (reconfigurable) (widget_weather_info.xml). Exported, as the launcher
+        <!-- A widget's configuration screen (D44). Exported, as the launcher
              starts it; it shows only this app's widgets. -->
         <activity
             android:name=".setup.SetupActivity"

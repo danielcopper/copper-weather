@@ -11,10 +11,8 @@ import dev.cupr.weather.app.enableEdgeToEdgeFromPalette
 import dev.cupr.weather.widget.WeatherWidgetProvider
 
 /**
- * A widget's configuration screen (D44), which the launcher opens from the widget's settings; placing a widget opens
- * nothing, it draws with the defaults (`configuration_optional`). Opened for an id that is none of this app's widgets,
- * it shows nothing and finishes, and the log says so. Going back keeps the stored settings; saving stores the new ones
- * and finishes.
+ * A widget's configuration screen (D44). Opened for an id that is none of this app's widgets, it shows nothing and
+ * finishes, and the log says so. Going back keeps the stored settings; saving stores the new ones and finishes.
  */
 class SetupActivity : ComponentActivity() {
     private var id = AppWidgetManager.INVALID_APPWIDGET_ID

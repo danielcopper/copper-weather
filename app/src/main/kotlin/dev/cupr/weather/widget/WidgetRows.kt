@@ -4,10 +4,10 @@ import android.content.Context
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
-import androidx.annotation.DrawableRes
 import androidx.annotation.Px
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
+import dev.cupr.weather.store.Animation
 import java.text.NumberFormat
 import java.time.DayOfWeek
 import java.util.Locale
@@ -37,29 +37,29 @@ internal object WidgetRows {
     /** The short German name of [day] as the dashboard names it ("Mo" … "So", D37). */
     fun Context.weekday(day: DayOfWeek): String = resources.getStringArray(R.array.weekdays_short)[day.value - 1]
 
-    /** An hour of the hours: its time, image, animated when [animate] (D44), temperature and rain. */
+    /** An hour of the hours: its time, image, moving as [animation] has the rows move (D44), temperature and rain. */
     fun hour(
         context: Context,
         hour: WidgetContent.Hour,
-        animate: Boolean,
+        animation: Animation,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_hour)
         views.show(R.id.hour_time, hour.time, Palette::textMuted)
-        views.icon(context, R.id.hour_icon, R.id.hour_icon_animated, hour.icon, animate)
+        views.icon(context, R.id.hour_icon, R.id.hour_icon_animated, hour.icon, animation.rows)
         views.show(R.id.hour_temperature, hour.temperature, Palette::text)
         views.show(R.id.hour_rain, context.rainText(hour.rain), Palette::rain)
         return views
     }
 
-    /** A day of the days: its weekday, image, animated when [animate] (D44), rain, high and low. */
+    /** A day of the days: its weekday, image, moving as [animation] has the rows move (D44), rain, high and low. */
     fun day(
         context: Context,
         day: WidgetContent.Day,
-        animate: Boolean,
+        animation: Animation,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_day)
         views.show(R.id.day_weekday, context.weekday(day.weekday), Palette::text)
-        views.icon(context, R.id.day_icon, R.id.day_icon_animated, day.icon, animate)
+        views.icon(context, R.id.day_icon, R.id.day_icon_animated, day.icon, animation.rows)
         // The rain keeps its room without an amount, so the highs and lows of all days stand in one column.
         views.show(R.id.day_rain, context.rainText(day.rain), Palette::rain, hidden = View.INVISIBLE)
         views.show(R.id.day_high, day.highLow.high, Palette::text)
@@ -68,18 +68,18 @@ internal object WidgetRows {
     }
 
     /**
-     * A day of the flat bucket (D41): its weekday, its image, animated when [animate] (D44), and its high and its low
-     * at [degrees] px, the size [WidgetViews] picks for every day of the strip.
+     * A day of the flat bucket (D41): its weekday, its image, moving as [animation] has the rows move (D44), and its
+     * high and its low at [degrees] px, the size [WidgetViews] picks for every day of the strip.
      */
     fun flatDay(
         context: Context,
         day: WidgetContent.Day,
         @Px degrees: Float,
-        animate: Boolean,
+        animation: Animation,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_flat_day)
         views.show(R.id.flat_day_weekday, context.weekday(day.weekday), Palette::textMuted)
-        views.icon(context, R.id.flat_day_icon, R.id.flat_day_icon_animated, day.icon, animate)
+        views.icon(context, R.id.flat_day_icon, R.id.flat_day_icon_animated, day.icon, animation.rows)
         views.show(R.id.flat_day_high, day.highLow.high, Palette::text)
         views.show(R.id.flat_day_low, day.highLow.low, Palette::textMuted)
         views.setTextViewTextSize(R.id.flat_day_high, TypedValue.COMPLEX_UNIT_PX, degrees)
@@ -89,7 +89,7 @@ internal object WidgetRows {
 }
 
 /**
- * Shows the still image [still] in the image view [image], or, when [animate], its animated icon in the frame [frame]
+ * Shows [icon]'s still image in the image view [image], or, when [animate], its animated icon in the frame [frame]
  * beside it, which it fills and runs while the widget is seen (D6, D43); the other stays hidden, and the frame empty
  * without the animated icon, since a launcher applies an update onto the views of the one before.
  */
@@ -97,16 +97,16 @@ internal fun RemoteViews.icon(
     context: Context,
     image: Int,
     frame: Int,
-    @DrawableRes still: Int,
+    icon: WeatherIcon,
     animate: Boolean,
 ) {
     removeAllViews(frame)
     setViewVisibility(image, if (animate) View.GONE else View.VISIBLE)
     setViewVisibility(frame, if (animate) View.VISIBLE else View.GONE)
     if (animate) {
-        addView(frame, RemoteViews(context.packageName, WeatherIcons.animated(still)))
+        addView(frame, RemoteViews(context.packageName, icon.animated))
     } else {
-        setImageViewResource(image, still)
+        setImageViewResource(image, icon.still)
     }
 }
 

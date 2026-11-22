@@ -1,7 +1,6 @@
 package dev.cupr.weather.widget
 
 import android.content.Context
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import dev.cupr.weather.R
 import dev.cupr.weather.app.Services
@@ -39,11 +38,11 @@ sealed interface WidgetContent {
     ) : WidgetContent
 
     /**
-     * "Now" (D12, D36): its still image, the temperature as "7°", [today]'s high and low (none without today among the
-     * days), and the line below them, none when there is neither a rain hint nor a condition the app knows.
+     * "Now" (D12, D36): its icon, the temperature as "7°", [today]'s high and low (none without today among the days),
+     * and the line below them, none when there is neither a rain hint nor a condition the app knows.
      */
     data class Now(
-        @param:DrawableRes val icon: Int,
+        val icon: WeatherIcon,
         val temperature: String?,
         val today: HighLow?,
         val line: Line?,
@@ -72,20 +71,20 @@ sealed interface WidgetContent {
         ) : Line
     }
 
-    /** An hour of the hours (D13, D37): its time "14", its still image, its temperature, and its rain when it has. */
+    /** An hour of the hours (D13, D37): its time "14", its icon, its temperature, and its rain when it has. */
     data class Hour(
         val time: String,
-        @param:DrawableRes val icon: Int,
+        val icon: WeatherIcon,
         val temperature: String,
         val rain: Rain?,
     )
 
     /**
-     * A day of the days (D14, D37): its weekday, its still image, its high and low, and its rain when it has.
+     * A day of the days (D14, D37): its weekday, its icon, its high and low, and its rain when it has.
      */
     data class Day(
         val weekday: DayOfWeek,
-        @param:DrawableRes val icon: Int,
+        val icon: WeatherIcon,
         val highLow: HighLow,
         val rain: Rain?,
     )
