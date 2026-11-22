@@ -111,8 +111,8 @@ android {
 
 // The unit tests' coverage, written by `createDebugUnitTestCoverageReport`. No Android Lint report: Lint runs in its
 // own CI job, warnings as errors (D10), so the scan's job has no report to import and main has no finding to show.
-// The weather icons' resources are left out: the icon script writes them and a test holds them to it (D38, D43), and
-// their lines would pass the free plan's limit of lines per organisation.
+// The weather icons' resources are left out: the icon script writes them and a test holds them to it (D38, D43), so
+// the analysis has nothing to find there, and their lines would outnumber the app's own many times over.
 extensions.configure<SonarExtension> {
     properties {
         property("sonar.exclusions", "src/main/res/*/weather_*.xml")
