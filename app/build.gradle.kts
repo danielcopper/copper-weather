@@ -115,7 +115,11 @@ android {
 // the analysis has nothing to find there, and their lines would outnumber the app's own many times over.
 extensions.configure<SonarExtension> {
     properties {
-        property("sonar.exclusions", "src/main/res/*/weather_*.xml")
+        property(
+            "sonar.exclusions",
+            listOf("drawable", "drawable-night", "layout", "interpolator")
+                .joinToString(",") { "src/main/res/$it/weather_*.xml" },
+        )
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
             layout.buildDirectory
