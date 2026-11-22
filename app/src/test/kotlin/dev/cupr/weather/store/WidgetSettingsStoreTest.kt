@@ -59,16 +59,19 @@ class WidgetSettingsStoreTest {
             putInt("7.opacity", 35)
             putString("8.opacity", "full")
             putInt("9.opacity", 110)
+            putInt("10.opacity", -10)
         }
 
         assertEquals(WidgetSettings.DEFAULT, store.read(7))
         assertEquals(WidgetSettings.DEFAULT, store.read(8))
         assertEquals(WidgetSettings.DEFAULT, store.read(9))
+        assertEquals(WidgetSettings.DEFAULT, store.read(10))
         val logs = ShadowLog.getLogsForTag("WidgetSettings").joinToString { it.msg }
         assertTrue(logs, logs.contains("Widget 7: its stored animation \"some\" is unknown; it reads as now"))
         assertTrue(logs, logs.contains("Widget 7: its stored flat_strip \"weeks\" is unknown; it reads as days"))
         assertTrue(logs, logs.contains("Widget 7: its stored opacity is no step of the slider; it reads as 100"))
         assertTrue(logs, logs.contains("Widget 8: its stored opacity is no step of the slider"))
         assertTrue(logs, logs.contains("Widget 9: its stored opacity is no step of the slider"))
+        assertTrue(logs, logs.contains("Widget 10: its stored opacity is no step of the slider; it reads as 100"))
     }
 }

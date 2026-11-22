@@ -17,6 +17,7 @@ import dev.cupr.weather.store.Animation
 import dev.cupr.weather.store.FlatStrip
 import dev.cupr.weather.store.WidgetSettings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -131,10 +132,36 @@ class WidgetSettingsTest : WidgetTestBase() {
         val sizes = listOf(SizeF(349f, 102f), SizeF(386f, 95f), SizeF(387f, 95f), flat, SizeF(410f, 95f))
         val hours = WidgetSettings(flatStrip = FlatStrip.HOURS)
         assertEquals(listOf(3, 4, 4, 4, 4), sizes.map { WidgetHost.hours(placed(hours, it)).size })
-        // At 2 cells wide neither shows, and "now" takes the card's width.
-        val narrow = placed(hours, SizeBucket.sizeOf(columns = 2, rows = 1))
-        assertEquals(emptyList<List<String>>(), WidgetHost.hours(narrow))
-        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, narrow.findViewById<View>(R.id.now_column).layoutParams.width)
+        // Below 4 cells wide neither shows, also 3 cells wide on a phone with wider cells, where an hour would fit
+        // (D11), and "now" takes the card's width.
+        for (size in listOf(SizeBucket.sizeOf(columns = 2, rows = 1), SizeF(272f, 100f))) {
+            val narrow = placed(hours, size)
+            assertEquals("$size", emptyList<List<String>>(), WidgetHost.hours(narrow))
+            val column = narrow.findViewById<View>(R.id.now_column).layoutParams.width
+            assertEquals("$size", ViewGroup.LayoutParams.MATCH_PARENT, column)
+        }
+    }
+
+    @Test
+    fun `the flat hours are drawn anew on each update, and give way to a plain text`() {
+        signIn()
+        written(SampleWeather.full())
+        val id = WidgetHost.place(application)
+        Services.widgetSettings(application).write(id, WidgetSettings(flatStrip = FlatStrip.HOURS))
+        WidgetHost.resize(application, id, flat)
+
+        // A launcher applies an update onto the views of the one before: the hours are not added twice.
+        assertTrue(Widgets.saved(application, id))
+        assertEquals(4, WidgetHost.hours(WidgetHost.view(application, id)).size)
+        Widgets.update(application)
+        assertEquals(4, WidgetHost.hours(WidgetHost.view(application, id)).size)
+
+        Services.account(application).signOut()
+        Widgets.update(application)
+        val plain = WidgetHost.view(application, id)
+        assertEquals(listOf("Nicht angemeldet – zum Anmelden tippen"), plain.shown())
+        assertEquals(emptyList<List<String>>(), WidgetHost.hours(plain))
+        assertFalse(plain.findViewById<View>(R.id.hours).visibility == View.VISIBLE)
     }
 
     @Test
@@ -174,7 +201,10 @@ class WidgetSettingsTest : WidgetTestBase() {
         assertEquals(listOf(SetupActivity::class.java.name), found)
     }
 
-    /** Every text is opaque, the divider and the icons too, and the card is [palette]'s surface at each opacity. */
+    /**
+     * The card is [palette]'s surface at each opacity, while every shown text, the divider's colour and every icon,
+     * "now"'s, the hours' and the days', stay fully opaque.
+     */
     private fun assertOpacity(palette: Palette) {
         // A plain text stands on the card at its opacity too.
         val plain = placed(WidgetSettings(opacity = 30), tall)
@@ -194,6 +224,13 @@ class WidgetSettingsTest : WidgetTestBase() {
                     assertEquals("${text.text}", 255, Color.alpha(text.currentTextColor))
                 }
                 assertEquals(1f, widget.iconSlot(R.id.now_icon).alpha)
+                val day = if (size == flat) R.id.flat_day_icon else R.id.day_icon
+                for ((list, image) in listOf(R.id.hours to R.id.hour_icon, R.id.days to day)) {
+                    val rows = widget.findViewById<ViewGroup>(list)
+                    for (row in (0 until rows.childCount).map { rows.getChildAt(it) }) {
+                        assertEquals(1f, row.iconSlot(image).alpha)
+                    }
+                }
             }
             val divider = placed(settings, flat).findViewById<View>(R.id.divider)
             assertEquals(palette.border, (divider.background as ColorDrawable).color)

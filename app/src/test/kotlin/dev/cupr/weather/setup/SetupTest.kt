@@ -113,6 +113,23 @@ class SetupTest : WidgetTestBase() {
     }
 
     @Test
+    fun `the settings shown, changed but not saved, outlive the screen made anew, as on turning the phone`() {
+        val id = WidgetHost.place(application, tall)
+        open(id)
+
+        node(R.string.setup_animation_off).performClick()
+        node(R.string.setup_flat_strip_hours).performClick()
+        slider().performSemanticsAction(SemanticsActions.SetProgress) { it(40f) }
+        opened.last().recreate()
+        compose.waitForIdle()
+
+        node(R.string.setup_animation_off).assertIsSelected()
+        node(R.string.setup_flat_strip_hours).assertIsSelected()
+        compose.onNodeWithText("40\u00A0%").assertExists()
+        assertEquals(WidgetSettings.DEFAULT, Services.widgetSettings(application).read(id))
+    }
+
+    @Test
     fun `going back keeps the stored settings`() {
         val id = WidgetHost.place(application, tall)
         Services.widgetSettings(application).write(id, WidgetSettings(opacity = 50))
