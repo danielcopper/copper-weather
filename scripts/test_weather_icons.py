@@ -286,6 +286,18 @@ class OutputsTest(unittest.TestCase):
                      'android:controlX2="0.58"', 'android:controlY2="1" />'):
             self.assertIn(part, text)
 
+    def test_an_animated_icon_whose_view_box_differs_from_its_still_images_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for mode in ("light", "dark"):
+                write_pair(root / "svg" / mode, "fog-day", '<path d="M0,0 L1,1 Z"/>')
+            moving = root / "svg" / "dark" / "fog-day.svg"
+            moving.write_text(moving.read_text().replace('viewBox="0 0 64 64"', 'viewBox="0 0 128 128"'))
+            with self.assertRaises(Unsupported) as caught:
+                weather_icons.outputs(root / "svg", root / "res")
+            self.assertIn("dark/fog-day.svg: viewBox 0 0 128 128 differs from its still image's, 0 0 64 64",
+                          str(caught.exception))
+
     def test_a_source_named_otherwise_is_refused(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -460,7 +472,7 @@ class AnimatedTest(unittest.TestCase):
                        'stroke-dasharray="18 100"><animate attributeName="stroke-dashoffset" dur="17s" '
                        'repeatCount="indefinite" keyTimes="0;.82;.84;.9;1" values="18;18;10;-82;-82"/></line>')
         start = target(xml, "p1").split('android:propertyName="trimPathEnd"')[0]
-        # The offset passes 0 a tenth of the way from 10 to -82 is 10/92 of .84 to .9.
+        # The offset, falling from 10 to -82 between .84 and .9, passes 0 10/92 of the way, at .846522.
         self.assertEqual([(0, 0), (0.82, 0), (0.84, 0), (0.846522, 0), (0.9, 0.82), (1, 0.82)], keyframes(start))
 
     def test_a_translation_with_key_times_and_a_negative_begin_jumps_back_where_it_repeats(self):
@@ -509,11 +521,19 @@ class AnimatedTest(unittest.TestCase):
         xml = animated(f'<path d="M0,0 L1,1 Z">{PULSE}</path>')
         self.assertIn("from icons/weather/light/x-day.svg; do not edit", xml)
 
+    def test_a_jump_passes_a_value_at_once_and_a_split_leaves_its_track_as_it_was(self):
+        track = weather_icons.Track([0, .5, .5, 1], [-1, -1, 5, 5], [None] * 3, 2.0, 0.0, None, "t.svg")
+        self.assertEqual((-1, -1, 5, 5), track.split_at(0.0).values)
+        moving = weather_icons.Track([0, 1], [-1, 5], [None], 2.0, 0.0, None, "t.svg")
+        split = moving.split_at(0.0)
+        self.assertEqual(((0, 1 / 6, 1), (-1, 0.0, 5)), (split.times, split.values))
+        self.assertEqual(((0, 1), (-1, 5)), (moving.times, moving.values))
+
     def test_an_animator_that_does_not_follow_its_animation_is_refused(self):
         track = weather_icons.Track([0.0, 1.0], [0.0, 1.0], [None], 2.0, 0.0, lambda t: (t / 2.0) % 1.0,
                                     "light/x-day.svg <path>")
         weather_icons.follows(weather_icons.animator("fillAlpha", track), track)
-        late = weather_icons.Animator("fillAlpha", "restart", 2100, [0.0, 1.0])
+        late = weather_icons.FromTo("fillAlpha", 2100, 0.0, 1.0, None)
         with self.assertRaises(Unsupported) as caught:
             weather_icons.follows(late, track)
         self.assertIn("light/x-day.svg <path>: the animator of fillAlpha does not follow the SMIL animation",
@@ -574,6 +594,10 @@ class AnimatedRefuseTest(unittest.TestCase):
         self.refused('<g><path d="M0,0 L1,1 Z"><animate attributeName="opacity" dur="2s" repeatCount="indefinite" '
                      'values="1;0"/></path><animate attributeName="opacity" dur="2s" repeatCount="indefinite" '
                      'values="1;0"/></g>', "an opacity animated here and on a group above")
+
+    def test_a_spline_whose_cut_at_a_negative_begin_leaves_the_unit_square(self):
+        self.pulse('dur="4s" begin="-1s" repeatCount="indefinite" calcMode="spline" keySplines="0 1 1 0" '
+                   'values="0;1"', "<animate>: the spline 0 1 1 0 cut at 0.25 of its interval leaves 0..1")
 
     def test_an_svg_that_moves_nothing(self):
         self.refused('<path d="M0,0 L1,1 Z"/>', "moves nothing")

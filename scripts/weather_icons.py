@@ -85,9 +85,12 @@ pathInterpolators are shared: one weather_spline_<x1>_<y1>_<x2>_<y2>.xml each
 in interpolator/, its control points in ten-thousandths, for every spline the
 drawables use. A shape's data takes only the first kind, since Android's render thread plays only a
 path animator's first and last value; a changing outline with a negative
-begin fails. Each animator is checked against its SMIL animation at 400
-points of two periods, within a thousandth of its values' range; one that
-does not follow it fails, naming the file and the element. The drawable's
+begin fails. Each number's animator is checked against its SMIL animation
+at 400 points of two periods, within a thousandth of its values' range or
+of 1 where that is smaller, allowing a slip of a ten-thousandth of its
+duration (FOLLOW, SLIP); one that does not follow it fails, naming the file
+and the element. A path's changing shape is not sampled; it may only run
+from one value to another or there and back. The drawable's
 vector shows each value at the start, so the first frame does not jump.
 
 Usage: python3 scripts/weather_icons.py         writes the drawables
@@ -241,6 +244,46 @@ def path_data(tag, attributes, where):
     if tag == "polygon":
         return points(attributes.get("points", ""), where) + " Z"
     return points(attributes.get("points", ""), where)
+
+
+def tag_of(element):
+    """An element's tag without the SVG namespace."""
+    return element.tag[len(SVG):] if element.tag.startswith(SVG) else element.tag
+
+
+def check_shape(element, tag, here):
+    """Fails on a shape's attributes the converters do not take, and on a rect with rounded corners."""
+    if tag == "rect" and ({"rx", "ry"} & set(element.attrib)):
+        raise Unsupported(f"{here}: rounded corners (rx, ry) are not supported")
+    unknown = set(element.attrib) - INHERITED - SHAPE_ONLY - GEOMETRY[tag]
+    if unknown:
+        raise Unsupported(f"{here}: attributes {sorted(unknown)} are not supported")
+
+
+def svg_root(svg_text, source_name):
+    """An SVG's root element and its viewBox's size; fails on anything else than an svg with a viewBox from 0 0."""
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as e:
+        raise Unsupported(f"{source_name}: not XML: {e}") from None
+    if root.tag != SVG + "svg":
+        raise Unsupported(f"{source_name}: the root is not an SVG svg element")
+    unknown = set(root.attrib) - {"viewBox"}
+    if unknown:
+        raise Unsupported(f"{source_name} <svg>: attributes {sorted(unknown)} are not supported")
+    box = [number(v, f"{source_name}: viewBox") for v in root.attrib.get("viewBox", "").split()]
+    if len(box) != 4 or box[0] != 0 or box[1] != 0 or box[2] <= 0 or box[3] <= 0:
+        raise Unsupported(f"{source_name}: viewBox must be 0 0 width height")
+    return root, (box[2], box[3])
+
+
+def frame_lines(frame, size, depth):
+    """The group that moves the frame (x, y, side) into view and its clip to the viewBox of size, at depth; its
+    closing tag is the caller's."""
+    return [
+        f'{" " * depth}<group android:translateX="{fmt(-frame[0])}" android:translateY="{fmt(-frame[1])}">',
+        f'{" " * (depth + 4)}<clip-path android:pathData="M0,0 H{fmt(size[0])} V{fmt(size[1])} H0 Z" />',
+    ]
 
 
 def check_dashes(attributes, where):
@@ -583,7 +626,7 @@ def paint_of(element, inherited, where):
 
 def shapes(element, inherited, steps, where, out):
     """Collects the shapes under element in document order."""
-    tag = element.tag[len(SVG):] if element.tag.startswith(SVG) else element.tag
+    tag = tag_of(element)
     here = f"{where} <{tag}>"
     if tag == "g":
         unknown = set(element.attrib) - GROUP_ATTRIBUTES
@@ -596,11 +639,7 @@ def shapes(element, inherited, steps, where, out):
         return
     if tag not in SHAPES:
         raise Unsupported(f"{here}: element is not supported")
-    if tag == "rect" and ({"rx", "ry"} & set(element.attrib)):
-        raise Unsupported(f"{here}: rounded corners (rx, ry) are not supported")
-    unknown = set(element.attrib) - INHERITED - SHAPE_ONLY - GEOMETRY[tag]
-    if unknown:
-        raise Unsupported(f"{here}: attributes {sorted(unknown)} are not supported")
+    check_shape(element, tag, here)
     if len(element):
         raise Unsupported(f"{here}: a shape with children (an animation?) is not supported")
     opacity = number(element.attrib.get("opacity", "1"), f"{here}: opacity")
@@ -644,8 +683,7 @@ def vector_xml(shapes_, size, alpha, indent, into_paint, frame=None):
     lines.append(f'{pad}    android:viewportHeight="{fmt(height)}">')
     base = indent + 4
     if frame is not None:
-        lines.append(f'{" " * base}<group android:translateX="{fmt(-frame[0])}" android:translateY="{fmt(-frame[1])}">')
-        lines.append(f'{" " * (base + 4)}<clip-path android:pathData="M0,0 H{fmt(size[0])} V{fmt(size[1])} H0 Z" />')
+        lines += frame_lines(frame, size, base)
         base += 4
     for shape in shapes_:
         depth = base
@@ -671,24 +709,13 @@ def vector_xml(shapes_, size, alpha, indent, into_paint, frame=None):
 
 def parse(svg_text, source_name):
     """An SVG's viewBox size and its shapes; raises Unsupported, naming source_name, for anything not converted."""
-    try:
-        root = ET.fromstring(svg_text)
-    except ET.ParseError as e:
-        raise Unsupported(f"{source_name}: not XML: {e}") from None
-    if root.tag != SVG + "svg":
-        raise Unsupported(f"{source_name}: the root is not an SVG svg element")
-    unknown = set(root.attrib) - {"viewBox"}
-    if unknown:
-        raise Unsupported(f"{source_name} <svg>: attributes {sorted(unknown)} are not supported")
-    box = [number(v, f"{source_name}: viewBox") for v in root.attrib.get("viewBox", "").split()]
-    if len(box) != 4 or box[0] != 0 or box[1] != 0 or box[2] <= 0 or box[3] <= 0:
-        raise Unsupported(f"{source_name}: viewBox must be 0 0 width height")
+    root, size = svg_root(svg_text, source_name)
     found = []
     for child in root:
         shapes(child, {}, [], source_name, found)
     if not found:
         raise Unsupported(f"{source_name}: draws nothing")
-    return (box[2], box[3]), found
+    return size, found
 
 
 def convert(svg_text, source_name, frame=None):
@@ -799,9 +826,9 @@ class Track:
     begin. reference gives the value at a time in seconds as SMIL computes it, to check the animators against."""
 
     def __init__(self, times, values, splines, duration, phase, reference, where):
-        self.times = times
-        self.values = values
-        self.splines = splines
+        self.times = tuple(times)
+        self.values = tuple(values)
+        self.splines = tuple(splines)
         self.duration = duration
         self.phase = phase
         self.reference = reference
@@ -814,38 +841,46 @@ class Track:
         return Track(self.times, [function(v) for v in self.values], self.splines, self.duration, self.phase,
                      lambda t: function(reference(t)), self.where)
 
-    def split_at_time(self, time):
-        """The track with a key time added at time, inside an interval, the spline cut there."""
+    def split_at_time(self, time, value=None):
+        """The track with a key time added at time, inside interval, the spline cut there, and its value there, or
+        value when given; time must lie strictly inside an interval."""
         for i in range(len(self.times) - 1):
             start, end = self.times[i], self.times[i + 1]
             if start < time < end:
                 u = (time - start) / (end - start)
                 spline = self.splines[i]
                 if spline is None:
-                    pieces, moved = [None, None], u
+                    pieces, moved = (None, None), u
                 else:
                     left, right, at = cut(spline, parameter(spline, u, 0))
-                    pieces, moved = [left, right], at[1]
-                value = self.values[i] + (self.values[i + 1] - self.values[i]) * moved
-                return Track(self.times[:i + 1] + [time] + self.times[i + 1:],
-                             self.values[:i + 1] + [value] + self.values[i + 1:],
+                    pieces, moved = (left, right), at[1]
+                    for piece in pieces:
+                        if piece is not None and not all(0 <= v <= 1 for v in piece):
+                            raise Unsupported(f"{self.where}: the spline {' '.join(fmt(v) for v in spline)} cut at "
+                                              f"{fmt(u)} of its interval leaves 0..1, which a shared interpolator's "
+                                              "name cannot hold")
+                if value is None:
+                    value = self.values[i] + (self.values[i + 1] - self.values[i]) * moved
+                return Track(self.times[:i + 1] + (time,) + self.times[i + 1:],
+                             self.values[:i + 1] + (value,) + self.values[i + 1:],
                              self.splines[:i] + pieces + self.splines[i + 1:], self.duration, self.phase,
                              self.reference, self.where)
-        return self
+        raise Unsupported(f"{self.where}: no interval of the animation lies around {fmt(time, FRACTION_DIGITS)} of "
+                          "its duration to cut")
 
     def split_at(self, value):
-        """The track with a key time added wherever an interval passes through value."""
+        """The track with a key time added wherever an interval of some length passes through value; one of no length,
+        a jump, passes it at once."""
         track = self
         i = 0
         while i < len(track.values) - 1:
             a, b = track.values[i], track.values[i + 1]
-            if (a - value) * (b - value) < 0:
+            start, end = track.times[i], track.times[i + 1]
+            if (a - value) * (b - value) < 0 and start < end:
                 share = (value - a) / (b - a)
                 spline = track.splines[i]
                 u = share if spline is None else cubic(0.0, spline[0], spline[2], 1.0, parameter(spline, share, 1))
-                time = track.times[i] + (track.times[i + 1] - track.times[i]) * u
-                track = track.split_at_time(time)
-                track.values[i + 1] = value
+                track = track.split_at_time(start + (end - start) * min(max(u, 1e-9), 1 - 1e-9), value)
             i += 1
         return track
 
@@ -920,34 +955,62 @@ def timing(element, count, where):
 def track_of(element, values, where):
     """The track of an animation's numbers values, with its timing."""
     times, splines, duration, phase = timing(element, len(values), where)
-    track = Track(list(times), list(values), list(splines), duration, phase, None, where)
-    original = Track(list(times), list(values), list(splines), duration, 0.0, None, where)
-    track.reference = lambda t: original.at(((t / duration) + phase) % 1.0)
-    return track
+    original = Track(times, values, splines, duration, 0.0, None, where)
+    return Track(times, values, splines, duration, phase, lambda t: original.at(((t / duration) + phase) % 1.0), where)
 
 
-class Animator:
-    """An objectAnimator of one property: from and to with a spline, played forwards again and again or forwards and
-    backwards (reverse), or keyframes [(fraction, value, spline)] over the whole duration, which follow a negative
-    begin."""
+class FromTo:
+    """An objectAnimator of one property from a value to another with a spline, played forwards again and again, or
+    forwards and backwards (reverse); its values are numbers, or a path's data (path)."""
 
-    def __init__(self, prop, kind, duration_ms, values, spline=None, keyframes=None, path=False):
+    def __init__(self, prop, duration_ms, start, end, spline, reverse=False, path=False):
         self.prop = prop
-        self.kind = kind
         self.duration_ms = duration_ms
-        self.values = values
+        self.start = start
+        self.end = end
         self.spline = spline
-        self.keyframes = keyframes
+        self.reverse = reverse
         self.path = path
 
     def at(self, ms):
-        """The value at ms after the start, as Android's animator computes it."""
+        """The number at ms after the start, as Android's animator computes it."""
         period = self.duration_ms
         u = (ms % period) / period
-        if self.kind == "reverse" and int(ms // period) % 2 == 1:
+        if self.reverse and int(ms // period) % 2 == 1:
             u = 1 - u
-        if self.kind != "keyframes":
-            return self.values[0] + (self.values[1] - self.values[0]) * progress(self.spline, u)
+        return self.start + (self.end - self.start) * progress(self.spline, u)
+
+    def xml(self, depth):
+        pad = " " * depth
+        inner = " " * (depth + 4)
+        shown = (lambda v: v) if self.path else fmt
+        lines = [
+            f"{pad}<objectAnimator",
+            f'{inner}android:propertyName="{self.prop}"',
+            f'{inner}android:valueType="{"pathType" if self.path else "floatType"}"',
+            f'{inner}android:valueFrom="{shown(self.start)}"',
+            f'{inner}android:valueTo="{shown(self.end)}"',
+            f'{inner}android:duration="{self.duration_ms}"',
+            f'{inner}android:repeatCount="infinite"',
+        ]
+        if self.reverse:
+            lines.append(f'{inner}android:repeatMode="reverse"')
+        lines.append(f'{inner}android:interpolator="{interpolator(self.spline)}" />')
+        return lines
+
+
+class Keyframes:
+    """An objectAnimator of one number over its whole duration, played again and again, by keyframes [(fraction,
+    value, spline of the interval before it)], which follow a negative begin."""
+
+    def __init__(self, prop, duration_ms, keyframes):
+        self.prop = prop
+        self.duration_ms = duration_ms
+        self.keyframes = keyframes
+
+    def at(self, ms):
+        """The value at ms after the start, as Android's animator computes it."""
+        u = (ms % self.duration_ms) / self.duration_ms
         frames = self.keyframes
         for i in range(1, len(frames)):
             if u < frames[i][0]:
@@ -960,25 +1023,12 @@ class Animator:
     def xml(self, depth):
         pad = " " * depth
         inner = " " * (depth + 4)
-        lines = [f"{pad}<objectAnimator"]
-        if self.kind != "keyframes":
-            value_type = "pathType" if self.path else "floatType"
-            shown = (lambda v: v) if self.path else fmt
-            lines += [
-                f'{inner}android:propertyName="{self.prop}"',
-                f'{inner}android:valueType="{value_type}"',
-                f'{inner}android:valueFrom="{shown(self.values[0])}"',
-                f'{inner}android:valueTo="{shown(self.values[1])}"',
-            ]
-        lines += [f'{inner}android:duration="{self.duration_ms}"', f'{inner}android:repeatCount="infinite"']
-        if self.kind == "reverse":
-            lines.append(f'{inner}android:repeatMode="reverse"')
-        shared = self.spline if self.kind != "keyframes" else None
-        lines.append(f'{inner}android:interpolator="{interpolator(shared)}"')
-        if self.kind != "keyframes":
-            lines[-1] += " />"
-            return lines
-        lines[-1] += ">"
+        lines = [
+            f"{pad}<objectAnimator",
+            f'{inner}android:duration="{self.duration_ms}"',
+            f'{inner}android:repeatCount="infinite"',
+            f'{inner}android:interpolator="{LINEAR}">',
+        ]
         lines.append(f'{inner}<propertyValuesHolder android:propertyName="{self.prop}" '
                      'android:valueType="floatType">')
         for fraction, value, spline in self.keyframes:
@@ -1024,17 +1074,24 @@ def mirrored(spline):
     return None if spline is None else (1 - spline[2], 1 - spline[3], 1 - spline[0], 1 - spline[1])
 
 
-def animator(prop, track, path=False):
+def animator(prop, track, shapes_=None):
     """The animator of track: from and to while it starts at its first value and either runs from one value to another
     or there and back the same way in two equal halves; else keyframes from its phase on, which a path's shape cannot
-    take (Android's render thread plays only a path animator's first and last value)."""
+    take (Android's render thread plays only a path animator's first and last value). Given shapes_, the track's values
+    are their indices, and the animator changes the path's data between them."""
     duration_ms = round(track.duration * 1000)
     values, splines, times = track.values, track.splines, track.times
+    path = shapes_ is not None
+
+    def shown(v):
+        return shapes_[int(v)] if path else v
+
     if track.phase == 0 and len(values) == 2:
-        return Animator(prop, "restart", duration_ms, values, rounded(splines[0]), path=path)
+        return FromTo(prop, duration_ms, shown(values[0]), shown(values[1]), rounded(splines[0]), path=path)
     if (track.phase == 0 and len(values) == 3 and values[0] == values[2] and times[1] == 0.5
             and rounded(splines[1]) == rounded(mirrored(splines[0])) and duration_ms % 2 == 0):
-        return Animator(prop, "reverse", duration_ms // 2, values[:2], rounded(splines[0]), path=path)
+        return FromTo(prop, duration_ms // 2, shown(values[0]), shown(values[1]), rounded(splines[0]), reverse=True,
+                      path=path)
     if path:
         raise Unsupported(f"{track.where}: a changing shape is supported only from its start, from one value to "
                           "another or there and back alike")
@@ -1050,7 +1107,7 @@ def animator(prop, track, path=False):
             frames.append((1 - track.phase, values[0], None))
         frames += [(times[j] + 1 - track.phase, values[j], splines[j - 1]) for j in range(1, k + 1)]
     frames = [(float(fmt(f, FRACTION_DIGITS)), float(fmt(v)), rounded(s)) for f, v, s in frames]
-    return Animator(prop, "keyframes", duration_ms, None, keyframes=frames)
+    return Keyframes(prop, duration_ms, frames)
 
 
 def follows(animator_, track):
@@ -1097,7 +1154,7 @@ def own_animations(element, where):
     found = {}
     rest = []
     for child in element:
-        tag = child.tag[len(SVG):] if child.tag.startswith(SVG) else child.tag
+        tag = tag_of(child)
         if tag not in ANIMATIONS:
             rest.append(child)
             continue
@@ -1134,9 +1191,8 @@ def opacity_track(own, static, inherited, where):
 def animated_shapes(element, inherited, opacity, icon, depth):
     """Writes the vector's groups and paths for element and what is under it, and the animators of what moves."""
     where = icon.where
-    tag = element.tag[len(SVG):] if element.tag.startswith(SVG) else element.tag
+    tag = tag_of(element)
     here = f"{where} <{tag}>"
-    pad = " " * depth
     if tag in ANIMATIONS:
         raise Unsupported(f"{here}: an animation outside a shape or group is not supported")
     if tag != "g" and tag not in SHAPES:
@@ -1171,11 +1227,7 @@ def animated_shapes(element, inherited, opacity, icon, depth):
         return
     if children:
         raise Unsupported(f"{here}: a shape with children other than animations is not supported")
-    if tag == "rect" and ({"rx", "ry"} & set(element.attrib)):
-        raise Unsupported(f"{here}: rounded corners (rx, ry) are not supported")
-    unknown = set(element.attrib) - INHERITED - SHAPE_ONLY - GEOMETRY[tag]
-    if unknown:
-        raise Unsupported(f"{here}: attributes {sorted(unknown)} are not supported")
+    check_shape(element, tag, here)
     if not isinstance(alpha, Track) and alpha <= 0:
         return
     paint = paint_of(element, inherited, here)
@@ -1213,7 +1265,7 @@ def joined(children, inherited, where):
     paints = []
     parts = []
     for child in children:
-        tag = child.tag[len(SVG):] if child.tag.startswith(SVG) else child.tag
+        tag = tag_of(child)
         here = f"{where} <{tag}>"
         if tag not in SHAPES or len(child) or set(child.attrib) - INHERITED - {"transform"} - GEOMETRY[tag]:
             return None
@@ -1422,9 +1474,7 @@ def path(shape, alpha, trims, morph, icon, depth):
         if len(set(shapes_)) > 1:
             if track.phase != 0:
                 raise Unsupported(f"{here}: a changing shape is supported only from its start")
-            moving = animator("pathData", track, path=True)
-            moving.values = [shapes_[int(v)] for v in moving.values]
-            animators.append(moving)
+            animators.append(animator("pathData", track, shapes_))
     name = icon.name("p") if animators else None
     text = [f"{pad}<path"]
     if name:
@@ -1438,21 +1488,14 @@ def path(shape, alpha, trims, morph, icon, depth):
         icon.animate(name, animators)
 
 
-def convert_animated(svg_text, source_name, frame):
+def convert_animated(svg_text, source_name, frame, still=None):
     """The AnimatedVectorDrawable XML of one animated SVG, showing the frame (x, y, side) of the still images; raises
-    Unsupported, naming source_name and the element, for anything not converted."""
-    try:
-        root = ET.fromstring(svg_text)
-    except ET.ParseError as e:
-        raise Unsupported(f"{source_name}: not XML: {e}") from None
-    if root.tag != SVG + "svg":
-        raise Unsupported(f"{source_name}: the root is not an SVG svg element")
-    unknown = set(root.attrib) - {"viewBox"}
-    if unknown:
-        raise Unsupported(f"{source_name} <svg>: attributes {sorted(unknown)} are not supported")
-    box = [number(v, f"{source_name}: viewBox") for v in root.attrib.get("viewBox", "").split()]
-    if len(box) != 4 or box[0] != 0 or box[1] != 0 or box[2] <= 0 or box[3] <= 0:
-        raise Unsupported(f"{source_name}: viewBox must be 0 0 width height")
+    Unsupported, naming source_name and the element, for anything not converted, and, given the viewBox size of its
+    still image, when its own differs, since the frame and the clip place it as its still image."""
+    root, size = svg_root(svg_text, source_name)
+    if still is not None and size != still:
+        raise Unsupported(f"{source_name}: viewBox 0 0 {fmt(size[0])} {fmt(size[1])} differs from its still "
+                          f"image's, 0 0 {fmt(still[0])} {fmt(still[1])}")
     icon = Animated(source_name)
     for child in root:
         animated_shapes(child, {}, 1.0, icon, 16)
@@ -1472,8 +1515,7 @@ def convert_animated(svg_text, source_name, frame):
         f'            android:height="{fmt(side)}dp"',
         f'            android:viewportWidth="{fmt(side)}"',
         f'            android:viewportHeight="{fmt(side)}">',
-        f'            <group android:translateX="{fmt(-frame[0])}" android:translateY="{fmt(-frame[1])}">',
-        f'                <clip-path android:pathData="M0,0 H{fmt(box[2])} V{fmt(box[3])} H0 Z" />',
+        *frame_lines(frame, size, 12),
     ]
     lines += icon.lines
     lines += ["            </group>", "        </vector>", "    </aapt:attr>"]
@@ -1542,8 +1584,10 @@ def outputs(sources=SOURCES, res=RES):
                 stills.append((target, name, text, *parse(text, name)))
     frame = frame_of([(name, size, shapes_) for _, name, _, size, shapes_ in stills])
     written = {target: convert(text, name, frame) for target, name, text, _, _ in stills}
+    sizes = {target: size for target, _, _, size, _ in stills}
     for target, name, text in animated:
-        written[target] = convert_animated(text, name, frame)
+        still = target.with_name(target.name.replace(ANIMATED, ""))
+        written[target] = convert_animated(text, name, frame, sizes[still])
         written[res / LAYOUT / target.name] = layout_xml(target.stem)
     splines = {n for text in list(written.values()) for n in re.findall(r"@interpolator/(" + SPLINE + r"[\d_]+)", text)}
     for spline in splines:
