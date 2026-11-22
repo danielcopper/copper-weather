@@ -89,7 +89,7 @@
     <string name="setup_animation_off">Aus</string>
     <string name="setup_animation_now">Nur „jetzt“</string>
     <string name="setup_animation_all">Alle: „jetzt“, Stunden und Tage</string>
-    <string name="setup_flat_strip">Eine Zeile hoch, neben „jetzt“</string>
+    <string name="setup_flat_strip">Vorschau</string>
     <string name="setup_flat_strip_days">Die nächsten Tage</string>
     <string name="setup_flat_strip_hours">Die nächsten Stunden</string>
     <string name="setup_opacity">Deckkraft des Hintergrunds</string>

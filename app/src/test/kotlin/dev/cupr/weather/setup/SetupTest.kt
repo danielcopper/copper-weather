@@ -77,6 +77,8 @@ class SetupTest : WidgetTestBase() {
         val range = slider().fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo]
         assertEquals(ProgressBarRangeInfo(70f, 0f..100f, steps = 9), range)
         compose.onNodeWithText(application.getString(R.string.setup_title, "Wetter")).assertExists()
+        // The flat strip's choice under the owner's heading (D44).
+        compose.onNodeWithText("Vorschau").assertExists()
     }
 
     @Test
