@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit
 /**
  * The weather icons (D38, D43): the drawables and the animated icons' layouts in the repo are what
  * `scripts/weather_icons.py` writes from the SVGs in `icons/weather`, the script converts what it should and refuses
- * the rest, and each condition finds its image, still and animated.
+ * the rest, and each condition finds its image, still and animated. The warnings' symbols (D48) likewise: what
+ * `scripts/warning_symbols.py` writes from the Material Symbols in `icons/symbols`, each kind's loading.
  */
 @RunWith(RobolectricTestRunner::class)
 class WeatherIconsTest {
@@ -33,6 +34,29 @@ class WeatherIconsTest {
         val (code, output) = run("python3", "-I", "-B", "scripts/weather_icons.py", "--check")
 
         assertEquals(output, 0, code)
+    }
+
+    @Test
+    fun `the warning symbols are what their script writes from the Material Symbols`() {
+        val (code, output) = run("python3", "-I", "-B", "scripts/warning_symbols.py", "--check")
+
+        assertEquals(output, 0, code)
+    }
+
+    @Test
+    fun `each warning kind has its own symbol, 24 dp large, and every symbol is a kind's`() {
+        val symbols =
+            R.drawable::class.java.fields
+                .filter { it.name.startsWith("symbol_") }
+                .map { it.getInt(null) }
+
+        assertEquals(symbols.toSet(), WarningKind.entries.map { it.symbol }.toSet())
+        assertEquals(WarningKind.entries.size, symbols.size)
+        val density = application.resources.displayMetrics.density
+        for (kind in WarningKind.entries) {
+            val drawable = checkNotNull(application.getDrawable(kind.symbol)) { kind.name }
+            assertEquals(kind.name, (SYMBOL_DP * density).toInt(), drawable.intrinsicWidth)
+        }
     }
 
     @Test
@@ -170,6 +194,9 @@ class WeatherIconsTest {
     private companion object {
         /** The common frame every icon shows, the square around what all of them draw, of the SVGs' 64 (D38). */
         const val ICON_DP = 59.21f
+
+        /** A Material Symbol's size (D48). */
+        const val SYMBOL_DP = 24f
         const val TIMEOUT_SECONDS = 60L
     }
 }

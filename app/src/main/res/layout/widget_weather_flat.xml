@@ -2,8 +2,9 @@
 <!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" as
      the dashboard's today (its image at the left, still or animated in the
      frame beside it (D43, D44), and beside it the temperature over the rain
-     hint or the condition, or "Neu anmelden" in that line's place while the
-     sign-in is no longer usable, and today's high, low and rain below them),
+     hint or the condition, or a warning's short form (D47) or "Neu
+     anmelden" in that line's place, and today's high, low and rain below
+     them, or "Stand 14:30" in their place (D16)),
      and beside it, after a divider, as many of the next days (D41) or hours
      (D46) as fit, as the widget is set (D44), or a plain text instead, on the
      card. Every part starts hidden; WidgetViews shows the ones it fills, adds
@@ -51,6 +52,30 @@
                 style="@style/WeatherWidget.Line.Long.Flat"
                 android:visibility="gone" />
 
+            <LinearLayout
+                android:id="@+id/short_form"
+                style="@style/WeatherWidget.ShortSlot.Flat"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/short_pill"
+                    style="@style/WeatherWidget.Short">
+
+                    <TextView
+                        android:id="@+id/short_word"
+                        style="@style/WeatherWidget.ShortWord" />
+
+                    <ImageView
+                        android:id="@+id/short_symbol"
+                        style="@style/WeatherWidget.ShortSymbol"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/short_more"
+                        style="@style/WeatherWidget.ShortMore" />
+                </LinearLayout>
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/widget_notice"
                 style="@style/WeatherWidget.Notice.Flat"
@@ -74,6 +99,11 @@
                     style="@style/WeatherWidget.FlatToday.Degree.Rain"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/stale"
+                style="@style/WeatherWidget.Stale.Flat"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 

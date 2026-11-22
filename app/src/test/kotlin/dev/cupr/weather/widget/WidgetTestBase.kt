@@ -98,10 +98,13 @@ abstract class WidgetTestBase {
     protected fun snapshot(now: String = """{"condition":"partlycloudy","temperature":7.4}""") =
         written("""{"schema_version":1,"now":$now}""")
 
-    protected fun written(data: String) =
-        Services
-            .snapshots(application)
-            .write(Snapshot(Instant.EPOCH, SensorData.read(Json.parseToJsonElement(data).jsonObject).readable()))
+    /** Writes the snapshot of [data], fetched at [fetchedAt], by default the sample clock's time. */
+    protected fun written(
+        data: String,
+        fetchedAt: Instant = SampleWeather.NOW,
+    ) = Services
+        .snapshots(application)
+        .write(Snapshot(fetchedAt, SensorData.read(Json.parseToJsonElement(data).jsonObject).readable()))
 
     private fun SensorData.Read.readable() = (this as SensorData.Read.Readable).data
 

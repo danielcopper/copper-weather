@@ -70,6 +70,23 @@ data class SensorData internal constructor(
                 }
             }
 
+    /**
+     * `warnings`, every warning the DWD issued, also those that begin later, in the order sent; a field absent, of
+     * another kind or, for `level` and `type`, not a whole number reads as absent, as does a start or an end that is
+     * not a time with an offset. An element that is not an object is left out.
+     */
+    val warnings: List<Warning>
+        get() =
+            entries("warnings").map { warning ->
+                Warning(
+                    level = warning.whole("level"),
+                    type = warning.whole("type"),
+                    headline = warning.string("headline"),
+                    start = warning.string("start")?.let(::instant),
+                    end = warning.string("end")?.let(::instant),
+                )
+            }
+
     private val now: JsonObject?
         get() = json.objectField("now")
 
@@ -84,6 +101,18 @@ data class SensorData internal constructor(
         val temperature: Double?,
         val precipitation: Double?,
         val night: Boolean,
+    )
+
+    /**
+     * A warning of `warnings`: the DWD's level, its event code (EC_II, the warning's kind), its headline as the DWD
+     * wrote it, and when it starts and ends; each may be absent.
+     */
+    data class Warning(
+        val level: Int?,
+        val type: Int?,
+        val headline: String?,
+        val start: Instant?,
+        val end: Instant?,
     )
 
     /** A day of `days`: its date where the weather is, its condition, its high and low in °C, and mm. */

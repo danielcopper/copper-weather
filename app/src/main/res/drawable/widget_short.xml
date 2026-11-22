@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The short form's ground in the flat and small buckets (D47), with
+     rounded corners: its colour is a placeholder, as the widget tints it in
+     its warning's colour at 16 % (WarningLook.kt), light and dark. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/palette_text" />
+    <corners android:radius="4dp" />
+</shape>

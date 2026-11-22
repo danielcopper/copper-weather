@@ -73,6 +73,24 @@
     <dimen name="widget_flat_text_step">0.5sp</dimen>
     <dimen name="widget_flat_fit_slack">1dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
+    <!-- The warning band across the top in the wide and tall buckets, and the
+         gap below it, which the days give way to (D47); its text and "+N",
+         their gap, and the symbol a band without a headline shows. -->
+    <dimen name="widget_band_height">22dp</dimen>
+    <dimen name="widget_band_gap">4dp</dimen>
+    <dimen name="widget_band_padding">8dp</dimen>
+    <dimen name="widget_band_text">13sp</dimen>
+    <dimen name="widget_band_more_gap">6dp</dimen>
+    <dimen name="widget_band_symbol">16dp</dimen>
+    <!-- The short form in the line's place in the small and the flat bucket
+         (D47): its word's and "+N"'s largest size there and the least the app
+         shrinks them to, the room inside its ground at each side, and the
+         gaps between its word, its symbol and "+N". -->
+    <dimen name="widget_short_text">14sp</dimen>
+    <dimen name="widget_short_flat_text">13sp</dimen>
+    <dimen name="widget_short_text_least">9sp</dimen>
+    <dimen name="widget_short_padding">3dp</dimen>
+    <dimen name="widget_short_gap">2dp</dimen>
     <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>

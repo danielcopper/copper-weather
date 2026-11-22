@@ -1,0 +1,359 @@
+package dev.cupr.weather.widget
+
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.text.TextUtils
+import android.util.SizeF
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.core.graphics.ColorUtils
+import dev.cupr.weather.R
+import dev.cupr.weather.app.Services
+import dev.cupr.weather.palette.Palette
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import java.time.Duration
+import java.time.OffsetDateTime
+
+/**
+ * A warning that applies on the widget (D15, D47): the band across the top in the wide and tall buckets, the short form
+ * in the line's place in the small and flat ones; and "Stand 14:30" while the snapshot is old (D16).
+ */
+@RunWith(RobolectricTestRunner::class)
+class WarningWidgetTest : WidgetTestBase() {
+    private val wide = SizeBucket.sizeOf(columns = 4, rows = 2)
+    private val tall = SizeBucket.sizeOf(columns = 4, rows = 3)
+    private val small = SizeBucket.sizeOf(columns = 2, rows = 2)
+    private val flat = SizeBucket.sizeOf(columns = 5, rows = 1)
+
+    @Test
+    fun `a warning that applies shows as the band with its headline in its level's colour on its tint`() {
+        signIn()
+        written(SampleWeather.full().warned(GUSTS))
+
+        for (size in listOf(wide, tall)) {
+            val widget = placed(size)
+
+            assertEquals(GUSTS_HEADLINE, widget.shown().first())
+            val band = widget.findViewById<ViewGroup>(R.id.band)
+            assertTrue(WidgetHost.visible(band, widget))
+            assertEquals(R.id.band, (widget as ViewGroup).getChildAt(0).id)
+            assertEquals(Palette.LIGHT.scale3, widget.text(R.id.band_text).currentTextColor)
+            assertEquals(tint(Palette.LIGHT.scale3), band.backgroundTintList?.defaultColor)
+            assertFalse(WidgetHost.visible(widget.findViewById(R.id.band_more), widget))
+            assertFalse(WidgetHost.visible(widget.findViewById(R.id.band_symbol), widget))
+            assertFalse(WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
+            assertEquals(1, widget.text(R.id.band_text).maxLines)
+            assertEquals(TextUtils.TruncateAt.END, widget.text(R.id.band_text).ellipsize)
+        }
+    }
+
+    @Test
+    fun `a warning that applies shows as the short form in the line's place in the flat and the small bucket`() {
+        signIn()
+        written(SampleWeather.full(rainIn = Duration.ofMinutes(25)).warned(GUSTS))
+
+        val strip = placed(flat)
+        assertEquals(listOf("7°", "Warnung", "9°", "3°"), strip.shown().take(4))
+        assertShortForm(strip, Palette.LIGHT.scale3, R.drawable.symbol_air)
+
+        val square = placed(small)
+        assertEquals(listOf("7°", "9°", "3°", "Warnung"), square.shown())
+        assertShortForm(square, Palette.LIGHT.scale3, R.drawable.symbol_air)
+        assertFalse(WidgetHost.visible(square.findViewById(R.id.band), square))
+    }
+
+    @Test
+    fun `two warnings that apply show the higher level and +1`() {
+        signIn()
+        written(SampleWeather.full().warned(FROST, ORKAN))
+
+        val band = placed(wide)
+        assertEquals(listOf(ORKAN_HEADLINE, "+1"), band.shown().take(2))
+        assertEquals(Palette.LIGHT.scale4, band.text(R.id.band_more).currentTextColor)
+        assertEquals(tint(Palette.LIGHT.scale4), band.findViewById<View>(R.id.band).backgroundTintList?.defaultColor)
+
+        for (size in listOf(flat, small)) {
+            val widget = placed(size)
+            assertTrue(widget.shown().containsAll(listOf("Unwetter", "+1")))
+            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_air)
+            assertEquals(Palette.LIGHT.scale4, widget.text(R.id.short_more).currentTextColor)
+        }
+    }
+
+    @Test
+    fun `a warning that begins later does not show, one without a start shows at once, one without an end shows`() {
+        signIn()
+        val later = """{"level":2,"type":52,"headline":"$GUSTS_HEADLINE","start":"${at(30)}","end":"${at(240)}"}"""
+        written(SampleWeather.full().warned(later))
+        assertEquals(listOf(R.id.now), shownParts(placed(wide)).take(1))
+
+        written(SampleWeather.full().warned("""{"level":2,"type":52,"headline":"$GUSTS_HEADLINE","end":"${at(60)}"}"""))
+        assertEquals(GUSTS_HEADLINE, placed(wide).shown().first())
+
+        written(
+            SampleWeather.full().warned("""{"level":2,"type":52,"headline":"$GUSTS_HEADLINE","start":"${at(-600)}"}"""),
+        )
+        assertEquals(GUSTS_HEADLINE, placed(wide).shown().first())
+
+        written(SampleWeather.full().warned(GUSTS.replace(at(120), at(-1))))
+        assertEquals(listOf(R.id.now), shownParts(placed(wide)).take(1))
+    }
+
+    @Test
+    fun `a band without a headline shows the short form's word and symbol`() {
+        signIn()
+        written(SampleWeather.full().warned("""{"level":4,"type":62}"""))
+
+        val widget = placed(wide)
+
+        assertEquals("Unwetter", widget.shown().first())
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.band_symbol), widget))
+        assertEquals(R.drawable.symbol_rainy, widget.image(R.id.band_symbol))
+        assertEquals(
+            PorterDuffColorFilter(Palette.LIGHT.scale5, PorterDuff.Mode.SRC_ATOP),
+            widget.findViewById<ImageView>(R.id.band_symbol).colorFilter,
+        )
+    }
+
+    @Test
+    fun `the band takes room from the days, and a widget redrawn without a warning hides it`() {
+        signIn()
+        written(SampleWeather.full())
+        val id = WidgetHost.place(application, tall)
+        assertEquals(5, WidgetHost.days(WidgetHost.view(application, id)).size)
+
+        written(SampleWeather.full().warned(GUSTS))
+        Widgets.update(application)
+        val warned = WidgetHost.view(application, id)
+        assertEquals(4, WidgetHost.days(warned).size)
+        assertTrue(WidgetHost.visible(warned.findViewById(R.id.band), warned))
+
+        written(SampleWeather.full())
+        Widgets.update(application)
+        val clear = WidgetHost.view(application, id)
+        assertFalse(WidgetHost.visible(clear.findViewById(R.id.band), clear))
+        assertEquals(5, WidgetHost.days(clear).size)
+    }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun `in night mode the band and the short form take the dark palette's level colours`() {
+        signIn()
+        written(SampleWeather.full().warned(ORKAN))
+
+        val band = placed(wide)
+        assertEquals(Palette.DARK.scale4, band.text(R.id.band_text).currentTextColor)
+        assertEquals(tint(Palette.DARK.scale4), band.findViewById<View>(R.id.band).backgroundTintList?.defaultColor)
+        assertShortForm(placed(flat), Palette.DARK.scale4, R.drawable.symbol_air, palette = Palette.DARK)
+    }
+
+    @Test
+    fun `each level takes its colour of the intensity scale and its word`() {
+        signIn()
+        val levels =
+            listOf(
+                1 to Palette.LIGHT.scale2,
+                2 to Palette.LIGHT.scale3,
+                3 to Palette.LIGHT.scale4,
+                4 to Palette.LIGHT.scale5,
+            )
+
+        for ((level, colour) in levels) {
+            written(SampleWeather.full().warned("""{"level":$level,"type":22}"""))
+            val widget = placed(small)
+            val word = if (level >= 3) "Unwetter" else "Warnung"
+            assertEquals("$level", word, widget.text(R.id.short_word).text.toString())
+            assertShortForm(widget, colour, R.drawable.symbol_severe_cold)
+        }
+    }
+
+    @Test
+    fun `in the flat bucket the short form takes the line's place before Neu anmelden`() {
+        signIn()
+        written(SampleWeather.full().warned(GUSTS))
+        Services.account(application).reject()
+
+        val widget = placed(flat)
+
+        assertEquals(listOf("7°", "Warnung", "9°", "3°"), widget.shown().take(4))
+        assertFalse(widget.shown().contains("Neu anmelden"))
+        // Wide, "Neu anmelden" keeps its notice line below "now".
+        assertTrue(placed(wide).shown().contains("Neu anmelden"))
+    }
+
+    @Test
+    fun `two hours after the last successful fetch the widget shows Stand and that time, after a fetch no longer`() {
+        signIn()
+        written(SampleWeather.full(), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
+        val ids = listOf(wide, tall, small, flat).associateWith { WidgetHost.place(application, it) }
+
+        for ((size, id) in ids) {
+            val widget = WidgetHost.view(application, id)
+            assertTrue("$size ${widget.shown()}", widget.shown().contains("Stand 11:40"))
+            val note = widget.text(if (size == wide || size == tall) R.id.notice_stale else R.id.stale)
+            assertEquals("$size", "Stand 11:40", note.text.toString())
+            assertTrue("$size", WidgetHost.visible(note, widget))
+            assertEquals("$size", Palette.LIGHT.textMuted, note.currentTextColor)
+        }
+        // In the small and the flat bucket in the place of today's high and low.
+        assertEquals(
+            listOf("7°", "Stand 11:40", "Teilweise bewölkt"),
+            WidgetHost.view(application, ids.getValue(small)).shown(),
+        )
+        assertEquals(
+            listOf("7°", "Teilweise bewölkt", "Stand 11:40"),
+            WidgetHost.view(application, ids.getValue(flat)).shown().take(3),
+        )
+        // In the wide and tall buckets in the notice line below "now".
+        assertEquals(
+            listOf("7°", "9°", "3°", "Teilweise bewölkt", "Stand 11:40"),
+            WidgetHost.view(application, ids.getValue(wide)).shown().take(5),
+        )
+
+        written(SampleWeather.full())
+        Widgets.update(application)
+
+        for ((size, id) in ids) {
+            val widget = WidgetHost.view(application, id)
+            assertFalse("$size ${widget.shown()}", widget.shown().any { it.startsWith("Stand") })
+        }
+        assertEquals(
+            listOf("7°", "9°", "3°", "Teilweise bewölkt"),
+            WidgetHost.view(application, ids.getValue(small)).shown(),
+        )
+    }
+
+    @Test
+    fun `with Neu anmelden the notice line says Stand after it in the wide and tall buckets`() {
+        signIn()
+        written(SampleWeather.full(), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
+        Services.account(application).reject()
+
+        val widget = placed(wide)
+
+        val row = widget.findViewById<ViewGroup>(R.id.notice_row)
+        assertEquals(listOf("Neu anmelden", "Stand 11:40"), WidgetHost.shown(row))
+        assertEquals(Palette.LIGHT.accent, widget.text(R.id.widget_notice).currentTextColor)
+        assertEquals(Palette.LIGHT.textMuted, widget.text(R.id.notice_stale).currentTextColor)
+        // In the flat bucket "Neu anmelden" takes the line's and today's line's place, and Stand gives way with it.
+        assertEquals(listOf("7°", "Neu anmelden"), placed(flat).shown().take(2))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `a wide widget 4 x 2 with the band and the notice line still holds now and the hours`() {
+        signIn()
+        written(SampleWeather.full().warned(FROST, ORKAN), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
+        Services.account(application).reject()
+
+        val widget = laidOut(placed(wide), wide)
+
+        val hours = widget.findViewById<View>(R.id.hours)
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.band), widget))
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.notice_row), widget))
+        assertEquals(5, WidgetHost.hours(widget).size)
+        assertTrue("${hours.bottom} ${widget.height}", hours.bottom <= widget.height - widget.paddingBottom)
+        assertEquals(dp(22), widget.findViewById<View>(R.id.band).height)
+        // The headline on one line, "+1" whole at its right.
+        val more = widget.text(R.id.band_more)
+        assertTrue(more.paint.measureText("+1") <= more.width)
+        assertEquals(1, widget.text(R.id.band_text).lineCount)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `the short form fits the flat text area and the small line, its word left out where even 9 sp is too wide`() {
+        signIn()
+        written(SampleWeather.full().warned(FROST, ORKAN))
+        val fits = { size: SizeF ->
+            val widget = laidOut(placed(size), size)
+            val pill = widget.findViewById<ViewGroup>(R.id.short_pill)
+            val slot = widget.findViewById<View>(R.id.short_form)
+            assertTrue("$size ${pill.width} ${slot.width}", pill.width <= slot.width)
+            for (id in listOf(R.id.short_word, R.id.short_more)) {
+                val text = widget.text(id)
+                if (WidgetHost.visible(text, widget)) {
+                    assertTrue("$size $id", text.paint.measureText(text.text.toString()) <= text.width)
+                }
+            }
+            widget
+        }
+
+        // The flat text area, 71 dp beside the days: "Unwetter", its symbol and "+1" at 9.5 sp, 69.2 dp.
+        val strip = fits(SizeF(388f, 95f))
+        val word = strip.text(R.id.short_word)
+        assertTrue(WidgetHost.visible(word, strip))
+        assertEquals(sp(9.5f), word.textSize, 0.5f)
+        // The small line, 106 dp: at 14 sp.
+        val square = fits(small)
+        assertEquals(sp(14f), square.text(R.id.short_word).textSize, 0.5f)
+        // At 2 x 1 the text area is 47 dp: the symbol and "+1" alone.
+        val narrow = fits(SizeBucket.sizeOf(columns = 2, rows = 1))
+        assertFalse(WidgetHost.visible(narrow.findViewById(R.id.short_word), narrow))
+        assertTrue(WidgetHost.visible(narrow.findViewById(R.id.short_more), narrow))
+        // One warning alone: "Unwetter" and its symbol at 12 sp in the flat text area, 69.2 dp.
+        written(SampleWeather.full().warned(ORKAN))
+        assertEquals(sp(12f), fits(SizeF(388f, 95f)).text(R.id.short_word).textSize, 0.5f)
+    }
+
+    private fun assertShortForm(
+        widget: View,
+        colour: Int,
+        symbol: Int,
+        palette: Palette = Palette.LIGHT,
+    ) {
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
+        assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line), widget))
+        assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line_long), widget))
+        assertEquals(colour, widget.text(R.id.short_word).currentTextColor)
+        assertEquals(tint(colour), widget.findViewById<View>(R.id.short_pill).backgroundTintList?.defaultColor)
+        assertEquals(symbol, widget.image(R.id.short_symbol))
+        assertEquals(
+            PorterDuffColorFilter(colour, PorterDuff.Mode.SRC_ATOP),
+            widget.findViewById<ImageView>(R.id.short_symbol).colorFilter,
+        )
+        assertTrue(colour in listOf(palette.scale2, palette.scale3, palette.scale4, palette.scale5))
+    }
+
+    /** The visible children of the card, by id, from the top. */
+    private fun shownParts(widget: View): List<Int> {
+        val card = widget as ViewGroup
+        return (0 until card.childCount)
+            .map {
+                card.getChildAt(
+                    it,
+                )
+            }.filter { WidgetHost.visible(it, widget) }
+            .map { it.id }
+    }
+
+    /** [colour] at 16 %, a warning's ground. */
+    private fun tint(colour: Int) = ColorUtils.setAlphaComponent(colour, Math.round(0.16f * 255))
+
+    /** This data with [warnings] added. */
+    private fun String.warned(vararg warnings: String) =
+        removeSuffix("}") + warnings.joinToString(",", ""","warnings":[""", "]}")
+
+    private companion object {
+        const val GUSTS_HEADLINE = "Amtliche WARNUNG vor STURMBÖEN"
+        const val ORKAN_HEADLINE = "Amtliche UNWETTERWARNUNG vor ORKANARTIGEN BÖEN"
+
+        /** The sample clock's time [minutes] from now, as the app sensor writes it. */
+        fun at(minutes: Long): String =
+            OffsetDateTime.ofInstant(SampleWeather.NOW.plusSeconds(minutes * 60), SampleWeather.ZONE).toString()
+
+        val GUSTS = """{"level":2,"type":52,"headline":"$GUSTS_HEADLINE","start":"${at(-60)}","end":"${at(120)}"}"""
+        val FROST = """{"level":1,"type":22,"headline":"Amtliche WARNUNG vor FROST","start":"${at(-60)}"}"""
+        val ORKAN = """{"level":3,"type":54,"headline":"$ORKAN_HEADLINE","start":"${at(-30)}","end":"${at(90)}"}"""
+    }
+}

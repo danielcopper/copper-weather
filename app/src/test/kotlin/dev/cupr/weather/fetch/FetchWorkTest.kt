@@ -89,13 +89,13 @@ class FetchWorkTest {
 
     private fun placed() = WidgetHost.placed(context)
 
-    /** A snapshot with [celsius] now, written as a fetch would. */
+    /** A snapshot with [celsius] now, written as a fetch would, just now, so the widget does not say "Stand" (D16). */
     private fun snapshot(celsius: Int) =
         Services
             .snapshots(context)
             .write(
                 Snapshot(
-                    Instant.EPOCH,
+                    Instant.now(),
                     SensorData(
                         Json.parseToJsonElement("""{"schema_version":1,"now":{"temperature":$celsius}}""").jsonObject,
                     ),

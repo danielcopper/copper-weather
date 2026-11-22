@@ -648,8 +648,17 @@ class FlatWidgetTest : WidgetTestBase() {
         )
         assertEquals(dp(icon), widget.iconSlot(R.id.now_icon).layoutParams.width)
         assertEquals(dp(icon), widget.iconSlot(R.id.now_icon).layoutParams.height)
+        // A warning's short form takes the line's place, "Stand 14:30" today's line's (D16, D47).
         assertEquals(
-            listOf(R.id.now_temperature, R.id.now_line, R.id.now_line_long, R.id.widget_notice, R.id.now_today_flat),
+            listOf(
+                R.id.now_temperature,
+                R.id.now_line,
+                R.id.now_line_long,
+                R.id.short_form,
+                R.id.widget_notice,
+                R.id.now_today_flat,
+                R.id.stale,
+            ),
             (0 until text.childCount).map { text.getChildAt(it).id },
         )
     }

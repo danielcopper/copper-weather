@@ -20,7 +20,7 @@ class WidgetContentTest {
 
     private fun weather(data: String): WidgetContent.Weather {
         val read = SensorData.read(Json.parseToJsonElement(data).jsonObject) as SensorData.Read.Readable
-        return WidgetContent.of(Account.State.SIGNED_IN, Snapshot(Instant.EPOCH, read.data), SampleWeather.CLOCK)
+        return WidgetContent.of(Account.State.SIGNED_IN, Snapshot(now, read.data), SampleWeather.CLOCK)
             as WidgetContent.Weather
     }
 
@@ -140,7 +140,7 @@ class WidgetContentTest {
     fun `on the hour, the hours start with that hour`() {
         val clock = Clock.fixed(OffsetDateTime.parse("2026-11-20T14:00:00+01:00").toInstant(), SampleWeather.ZONE)
         val read = SensorData.read(Json.parseToJsonElement(SampleWeather.full()).jsonObject) as SensorData.Read.Readable
-        val weather = WidgetContent.of(Account.State.SIGNED_IN, Snapshot(Instant.EPOCH, read.data), clock)
+        val weather = WidgetContent.of(Account.State.SIGNED_IN, Snapshot(now, read.data), clock)
 
         assertEquals("14", (weather as WidgetContent.Weather).hours.first().time)
     }
@@ -160,5 +160,127 @@ class WidgetContentTest {
         val weather = weather(SampleWeather.data(""","days":[$day]"""))
 
         assertEquals(WidgetContent.HighLow("–", "1°"), weather.now.today)
+    }
+
+    private fun warning(
+        level: Int? = 2,
+        type: Int? = 52,
+        headline: String? = "Amtliche WARNUNG vor STURMBÖEN",
+        start: Duration? = Duration.ofHours(-1),
+        end: Duration? = Duration.ofHours(1),
+    ) = SensorData.Warning(level, type, headline, start?.let(now::plus), end?.let(now::plus))
+
+    @Test
+    fun `a warning that applies shows with its level, kind and headline, and one that begins later does not`() {
+        assertEquals(
+            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.warning(listOf(warning()), now),
+        )
+        assertNull(WidgetContent.warning(listOf(warning(start = Duration.ofMinutes(1))), now))
+        assertNull(WidgetContent.warning(listOf(warning(end = Duration.ZERO)), now))
+        assertNull(WidgetContent.warning(listOf(warning(end = Duration.ofMinutes(-1))), now))
+        assertEquals(0, WidgetContent.warning(listOf(warning(start = Duration.ZERO)), now)?.more)
+        assertNull(WidgetContent.warning(emptyList(), now))
+    }
+
+    @Test
+    fun `a warning without a start shows at once, and one without an end while the snapshot carries it`() {
+        assertEquals(
+            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.warning(listOf(warning(start = null)), now),
+        )
+        assertEquals(
+            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.warning(listOf(warning(start = Duration.ofDays(-3), end = null)), now),
+        )
+        assertEquals(
+            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.warning(listOf(warning(start = null, end = null)), now),
+        )
+    }
+
+    @Test
+    fun `of several that apply the highest level shows, the first sent among equals, with how many more apply`() {
+        val frost = warning(level = 1, type = 22, headline = "Amtliche WARNUNG vor FROST")
+        val gusts = warning(level = 3, type = 54, headline = "Amtliche UNWETTERWARNUNG vor ORKANARTIGEN BÖEN")
+        val rain = warning(level = 3, type = 62, headline = "Amtliche UNWETTERWARNUNG vor HEFTIGEM STARKREGEN")
+        val later = warning(level = 4, start = Duration.ofHours(2))
+
+        assertEquals(
+            WidgetContent.Warning(3, WarningKind.WIND, gusts.headline, more = 2),
+            WidgetContent.warning(listOf(frost, gusts, rain, later), now),
+        )
+        assertEquals(
+            WidgetContent.Warning(3, WarningKind.WIND, gusts.headline, more = 1),
+            WidgetContent.warning(listOf(frost, gusts), now),
+        )
+    }
+
+    @Test
+    fun `a level absent or outside 1 to 4 counts as the nearest of them, a headline and a type may be absent`() {
+        val shown =
+            listOf(null, 0, -2, 1, 4, 5, 20).associateWith {
+                WidgetContent.warning(listOf(warning(level = it)), now)?.level
+            }
+
+        assertEquals(mapOf(null to 1, 0 to 1, -2 to 1, 1 to 1, 4 to 4, 5 to 4, 20 to 4), shown)
+        assertEquals(
+            WidgetContent.Warning(1, WarningKind.OTHER, null, more = 0),
+            WidgetContent.warning(listOf(warning(level = null, type = null, headline = null)), now),
+        )
+    }
+
+    @Test
+    fun `the event codes take their kinds by the DWD's groups, a code outside them the warning sign`() {
+        val kinds =
+            mapOf(
+                WarningKind.THUNDERSTORM to listOf(31, 33, 34, 36, 38, 40, 41, 42, 44, 45, 46, 48, 49, 90, 93, 95, 96),
+                WarningKind.WIND to listOf(11, 12, 13, 51, 52, 53, 54, 55, 56, 57, 58),
+                WarningKind.RAIN to listOf(61, 62, 63, 64, 65, 66),
+                WarningKind.SNOW to listOf(70, 71, 72, 73, 74, 75, 76),
+                WarningKind.FOG to listOf(59),
+                WarningKind.FROST to listOf(22, 82, 83),
+                WarningKind.ICE to listOf(84, 85, 86, 87),
+                WarningKind.THAW to listOf(88, 89),
+                WarningKind.UV to listOf(246),
+                WarningKind.HEAT to listOf(247, 248),
+                WarningKind.OTHER to listOf(14, 79, 98, 99, 0, 100),
+            )
+
+        for ((kind, codes) in kinds) {
+            for (code in codes) assertEquals("$code", kind, WarningKind.of(code))
+        }
+        assertEquals(WarningKind.OTHER, WarningKind.of(null))
+    }
+
+    @Test
+    fun `the weather carries the warning that applies at the clock's time`() {
+        val warnings =
+            ""","warnings":[{"level":1,"type":22,"headline":"Amtliche WARNUNG vor FROST",""" +
+                """"start":"2026-11-20T12:00:00+01:00","end":"2026-11-20T18:00:00+01:00"}]"""
+
+        assertEquals(
+            WidgetContent.Warning(1, WarningKind.FROST, "Amtliche WARNUNG vor FROST", more = 0),
+            weather(SampleWeather.data(warnings)).warning,
+        )
+        assertNull(weather(SampleWeather.data()).warning)
+    }
+
+    @Test
+    fun `while the snapshot is over an hour old the weather says when it was fetched, on another day with the date`() {
+        val read = SensorData.read(Json.parseToJsonElement(SampleWeather.data()).jsonObject) as SensorData.Read.Readable
+        val stale = { fetchedAt: Instant ->
+            (
+                WidgetContent.of(Account.State.SIGNED_IN, Snapshot(fetchedAt, read.data), SampleWeather.CLOCK)
+                    as WidgetContent.Weather
+            ).stale
+        }
+
+        assertNull(stale(now))
+        assertNull(stale(now.minus(Duration.ofHours(1))))
+        assertEquals("12:39", stale(now.minus(Duration.ofMinutes(61))))
+        assertEquals("11:40", stale(now.minus(Duration.ofHours(2))))
+        assertEquals("19.11. 23:40", stale(now.minus(Duration.ofHours(14))))
+        assertNull(stale(now.plus(Duration.ofHours(2))))
     }
 }

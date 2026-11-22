@@ -75,7 +75,7 @@ android {
                 // Robolectric sets up API 37's shared memory through JDK internals.
                 test.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
                 // Some tests read files rather than what the build makes of them: the module's sources, version.txt,
-                // and the weather icons' script and SVGs (WeatherIconsTest). Declared as inputs, a change to them runs
+                // the weather icons' and the warning symbols' scripts and SVGs (WeatherIconsTest). Declared as inputs, a change to them runs
                 // the tests again rather than taking their result from the build cache.
                 test.inputs
                     .dir("src")

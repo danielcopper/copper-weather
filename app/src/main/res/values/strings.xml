@@ -9,6 +9,12 @@
     <string name="widget_signed_out">Nicht angemeldet – zum Anmelden tippen</string>
     <string name="widget_no_data">Noch keine Daten – zum Öffnen tippen</string>
     <string name="widget_sign_in_again">Neu anmelden</string>
+    <!-- When the snapshot was fetched, while that is over an hour ago (D16): "14:30", on another day "21.11. 14:30". -->
+    <string name="widget_stale">Stand %1$s</string>
+    <!-- A warning's short form (D47): its word by the DWD's level, "Warnung" for 1 and 2, "Unwetter" for 3 and 4, and how many more warnings apply. -->
+    <string name="warning_word">Warnung</string>
+    <string name="warning_word_severe">Unwetter</string>
+    <string name="warning_more">+%1$d</string>
     <!-- The widget picker's preview (D40): sample weather, not the user's. -->
     <string name="preview_temperature" translatable="false">7°</string>
     <string name="preview_high" translatable="false">9°</string>

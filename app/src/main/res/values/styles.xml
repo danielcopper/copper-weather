@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The looks of the widget's parts: the card, "now", "Neu anmelden", the
-     plain text, the hours, the days, the flat bucket's divider, its strip of
-     days or hours and its days, and the animated icons' ProgressBar, used by
+<!-- The looks of the widget's parts: the card, "now", "Neu anmelden",
+     "Stand 14:30", the warning band and the warning's short form, the plain
+     text, the hours, the days, the flat bucket's divider, its strip of days
+     or hours and its days, and the animated icons' ProgressBar, used by
      widget_weather.xml, widget_weather_flat.xml, widget_hour.xml,
      widget_day.xml, widget_flat_day.xml and the generated
      weather_*_animated.xml. The picker's preview
@@ -10,8 +11,9 @@
      widget's layouts from adding looks of their own beside them; WidgetViews
      sets "now"'s row and image sizes by bucket, in the flat bucket the
      column's width and the image's size by whether days or hours show, the
-     size of today's rain and the size of the days' highs and lows, and picks
-     the line's one- or two-line form (D36, D41, D46). The sizes are in dimens.xml
+     size of today's rain, the size of the days' highs and lows and of the
+     short form's text and symbol, and picks the line's one- or two-line form
+     (D36, D41, D46, D47). The sizes are in dimens.xml
      (D35); the colours come from the palette, set by WidgetViews or, in the
      preview, from colors.xml (D7). -->
 <resources>
@@ -149,7 +151,7 @@
          widget_weather.xml gives the notice its height, Notice.Flat the flat
          one's; each layout gives the plain text its height. -->
     <style name="WeatherWidget.Notice">
-        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">@dimen/widget_notice_text</item>
@@ -160,6 +162,7 @@
          breaking moves a word to the next line before it splits it, so the
          shrinking goes on until no word needs splitting (D36). -->
     <style name="WeatherWidget.Notice.Flat">
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/widget_line_long_height</item>
         <item name="android:breakStrategy">simple</item>
         <item name="android:autoSizeMaxTextSize">@dimen/widget_notice_text</item>
@@ -168,6 +171,138 @@
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:gravity">center</item>
         <item name="android:maxLines">2</item>
+    </style>
+
+    <!-- The notice line below "now" in the wide and tall buckets: "Neu
+         anmelden" and after it "Stand 14:30" (D16, D33). -->
+    <style name="WeatherWidget.NoticeRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_notice_height</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.Notice.Stale">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- "Stand 14:30" in today's place (D16): below "now"'s row in the small
+         bucket, as its high and low; below the line in the flat one, as
+         today's line, shrinking to fit the text area. -->
+    <style name="WeatherWidget.Stale">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_today_height</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_notice_text</item>
+        <item name="android:autoSizeMinTextSize">9sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_notice_text</item>
+    </style>
+
+    <style name="WeatherWidget.Stale.Flat">
+        <item name="android:layout_height">@dimen/widget_flat_today_height</item>
+        <item name="android:autoSizeMaxTextSize">@dimen/widget_flat_today_text</item>
+        <item name="android:autoSizeMinTextSize">7sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/widget_flat_today_text</item>
+    </style>
+
+    <!-- The warning band across the top in the wide and tall buckets (D47):
+         the headline unchanged on one line, ending in "…" where it must, and
+         "+N" at its right; without a headline the short form's word and
+         symbol. WidgetViews tints its ground and colours its text and symbol
+         in the warning's level. -->
+    <style name="WeatherWidget.Band">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_band_height</item>
+        <item name="android:layout_marginBottom">@dimen/widget_band_gap</item>
+        <item name="android:background">@drawable/widget_band</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">@dimen/widget_band_padding</item>
+        <item name="android:paddingEnd">@dimen/widget_band_padding</item>
+    </style>
+
+    <style name="WeatherWidget.BandText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_band_text</item>
+    </style>
+
+    <style name="WeatherWidget.BandSymbol">
+        <item name="android:layout_width">@dimen/widget_band_symbol</item>
+        <item name="android:layout_height">@dimen/widget_band_symbol</item>
+        <item name="android:layout_marginStart">@dimen/widget_short_gap</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="WeatherWidget.BandMore">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">@dimen/widget_band_more_gap</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_band_text</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- The short form in the line's place in the small and the flat bucket
+         (D47): its word, the symbol of its kind and "+N" on a tinted ground,
+         at the start of the line or, in the flat bucket, centred in the text
+         area; WidgetViews sets their sizes to fit and colours them. -->
+    <style name="WeatherWidget.ShortSlot">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/widget_line_height</item>
+        <item name="android:gravity">start|center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WeatherWidget.ShortSlot.Flat">
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="WeatherWidget.Short">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/widget_short</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">@dimen/widget_short_padding</item>
+        <item name="android:paddingEnd">@dimen/widget_short_padding</item>
+    </style>
+
+    <style name="WeatherWidget.ShortWord">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">@dimen/widget_short_gap</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_short_text</item>
+    </style>
+
+    <style name="WeatherWidget.ShortSymbol">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <style name="WeatherWidget.ShortMore">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">@dimen/widget_short_gap</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textSize">@dimen/widget_short_text</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="WeatherWidget.Plain">

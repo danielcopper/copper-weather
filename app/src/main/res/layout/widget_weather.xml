@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter" (D12-D14, D33, D36): "now" (its image, still or
-     animated in the frame beside it (D43, D44), the temperature, today's
-     high and low beside it or, in the small bucket, below it, then the rain
-     hint or the condition, and "Neu anmelden" while the sign-in is no longer
-     usable), the hours and the days as the size bucket shows them, or a
+<!-- The widget "Wetter" (D12-D14, D33, D36): the warning band across the
+     top while a warning applies, in the wide and tall buckets (D47); "now"
+     (its image, still or animated in the frame beside it (D43, D44), the
+     temperature, today's high and low beside it or, in the small bucket,
+     below it, where "Stand 14:30" takes their place there (D16), then the
+     rain hint or the condition, or in the small bucket a warning's short
+     form in their place, and the notice line with "Neu anmelden" while the
+     sign-in is no longer usable and, in the wide and tall buckets, "Stand
+     14:30"), the hours and the days as the size bucket shows them, or a
      plain text instead, on the card. Every part starts hidden; WidgetViews
      shows the ones it fills, adds the hours and days, and sets the texts'
      colours from the palette, light and dark (D7). The card, "now" and the
@@ -13,6 +17,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">
+
+    <LinearLayout
+        android:id="@+id/band"
+        style="@style/WeatherWidget.Band"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/band_text"
+            style="@style/WeatherWidget.BandText" />
+
+        <ImageView
+            android:id="@+id/band_symbol"
+            style="@style/WeatherWidget.BandSymbol"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/band_more"
+            style="@style/WeatherWidget.BandMore" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/now"
@@ -65,6 +89,11 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/stale"
+        style="@style/WeatherWidget.Stale"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/now_line"
         style="@style/WeatherWidget.Line"
         android:visibility="gone" />
@@ -74,11 +103,47 @@
         style="@style/WeatherWidget.Line.Long"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/widget_notice"
-        style="@style/WeatherWidget.Notice"
-        android:layout_height="@dimen/widget_notice_height"
-        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/short_form"
+        style="@style/WeatherWidget.ShortSlot"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/short_pill"
+            style="@style/WeatherWidget.Short">
+
+            <TextView
+                android:id="@+id/short_word"
+                style="@style/WeatherWidget.ShortWord" />
+
+            <ImageView
+                android:id="@+id/short_symbol"
+                style="@style/WeatherWidget.ShortSymbol"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/short_more"
+                style="@style/WeatherWidget.ShortMore" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/notice_row"
+        style="@style/WeatherWidget.NoticeRow"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/widget_notice"
+            style="@style/WeatherWidget.Notice"
+            android:layout_height="@dimen/widget_notice_height"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/notice_stale"
+            style="@style/WeatherWidget.Notice.Stale"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/hours"

@@ -28,14 +28,28 @@ sealed interface WidgetContent {
     /**
      * The snapshot's weather: [now], the [hours] from the current one on and the [days] from tomorrow on, as many as
      * the snapshot has; and whether the sign-in is no longer usable, which shows "Neu anmelden" below "now"
-     * ([signInAgain]).
+     * ([signInAgain]); the [warning] that applies, if any (D15); and when the snapshot was fetched, as "14:30", while
+     * that is over an hour ago ([stale], D16).
      */
     data class Weather(
         val now: Now,
         val hours: List<Hour>,
         val days: List<Day>,
         val signInAgain: Boolean,
+        val warning: Warning? = null,
+        val stale: String? = null,
     ) : WidgetContent
+
+    /**
+     * The warning the widget shows (D15, D47): of those that apply, the one of the highest [level], 1 to 4, its
+     * [kind] and its [headline] as the DWD wrote it, none without one; and how many more apply ([more]).
+     */
+    data class Warning(
+        val level: Int,
+        val kind: WarningKind,
+        val headline: String?,
+        val more: Int,
+    )
 
     /**
      * "Now" (D12, D36): its icon, the temperature as "7°", [today]'s high and low (none without today among the days),
@@ -109,6 +123,13 @@ sealed interface WidgetContent {
 
         private val MILLIS_PER_MINUTE = Duration.ofMinutes(1).toMillis().toDouble()
 
+        /** How old the snapshot may be before the widget says when it was fetched (D16). */
+        private val STALE_AFTER: Duration = Duration.ofHours(1)
+
+        /** The DWD's warning levels, the lowest and the highest (D15). */
+        private const val LOWEST_LEVEL = 1
+        private const val HIGHEST_LEVEL = 4
+
         /** What the widget shows now, from the sign-in and the snapshot the app keeps, at [clock]'s time and zone. */
         fun read(
             context: Context,
@@ -138,6 +159,7 @@ sealed interface WidgetContent {
 
                 else -> {
                     weather(data, clock, state == Account.State.REJECTED || state == Account.State.UNREADABLE)
+                        .copy(warning = warning(data.warnings, clock.instant()), stale = stale(snapshot, clock))
                 }
             }
         }
@@ -185,6 +207,40 @@ sealed interface WidgetContent {
                 signInAgain = signInAgain,
             )
         }
+
+        /**
+         * The warning to show at [now] of [warnings] (D15): of those that apply, their start passed or absent and
+         * their end not reached or absent, the one of the highest level, the first sent among equals, with how many
+         * more apply; none when none applies. A level absent, below 1 or above 4 counts as the nearest of 1 and 4.
+         */
+        internal fun warning(
+            warnings: List<SensorData.Warning>,
+            now: Instant,
+        ): Warning? {
+            val applying = warnings.filter { (it.start == null || it.start <= now) && (it.end == null || now < it.end) }
+            val shown = applying.maxByOrNull { level(it) } ?: return null
+            return Warning(level(shown), WarningKind.of(shown.type), shown.headline, applying.size - 1)
+        }
+
+        private fun level(warning: SensorData.Warning): Int =
+            (warning.level ?: LOWEST_LEVEL).coerceIn(LOWEST_LEVEL, HIGHEST_LEVEL)
+
+        /**
+         * When [snapshot] was fetched, while that is over an hour before [clock]'s time (D16): its time as "14:30" in
+         * [clock]'s zone, with its date before it, "21.11. 14:30", when that is not today; else none.
+         */
+        internal fun stale(
+            snapshot: Snapshot,
+            clock: Clock,
+        ): String? {
+            if (Duration.between(snapshot.fetchedAt, clock.instant()) <= STALE_AFTER) return null
+            val at = snapshot.fetchedAt.atZone(clock.zone)
+            val time = at.format(CLOCK_TIME)
+            return if (at.toLocalDate() == LocalDate.now(clock)) time else "${at.format(DAY)} $time"
+        }
+
+        private val CLOCK_TIME = DateTimeFormatter.ofPattern("HH:mm")
+        private val DAY = DateTimeFormatter.ofPattern("dd.MM.")
 
         /**
          * Whether "now" shows the night form (D36): at night; in the morning's twilight too and not in the evening's,

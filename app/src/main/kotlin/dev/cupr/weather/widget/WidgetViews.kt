@@ -21,8 +21,10 @@ import kotlin.math.floor
  * The views of the widget "Wetter" at one size (D11–D14, D35, D36, D41): "now" in every size bucket, the hours in the
  * wide and the tall one, the days in the tall one and, from 4 cells wide, the days or the hours in the flat one (D46),
  * as many of each as fit; or a plain text. The flat bucket has a layout of its own, "now" and the days or hours side by
- * side. Every text in its palette role for light and for dark (D7); the images are the conditions' weather icons
- * ([WeatherIcons]), animated where the widget's settings say (D44), on its card at the opacity they set (D45).
+ * side. A warning that applies shows as the band across the top in the wide and the tall bucket, and as its short form
+ * in the line's place in the small and the flat one (D47); "Stand 14:30" shows while the snapshot is old (D16). Every
+ * text in its palette role for light and for dark (D7); the images are the conditions' weather icons ([WeatherIcons]),
+ * animated where the widget's settings say (D44), on its card at the opacity they set (D45).
  */
 internal object WidgetViews {
     /** The views of [content] for a widget [size] dp large with [settings]. */
@@ -53,11 +55,14 @@ internal object WidgetViews {
     private val flatParts = intArrayOf(R.id.now_column, R.id.divider, R.id.days, R.id.hours)
     private val parts =
         intArrayOf(
+            R.id.band,
             R.id.now,
             R.id.now_today_below,
+            R.id.stale,
             R.id.now_line,
             R.id.now_line_long,
-            R.id.widget_notice,
+            R.id.short_form,
+            R.id.notice_row,
             R.id.hours,
             R.id.days,
         )
@@ -82,25 +87,57 @@ internal object WidgetViews {
         animation: Animation,
     ) {
         val small = bucket == SizeBucket.SMALL
+        // The band across the top in the wide and tall buckets; the small one shows the short form instead (D47).
+        val band = content.warning.takeUnless { small }
+        WarningViews.band(context, views, band)
         now(context, views, content.now, compact = small, animation)
+        val stale = content.stale?.let { context.getString(R.string.widget_stale, it) }
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
-        views.today(R.id.now_today_below, R.id.now_high_below, R.id.now_low_below, content.now.today.takeIf { small })
-        val room = Room(context.resources, size, content.signInAgain)
-        line(
-            context,
-            views,
-            room,
-            content.now.line,
-            twoLineRoom =
-                room.inside().takeIf {
-                    small
-                },
-            lineText = R.dimen.widget_line_text,
+        // In the small bucket "Stand 14:30" takes the place of today's high and low (D16).
+        views.today(
+            R.id.now_today_below,
+            R.id.now_high_below,
+            R.id.now_low_below,
+            content.now.today.takeIf { small && stale == null },
         )
+        views.show(R.id.stale, stale.takeIf { small }, Palette::textMuted)
+        // The notice line: "Neu anmelden", and in the wide and tall buckets "Stand 14:30" after it (D16, D33).
+        val noticeStale = stale.takeUnless { small }
+        views.setViewVisibility(
+            R.id.notice_row,
+            if (content.signInAgain || noticeStale != null) View.VISIBLE else View.GONE,
+        )
+        views.show(R.id.notice_stale, noticeStale, Palette::textMuted)
+        val room =
+            Room(
+                context.resources,
+                size,
+                notice = content.signInAgain || noticeStale != null,
+                band =
+                    band != null,
+            )
+        val short = content.warning.takeIf { small }
+        if (short != null) {
+            views.setViewVisibility(R.id.now_line, View.GONE)
+            views.setViewVisibility(R.id.now_line_long, View.GONE)
+        } else {
+            line(
+                context,
+                views,
+                room,
+                content.now.line,
+                twoLineRoom =
+                    room.inside().takeIf {
+                        small
+                    },
+                lineText = R.dimen.widget_line_text,
+            )
+        }
+        WarningViews.shortForm(context, views, short, room.inside(), R.dimen.widget_short_text)
 
         val hours = if (small) emptyList() else content.hours.take(room.hours())
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, animation) }
-        rest(context, views, content)
+        rest(context, views, content, flat = false)
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
         views.rows(R.id.days, days) { WidgetRows.day(context, it, animation) }
     }
@@ -120,7 +157,7 @@ internal object WidgetViews {
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
         views.show(R.id.now_temperature, content.now.temperature, Palette::text)
-        val room = Room(context.resources, size, content.signInAgain)
+        val room = Room(context.resources, size, notice = content.signInAgain, band = false)
         val wide = SizeBucket.wide(size)
         val days = if (wide && settings.flatStrip == FlatStrip.DAYS) content.days.take(room.flatDays()) else emptyList()
         val hours =
@@ -144,30 +181,42 @@ internal object WidgetViews {
         val icon = if (strip) R.dimen.widget_flat_now_icon else R.dimen.widget_flat_now_icon_narrow
         views.nowIcon(context, content.now.icon, icon, settings.animation)
         val text = room.flatText(column, icon)
-        if (content.signInAgain) {
+        // The line's place: a warning's short form, else "Neu anmelden", else the rain hint or the condition (D47).
+        val again = content.signInAgain && content.warning == null
+        if (content.warning != null || again) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
         } else {
             line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
-        // Today's high, low and rain below; with "Neu anmelden", 36 dp high, today's line gives way (D36).
-        flatToday(context, views, content.now.takeUnless { content.signInAgain }, room, text)
+        WarningViews.shortForm(context, views, content.warning, text, R.dimen.widget_short_flat_text)
+        // Today's high, low and rain below, or "Stand 14:30" in their place (D16); with "Neu anmelden", 36 dp high,
+        // both give way (D36).
+        val stale = content.stale?.let { context.getString(R.string.widget_stale, it) }.takeUnless { again }
+        views.show(R.id.stale, stale, Palette::textMuted)
+        flatToday(context, views, content.now.takeUnless { again || stale != null }, room, text)
 
         views.setViewVisibility(R.id.divider, if (strip) View.VISIBLE else View.GONE)
         views.setColorInt(R.id.divider, "setBackgroundColor", Palette.LIGHT.border, Palette.DARK.border)
         val degrees = room.flatDayDegrees(days.map { it.highLow })
         views.rows(R.id.days, days) { WidgetRows.flatDay(context, it, degrees, settings.animation) }
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, settings.animation) }
-        rest(context, views, content)
+        rest(context, views, content, flat = true)
     }
 
-    /** What both layouts show after "now" and its parts: "Neu anmelden" while it applies, no plain text, the tap. */
+    /**
+     * What both layouts show after "now" and its parts: "Neu anmelden" while it applies, but in the [flat] bucket not
+     * while a warning takes its place there; no plain text; the tap.
+     */
     private fun rest(
         context: Context,
         views: RemoteViews,
         content: WidgetContent.Weather,
+        flat: Boolean,
     ) {
-        val again = context.getString(R.string.widget_sign_in_again).takeIf { content.signInAgain }
+        // In the flat bucket a warning's short form takes the line's place before "Neu anmelden" (D47).
+        val notice = content.signInAgain && !(flat && content.warning != null)
+        val again = context.getString(R.string.widget_sign_in_again).takeIf { notice }
         views.show(R.id.widget_notice, again, Palette::accent)
         views.show(R.id.widget_plain, null, Palette::text)
         views.setOnClickPendingIntent(R.id.widget, tap(context, content))
@@ -264,13 +313,14 @@ internal object WidgetViews {
 
     /**
      * The room a widget [size] dp large has for the hours and the days (D35), from the fixed sizes of its parts
-     * (`dimens.xml`): within the card's padding, beside "now" in the flat bucket; below "now" and its line, and "Neu
-     * anmelden" while it shows ([notice]), in the others.
+     * (`dimens.xml`): within the card's padding, beside "now" in the flat bucket; below the warning band while it
+     * shows ([band], D47), "now" and its line, and the notice line while it shows ([notice]), in the others.
      */
     private class Room(
         private val resources: Resources,
         private val size: SizeF,
         private val notice: Boolean,
+        private val band: Boolean,
     ) {
         private val dimen = resources::dimen
 
@@ -359,6 +409,7 @@ internal object WidgetViews {
         /** The days that fit the height below "now" and, when they show ([withHours]), the hours. */
         fun days(withHours: Boolean): Int {
             var left = size.height - 2 * padding - dimen(R.dimen.widget_now_height) - dimen(R.dimen.widget_line_height)
+            if (band) left -= dimen(R.dimen.widget_band_height) + dimen(R.dimen.widget_band_gap)
             if (notice) left -= dimen(R.dimen.widget_notice_height)
             if (withHours) left -= gap + dimen(R.dimen.widget_hour_height)
             return fit(left - gap, dimen(R.dimen.widget_day_height))

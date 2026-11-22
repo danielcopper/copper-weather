@@ -36,3 +36,6 @@ internal fun parseObject(text: String): JsonObject? =
     } catch (_: IllegalArgumentException) {
         null
     }
+
+/** A field that is a whole JSON number within an Int, written without a fraction or an exponent, or none. */
+internal fun JsonObject.whole(name: String): Int? = this[name]?.numberContent()?.toIntOrNull()
