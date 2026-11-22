@@ -17,8 +17,8 @@ version has one widget, whose content follows its **size bucket** (D4).
 ### Size bucket
 
 The size class of a widget that decides what it shows: flat, one row high (**now**, and from 4 cells wide the
-**days** or, as the widget is set, the **hours** beside it), small (**now**), wide (plus the **hours**) and tall (plus the **days**) (D4); where each begins:
-D11.
+**days** or, as the widget is set, the **hours** beside it), small (**now**), wide (plus the **hours**) and tall (plus
+the **days**) (D4); where each begins: D11.
 
 ### Snapshot
 
