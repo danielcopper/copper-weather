@@ -51,13 +51,20 @@ A short note that rain is falling or due soon. Its colour is the palette's `rain
 
 ### Warning
 
-An official weather warning for the place the weather is for, shown as the **warning band** on the widget while it
-applies (D15).
+An official weather warning of the DWD for the place the weather is for, shown on the widget while it applies (D15):
+as the **warning band** in the wide and tall size buckets, as its **short form** in the small and flat ones (D47). Its
+kind follows its event code (EC_II), its symbol the kind (D48).
 
 ### Warning band
 
-The band across the top of the widget that shows the warnings (D15).
+The band across the top of the widget in the wide and tall size buckets that shows the warnings: the official headline
+of the highest, "+N" for the others (D15, D47).
 _Avoid_: banner
+
+### Short form
+
+A warning in the small and flat size buckets, in the place of "now"'s line: "Warnung" or "Unwetter" by its level, the
+symbol of its kind and "+N" (D47).
 
 ### Prototype
 
