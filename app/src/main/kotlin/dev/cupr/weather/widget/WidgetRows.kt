@@ -68,8 +68,8 @@ internal object WidgetRows {
     }
 
     /**
-     * A day of the flat bucket (D41): its weekday, its image, animated when [animate] (D44), and its high and its low at
-     * [degrees] px, the size [WidgetViews] picks for every day of the strip.
+     * A day of the flat bucket (D41): its weekday, its image, animated when [animate] (D44), and its high and its low
+     * at [degrees] px, the size [WidgetViews] picks for every day of the strip.
      */
     fun flatDay(
         context: Context,

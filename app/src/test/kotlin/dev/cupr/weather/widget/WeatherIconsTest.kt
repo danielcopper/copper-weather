@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * The weather icons (D38, D43): the drawables and the animated icons' layouts in the repo are what
- * `scripts/weather_icons.py` writes from the SVGs in `icons/weather`, the script converts what it should and refuses the
- * rest, and each condition finds its image, still and animated.
+ * `scripts/weather_icons.py` writes from the SVGs in `icons/weather`, the script converts what it should and refuses
+ * the rest, and each condition finds its image, still and animated.
  */
 @RunWith(RobolectricTestRunner::class)
 class WeatherIconsTest {

@@ -306,7 +306,14 @@
 
     <!-- The hours in the flat bucket's place of the days, each an hour of the
          wide bucket's strip, sharing its width (D46). -->
-    <style name="WeatherWidget.FlatHours" parent="WeatherWidget.FlatDays" />
+    <style name="WeatherWidget.FlatHours">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingStart">@dimen/widget_flat_days_padding</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
 
     <!-- A day of the flat bucket: its weekday, its image and its high and
          low (D41). -->

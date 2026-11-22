@@ -1,7 +1,6 @@
 package dev.cupr.weather.widget
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.util.SizeF
@@ -11,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.RemoteViews
 import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
-import androidx.core.graphics.ColorUtils
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 import dev.cupr.weather.store.Animation
@@ -43,7 +41,7 @@ internal object WidgetViews {
         // layout is the same.
         views.removeAllViews(R.id.hours)
         views.removeAllViews(R.id.days)
-        card(views, settings.opacity)
+        views.card(settings.opacity)
         when (content) {
             is WidgetContent.Plain -> plain(context, views, content, flat)
             is WidgetContent.Weather if flat -> flatWeather(context, views, content, size, settings)
@@ -51,26 +49,6 @@ internal object WidgetViews {
         }
         return views
     }
-
-    /**
-     * The card at [opacity] percent (D45): its colour, the palette's `surface` light and dark, at that alpha through the
-     * card's tint, fully transparent at 0 %, so no card shows; the divider, the texts and the icons stay opaque.
-     */
-    private fun card(
-        views: RemoteViews,
-        opacity: Int,
-    ) {
-        val alpha = Math.round(opacity * OPAQUE.toFloat() / WidgetSettings.FULL)
-        views.setColorStateList(
-            R.id.widget,
-            "setBackgroundTintList",
-            ColorStateList.valueOf(ColorUtils.setAlphaComponent(Palette.LIGHT.surface, alpha)),
-            ColorStateList.valueOf(ColorUtils.setAlphaComponent(Palette.DARK.surface, alpha)),
-        )
-    }
-
-    /** A colour's alpha when it is fully opaque. */
-    private const val OPAQUE = 255
 
     /** The parts of each layout a plain text hides: all of the flat one's, or all of the other one's. */
     private val flatParts = intArrayOf(R.id.now_column, R.id.divider, R.id.days, R.id.hours)
@@ -186,23 +164,6 @@ internal object WidgetViews {
         rest(context, views, content)
     }
 
-    /**
-     * "Now"'s image, [size] large: its still image, or, when [animate], its animated icon in the frame beside it, both
-     * sized as values (D42, D43).
-     */
-    private fun RemoteViews.nowIcon(
-        context: Context,
-        @DrawableRes still: Int,
-        @DimenRes size: Int,
-        animate: Boolean,
-    ) {
-        for (id in intArrayOf(R.id.now_icon, R.id.now_icon_animated)) {
-            setWidth(context, id, size)
-            setHeight(context, id, size)
-        }
-        icon(context, R.id.now_icon, R.id.now_icon_animated, still, animate)
-    }
-
     /** What both layouts show after "now" and its parts: "Neu anmelden" while it applies, no plain text, the tap. */
     private fun rest(
         context: Context,
@@ -242,8 +203,8 @@ internal object WidgetViews {
     ) = if (content.signInAgain) Taps.app(context) else Taps.weather(context)
 
     /**
-     * "Now"'s row outside the flat bucket (D36): [compact] in the small bucket, lower and with a smaller image; its image
-     * animated when [animate] (D44).
+     * "Now"'s row outside the flat bucket (D36): [compact] in the small bucket, lower and with a smaller image; its
+     * image animated when [animate] (D44).
      */
     private fun now(
         context: Context,
@@ -412,4 +373,21 @@ internal object WidgetViews {
             each: Float,
         ): Int = floor(room / each).toInt().coerceAtLeast(0)
     }
+}
+
+/**
+ * "Now"'s image, [size] large: its still image, or, when [animate], its animated icon in the frame beside it, both
+ * sized as values (D42, D43).
+ */
+private fun RemoteViews.nowIcon(
+    context: Context,
+    @DrawableRes still: Int,
+    @DimenRes size: Int,
+    animate: Boolean,
+) {
+    for (id in intArrayOf(R.id.now_icon, R.id.now_icon_animated)) {
+        setWidth(context, id, size)
+        setHeight(context, id, size)
+    }
+    icon(context, R.id.now_icon, R.id.now_icon_animated, still, animate)
 }

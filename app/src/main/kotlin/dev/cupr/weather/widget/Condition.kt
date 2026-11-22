@@ -8,8 +8,8 @@ import dev.cupr.weather.R
 /**
  * Home Assistant's conditions (GLOSSARY.md, Condition) and everything the widget shows of one: its German [word], as
  * Home Assistant shows it (D34); its still images by [day] and by [night] (D38) and its animated icons' layouts by
- * [dayAnimated] and [nightAnimated] (D43); and whether its image draws falling rain, snow or hail ([wet]), which shows a
- * trace of rain as "< 0,1 mm" (D37).
+ * [dayAnimated] and [nightAnimated] (D43); and whether its image draws falling rain, snow or hail ([wet]), which shows
+ * a trace of rain as "< 0,1 mm" (D37).
  */
 enum class Condition(
     /** The condition as Home Assistant states it. */

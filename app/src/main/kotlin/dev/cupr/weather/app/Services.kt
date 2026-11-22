@@ -25,7 +25,8 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 /**
- * The app's one sign-in, snapshot, settings, widgets' settings and HTTP client, and what the app's screen and the fetch do with them, with
+ * The app's one sign-in, snapshot, settings, widgets' settings and HTTP client, and what the app's screen and the
+ * fetch do with them, with
  * the fetches scheduled and the widgets updated to match (D27, D28, D31, D33).
  */
 object Services {

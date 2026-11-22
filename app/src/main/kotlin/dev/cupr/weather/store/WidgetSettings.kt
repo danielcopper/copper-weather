@@ -95,13 +95,10 @@ class WidgetSettingsStore(
         default: Int,
     ): Int {
         val key = key(id, OPACITY)
-        if (!prefs.contains(key)) return default
-        val stored = runCatching { prefs.getInt(key, default) }.getOrNull()
-        if (stored != null && stored in 0..WidgetSettings.FULL && stored % WidgetSettings.OPACITY_STEP == 0) {
-            return stored
-        }
-        Log.w(TAG, "${what(id, OPACITY)} is no step of the slider; it reads as $default")
-        return default
+        val stored = if (prefs.contains(key)) runCatching { prefs.getInt(key, default) }.getOrNull() else default
+        val step = stored != null && stored in 0..WidgetSettings.FULL && stored % WidgetSettings.OPACITY_STEP == 0
+        if (!step) Log.w(TAG, "${what(id, OPACITY)} is no step of the slider; it reads as $default")
+        return if (step) checkNotNull(stored) else default
     }
 
     private companion object {
