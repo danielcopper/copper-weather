@@ -326,6 +326,15 @@
         <item name="android:scaleType">fitCenter</item>
     </style>
 
+    <!-- The symbols of the kinds that apply, side by side (D47). -->
+    <style name="WeatherWidget.ShortSymbols">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
     <style name="WeatherWidget.ShortSymbol">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

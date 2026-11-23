@@ -178,7 +178,13 @@ class WidgetContentTest {
     @Test
     fun `a warning that applies shows with its level, kind and headline, and one that begins later does not`() {
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MODERATE,
+                WarningKind.WIND,
+                "Amtliche WARNUNG vor STURMBÖEN",
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+            ),
             WidgetContent.warning(listOf(warning()), now),
         )
         assertNull(WidgetContent.warning(listOf(warning(start = Duration.ofMinutes(1))), now))
@@ -191,15 +197,33 @@ class WidgetContentTest {
     @Test
     fun `a warning without a start shows at once, and one without an end while the snapshot carries it`() {
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MODERATE,
+                WarningKind.WIND,
+                "Amtliche WARNUNG vor STURMBÖEN",
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+            ),
             WidgetContent.warning(listOf(warning(start = null)), now),
         )
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MODERATE,
+                WarningKind.WIND,
+                "Amtliche WARNUNG vor STURMBÖEN",
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+            ),
             WidgetContent.warning(listOf(warning(start = Duration.ofDays(-3), end = null)), now),
         )
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MODERATE,
+                WarningKind.WIND,
+                "Amtliche WARNUNG vor STURMBÖEN",
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+            ),
             WidgetContent.warning(listOf(warning(start = null, end = null)), now),
         )
     }
@@ -212,12 +236,43 @@ class WidgetContentTest {
         val later = warning(level = 4, start = Duration.ofHours(2))
 
         assertEquals(
-            WidgetContent.Warning(WarningLevel.SEVERE, WarningKind.WIND, gusts.headline, more = 2),
+            WidgetContent.Warning(
+                WarningLevel.SEVERE,
+                WarningKind.WIND,
+                gusts.headline,
+                more = 2,
+                kinds =
+                    listOf(
+                        WidgetContent.KindCount(WarningKind.WIND, 1),
+                        WidgetContent.KindCount(WarningKind.FROST, 1),
+                        WidgetContent.KindCount(WarningKind.RAIN, 1),
+                    ),
+            ),
             WidgetContent.warning(listOf(frost, gusts, rain, later), now),
         )
         assertEquals(
-            WidgetContent.Warning(WarningLevel.SEVERE, WarningKind.WIND, gusts.headline, more = 1),
+            WidgetContent.Warning(
+                WarningLevel.SEVERE,
+                WarningKind.WIND,
+                gusts.headline,
+                more = 1,
+                kinds =
+                    listOf(
+                        WidgetContent.KindCount(WarningKind.WIND, 1),
+                        WidgetContent.KindCount(WarningKind.FROST, 1),
+                    ),
+            ),
             WidgetContent.warning(listOf(frost, gusts), now),
+        )
+        // The kinds of all that apply, the shown one's first, then in the order sent, each once with its count (D47).
+        val gusts2 = warning(level = 2, type = 52, headline = "Amtliche WARNUNG vor STURMBÖEN")
+        assertEquals(
+            listOf(
+                WidgetContent.KindCount(WarningKind.WIND, 2),
+                WidgetContent.KindCount(WarningKind.FROST, 1),
+                WidgetContent.KindCount(WarningKind.RAIN, 1),
+            ),
+            WidgetContent.warning(listOf(frost, gusts2, gusts, rain), now)?.kinds,
         )
     }
 
@@ -245,7 +300,13 @@ class WidgetContentTest {
             shown,
         )
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MINOR, WarningKind.OTHER, null, more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MINOR,
+                WarningKind.OTHER,
+                null,
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.OTHER, 1)),
+            ),
             WidgetContent.warning(listOf(warning(level = null, type = null, headline = null)), now),
         )
     }
@@ -281,7 +342,13 @@ class WidgetContentTest {
                 """"start":"2026-11-20T12:00:00+01:00","end":"2026-11-20T18:00:00+01:00"}]"""
 
         assertEquals(
-            WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", more = 0),
+            WidgetContent.Warning(
+                WarningLevel.MINOR,
+                WarningKind.FROST,
+                "Amtliche WARNUNG vor FROST",
+                more = 0,
+                kinds = listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+            ),
             weather(SampleWeather.data(warnings)).warning,
         )
         assertNull(weather(SampleWeather.data()).warning)
@@ -309,7 +376,13 @@ class WidgetContentTest {
     fun `a blank headline reads as none`() {
         for (headline in listOf("", "  ")) {
             assertEquals(
-                WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, null, more = 0),
+                WidgetContent.Warning(
+                    WarningLevel.MODERATE,
+                    WarningKind.WIND,
+                    null,
+                    more = 0,
+                    kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                ),
                 WidgetContent.warning(listOf(warning(headline = headline)), now),
             )
         }
@@ -351,7 +424,14 @@ class WidgetContentTest {
     @Test
     fun `a warning that applies shows also with the plain text of a snapshot without a usable now`() {
         val empty = """{"schema_version":1$frostWarning}"""
-        val frost = WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", 0)
+        val frost =
+            WidgetContent.Warning(
+                WarningLevel.MINOR,
+                WarningKind.FROST,
+                "Amtliche WARNUNG vor FROST",
+                0,
+                listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+            )
 
         assertEquals(WidgetContent.Plain(R.string.widget_no_data, frost, null), content(empty))
         assertEquals(
@@ -369,7 +449,14 @@ class WidgetContentTest {
     @Test
     fun `an old snapshot's plain text says Stand beside a warning, and alone it does not`() {
         val old = now.minus(Duration.ofHours(2))
-        val frost = WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", 0)
+        val frost =
+            WidgetContent.Warning(
+                WarningLevel.MINOR,
+                WarningKind.FROST,
+                "Amtliche WARNUNG vor FROST",
+                0,
+                listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+            )
 
         assertEquals(
             WidgetContent.Plain(R.string.widget_no_data, frost, "11:40"),

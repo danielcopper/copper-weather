@@ -73,10 +73,9 @@
                         android:src="@drawable/symbol_other"
                         android:visibility="gone" />
 
-                    <ImageView
-                        android:id="@+id/short_symbol"
-                        style="@style/WeatherWidget.ShortSymbol"
-                        android:importantForAccessibility="no" />
+                    <LinearLayout
+                        android:id="@+id/short_symbols"
+                        style="@style/WeatherWidget.ShortSymbols" />
 
                     <TextView
                         android:id="@+id/short_more"

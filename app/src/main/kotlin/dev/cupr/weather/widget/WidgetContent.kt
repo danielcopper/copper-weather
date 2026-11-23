@@ -51,13 +51,21 @@ sealed interface WidgetContent {
 
     /**
      * The warning the widget shows (D15, D47): of those that apply, the one of the highest [level], its [kind] and its
-     * [headline] as the DWD wrote it, none without one or with a blank one; and how many more apply ([more]).
+     * [headline] as the DWD wrote it, none without one or with a blank one; how many more apply ([more]); and the
+     * [kinds] of all that apply, its own first and the others in the order sent, each once with how many apply.
      */
     data class Warning(
         val level: WarningLevel,
         val kind: WarningKind,
         val headline: String?,
         val more: Int,
+        val kinds: List<KindCount>,
+    )
+
+    /** A kind of the warnings that apply, and how many of them are of it (D47). */
+    data class KindCount(
+        val kind: WarningKind,
+        val count: Int,
     )
 
     /**
@@ -242,11 +250,15 @@ sealed interface WidgetContent {
         ): Warning? {
             val applying = warnings.filter { (it.start == null || it.start <= now) && (it.end == null || now < it.end) }
             val shown = applying.maxByOrNull { WarningLevel.of(it.level) } ?: return null
+            val kind = WarningKind.of(shown.type)
+            val counts = applying.groupingBy { WarningKind.of(it.type) }.eachCount()
+            val kinds = (listOf(kind) + applying.map { WarningKind.of(it.type) }).distinct()
             return Warning(
                 level = WarningLevel.of(shown.level),
-                kind = WarningKind.of(shown.type),
+                kind = kind,
                 headline = shown.headline?.takeUnless(String::isBlank),
                 more = applying.size - 1,
+                kinds = kinds.map { KindCount(it, counts.getValue(it)) },
             )
         }
 

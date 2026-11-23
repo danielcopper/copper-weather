@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A symbol of a warning's kind in its short form (D47, D48), one for each
+     kind that applies; WarningViews sets its image, its colour, its size and
+     its gap before it. -->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/short_symbol"
+    style="@style/WeatherWidget.ShortSymbol"
+    android:importantForAccessibility="no" />
