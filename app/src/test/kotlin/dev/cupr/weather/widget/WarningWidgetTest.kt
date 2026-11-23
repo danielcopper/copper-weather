@@ -400,14 +400,14 @@ class WarningWidgetTest : WidgetTestBase() {
             // The short form's top and "Stand"'s bottom inside the text area, and the text area inside the card.
             assertTrue("$size ${form.top}", form.top >= 0)
             assertTrue("$size ${stand.bottom} ${text.height}", stand.bottom <= text.height)
-            // One tile, 32 dp (D47).
-            assertEquals("$size", dp(32), form.height)
+            // One tile, 28 dp (D47).
+            assertEquals("$size", dp(28), form.height)
             assertEquals("$size", dp(16), stand.height)
             val top = column.top + text.top
             assertTrue("$size $top", top >= widget.paddingTop)
             assertTrue("$size", top + text.height <= widget.height - widget.paddingBottom)
         }
-        // At 2 x 1 the text has 38 dp between them: it shrinks below its 14 sp.
+        // At 2 x 1 the text has 42 dp between them: it shrinks below its 14 sp.
         val narrow = laidOut(placed(SizeBucket.sizeOf(columns = 2, rows = 1)), SizeBucket.sizeOf(columns = 2, rows = 1))
         assertTrue(narrow.text(R.id.widget_plain).textSize < sp(14f))
         // Without a warning the plain text keeps its size.
@@ -504,8 +504,8 @@ class WarningWidgetTest : WidgetTestBase() {
         signIn()
         written(SampleWeather.full().warned(FROST, ORKAN))
         val narrow = SizeBucket.sizeOf(columns = 2, rows = 1)
-        // Two tiles: 32 dp in the flat strip's 71 dp and the small line's 106 dp, 21 dp in the 47 dp at 2 x 1.
-        for ((size, side) in listOf(SizeF(388f, 95f) to 32, small to 32, narrow to 21)) {
+        // Two tiles: 28 dp in the flat strip's 71 dp and the small line's 106 dp, 21 dp in the 47 dp at 2 x 1.
+        for ((size, side) in listOf(SizeF(388f, 95f) to 28, small to 28, narrow to 21)) {
             val widget = laidOut(placed(size), size)
             val tiles = tileViews(widget)
             assertEquals("$size", 2, tiles.size)
@@ -518,10 +518,10 @@ class WarningWidgetTest : WidgetTestBase() {
         // rows: 8 dp would be left, so they take their least side, 18 dp.
         val low = SizeF(388f, 70f)
         assertEquals(listOf(dp(18), dp(18)), tileViews(laidOut(placed(low), low)).map { it.height })
-        // One warning: one tile, 32 dp.
+        // One warning: one tile, 28 dp.
         written(SampleWeather.full().warned(ORKAN))
         val one = tileViews(laidOut(placed(narrow), narrow))
-        assertEquals(listOf(dp(32)), one.map { it.width })
+        assertEquals(listOf(dp(28)), one.map { it.width })
     }
 
     @Test

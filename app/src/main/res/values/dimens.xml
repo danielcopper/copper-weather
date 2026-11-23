@@ -94,7 +94,7 @@
          (D47): its tiles' side, largest and least, the step between the
          sides the app tries, and the gap between the tiles and before "+N";
          and the gap between the band's word and its symbol. -->
-    <dimen name="widget_tile_largest">32dp</dimen>
+    <dimen name="widget_tile_largest">28dp</dimen>
     <dimen name="widget_tile_least">18dp</dimen>
     <dimen name="widget_tile_step">1dp</dimen>
     <dimen name="widget_tile_gap">3dp</dimen>

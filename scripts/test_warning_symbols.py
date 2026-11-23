@@ -73,23 +73,25 @@ class ConvertTest(unittest.TestCase):
         # The letters centred on the sun's centre: the U from 295 and the V to 665, from -580 to -380.
         self.assertTrue(data[1].startswith("M295,-580 V-440 A60,60 0 0,0 415,-440 V-580 M525,-580 L595,-380 L665,-580"))
 
-    def test_a_tile_is_a_square_of_one_side_for_all_centred_on_the_main_symbol(self):
+    def test_a_tile_is_a_square_of_one_side_for_all_centred_on_all_its_symbol_draws(self):
+        # The stand-in square draws from 280 to 680 across and 80 to 880 down the em; the composite's part, at 0.55
+        # from 0.75 across and -0.05 down, from 874 to 1094 and from -4 to 436: all of it from 280 to 1094 and from
+        # -4 to 880, its centre (687, 438), 884 high.
         figures = [
-            warning_symbols.plain(self.paths, "air"),
-            warning_symbols.composed(self.paths, "thermometer", "ac_unit"),
+            (warning_symbols.plain(self.paths, "air"), (480, 480)),
+            (warning_symbols.composed(self.paths, "thermometer", "ac_unit"), (687, 438)),
         ]
-        half = warning_symbols.tile_half(figures)
-        # The composite's part reaches farthest from its main symbol's centre: 720 + 0.55 * 680 - 480, and MARGIN.
-        self.assertEqual(round(720 + 0.55 * 680 - 480 + 80, 2), round(half, 2))
-        for figure in figures:
+        half = warning_symbols.tile_half([figure for figure, _ in figures])
+        self.assertEqual(round(884 / 2 + 80, 2), round(half, 2))
+        for figure, (cx, cy) in figures:
             xml = warning_symbols.tile_drawable(figure, half)
             self.assertEqual(round(2 * half, 2), numbers(xml, "viewportWidth"))
             self.assertEqual(round(2 * half, 2), numbers(xml, "viewportHeight"))
-            # The main symbol's centre, (480, -480) of its path for the stand-in square, at the tile's centre.
+            # The centre of all it draws lands on the tile's centre.
             first = re.search(r"<group ([^>]*)>", xml).group(1)
             x = float(re.search(r'translateX="([-0-9.]+)"', first).group(1))
             y = float(re.search(r'translateY="([-0-9.]+)"', first).group(1))
-            self.assertEqual((half, half), (x + 480, y - 480))
+            self.assertEqual((round(half, 2), round(half, 2)), (round(cx + x, 2), round(cy - 960 + y, 2)))
 
     def test_a_moveto_with_more_points_keeps_them_as_lines(self):
         pieces = warning_symbols.subpaths("M10-10 20-20ZM480-480m5 5 1 1Z", "t.svg")

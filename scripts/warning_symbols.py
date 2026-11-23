@@ -27,9 +27,9 @@ three ways (D48):
 
 For the short form's tiles (D47) it writes each kind's symbol again as
 app/src/main/res/drawable/tile_<kind>.xml: a square of one side for all kinds,
-centred on the centre of the main symbol's own bounds, so a composite's main
-symbol stands where a plain one does; half its side is the farthest any symbol
-draws from that centre, and MARGIN.
+centred on the centre of everything the symbol draws, a composite's second
+symbol included, so each stands centred in its tile; half its side is the
+farthest any symbol draws from its centre, and MARGIN.
 
 Every copy must be used by one of them. The script takes exactly that shape of
 SVG and fails, naming the file, on anything else: another root, viewBox, size
@@ -177,12 +177,11 @@ def group(paths, translate_x=0.0, translate_y=float(EM), scale=1.0):
 
 class Figure:
     """A symbol's groups, each (paths, translate x, translate y, scale) in the main symbol's em, y from 0 at its top;
-    the box of what they draw there; the centre of the main symbol's own bounds; its source and what it changes."""
+    the box of what they draw there; its source and what it changes."""
 
-    def __init__(self, groups, box, centre, source, change=None):
+    def __init__(self, groups, box, source, change=None):
         self.groups = groups
         self.box = box
-        self.centre = centre
         self.source = source
         self.change = change
 
@@ -209,7 +208,7 @@ def centre_of(box):
 def plain(paths, name):
     """A Material Symbol as it is."""
     box = placed_box(paths[name], f"{name}.svg", 0.0, float(EM), 1.0)
-    return Figure([([(paths[name], None)], 0.0, float(EM), 1.0)], box, centre_of(box), f"icons/symbols/{name}.svg")
+    return Figure([([(paths[name], None)], 0.0, float(EM), 1.0)], box, f"icons/symbols/{name}.svg")
 
 
 def composed(paths, main, part):
@@ -222,7 +221,7 @@ def composed(paths, main, part):
     groups = [([(paths[main], None)], 0.0, float(EM), 1.0), ([(paths[part], None)], move_x, move_y, PART_SCALE)]
     change = f"{part} at {fmt(PART_SCALE)} of the size at the upper right of {main}"
     source = f"icons/symbols/{main}.svg and {part}.svg"
-    return Figure(groups, union(main_box, part_box), centre_of(main_box), source, change)
+    return Figure(groups, union(main_box, part_box), source, change)
 
 
 def symbol_drawable(figure):
@@ -236,17 +235,13 @@ def symbol_drawable(figure):
 
 
 def tile_half(figures):
-    """Half a tile's side: the farthest any symbol draws from its main symbol's centre, and MARGIN beyond."""
-    return MARGIN + max(
-        max(cx - x0, x1 - cx, cy - y0, y1 - cy)
-        for figure in figures
-        for (x0, y0, x1, y1), (cx, cy) in [(figure.box, figure.centre)]
-    )
+    """Half a tile's side: the farthest any symbol draws from the centre of all it draws, and MARGIN beyond."""
+    return MARGIN + max(max(x1 - x0, y1 - y0) / 2 for x0, y0, x1, y1 in (figure.box for figure in figures))
 
 
 def tile_drawable(figure, half):
-    """The tile's symbol: a square of the common side around the main symbol's centre, so each stands centred."""
-    cx, cy = figure.centre
+    """The tile's symbol: a square of the common side around the centre of all it draws, so each stands centred."""
+    cx, cy = centre_of(figure.box)
     return figure.drawable(cx - half, cy - half, 2 * half, 2 * half)
 
 
@@ -307,7 +302,6 @@ def uv(paths):
     return Figure(
         [([(" ".join(rays), None), (letters(), LETTER_STROKE)], 0.0, float(EM), 1.0)],
         box,
-        (cx, cy + EM),
         f"icons/symbols/{UV_SUN}.svg",
         "its disc left out, and the letters UV, drawn by the script, in its middle",
     )
