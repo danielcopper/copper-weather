@@ -286,7 +286,8 @@
 
     <!-- The short form in the line's place in the small and the flat bucket
          (D47): a tile for each kind of warning that applies and "+N" for the
-         kinds that do not fit, centred in the line; WarningViews sets their
+         warnings whose kinds' tiles do not fit, centred in the line;
+         WarningViews sets their
          sizes to fit, colours them and describes them. -->
     <style name="WeatherWidget.ShortSlot">
         <item name="android:layout_width">match_parent</item>
