@@ -6,6 +6,7 @@ import android.graphics.text.LineBreaker
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.text.TextUtils
 import androidx.annotation.DimenRes
 import androidx.annotation.Px
 import dev.cupr.weather.R
@@ -53,7 +54,7 @@ internal fun Resources.plainFit(
 ): PlainFit {
     val sizes = sizes(R.dimen.widget_plain_text, R.dimen.widget_plain_text_least)
     if (height == null) return PlainFit(sizes.first(), Int.MAX_VALUE)
-    val layout = { px: Float ->
+    val layout = { px: Float, lines: Int ->
         val paint =
             TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
                 textSize = px
@@ -64,10 +65,13 @@ internal fun Resources.plainFit(
             .obtain(text, 0, text.length, paint, inPx)
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
             .setBreakStrategy(LineBreaker.BREAK_STRATEGY_HIGH_QUALITY)
+            .setEllipsize(TextUtils.TruncateAt.END)
+            .setMaxLines(lines)
             .build()
     }
-    val fits = sizes.firstOrNull { dp(layout(it).height.toFloat()) <= height }
-    val least = layout(sizes.last())
-    val lines = maxOf(1, (height / (dp(least.height.toFloat()) / least.lineCount)).toInt())
+    val fits = sizes.firstOrNull { dp(layout(it, Int.MAX_VALUE).height.toFloat()) <= height }
+    // At the least size, the most lines whose layout, the last ending in "…", fits; at least one.
+    val least = layout(sizes.last(), Int.MAX_VALUE).lineCount
+    val lines = (least downTo 1).firstOrNull { dp(layout(sizes.last(), it).height.toFloat()) <= height } ?: 1
     return if (fits != null) PlainFit(fits, Int.MAX_VALUE) else PlainFit(sizes.last(), lines)
 }

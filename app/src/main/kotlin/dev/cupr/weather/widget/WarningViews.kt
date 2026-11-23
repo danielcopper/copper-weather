@@ -35,21 +35,11 @@ internal object WarningViews {
         bucket: SizeBucket,
         width: Float,
     ) {
-        when (bucket) {
-            SizeBucket.FLAT -> {
-                shortForm(context, views, warning, width, R.dimen.widget_short_flat_text)
-            }
-
-            SizeBucket.SMALL -> {
-                band(context, views, null)
-                shortForm(context, views, warning, width, R.dimen.widget_short_text)
-            }
-
-            SizeBucket.WIDE, SizeBucket.TALL -> {
-                band(context, views, warning)
-                shortForm(context, views, null, width, R.dimen.widget_short_text)
-            }
-        }
+        // The flat layout has no band; its short form is smaller.
+        val band = showsBand(bucket)
+        if (bucket != SizeBucket.FLAT) band(context, views, warning.takeIf { band })
+        val largest = if (bucket == SizeBucket.FLAT) R.dimen.widget_short_flat_text else R.dimen.widget_short_text
+        shortForm(context, views, warning.takeUnless { band }, width, largest)
     }
 
     /**

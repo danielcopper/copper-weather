@@ -141,12 +141,12 @@ internal object WidgetViews {
             R.id.now_low_below,
             content.now.today.takeIf { small && stale == null },
         )
-        views.stand(stale, bucket, again = content.signInAgain, below = R.id.stale)
+        val notice = views.stand(stale, bucket, again = content.signInAgain, below = R.id.stale)
         val room =
             Room(
                 context.resources,
                 size,
-                notice = content.signInAgain || (stale != null && !small),
+                notice = notice,
                 band = content.warning != null && WarningViews.showsBand(bucket),
             )
         val short = content.warning.takeUnless { WarningViews.showsBand(bucket) }
@@ -479,18 +479,21 @@ private fun Context.standText(stale: String?): String? = stale?.let { getString(
 
 /**
  * Places "Stand 14:30" ([stale]) as [bucket] shows it (D16): in the small bucket in the view [below], in the wide and
- * tall ones in the notice line after "Neu anmelden", which shows while [again]; the other place empty.
+ * tall ones in the notice line after "Neu anmelden", which shows while [again]; the other place empty. Whether the
+ * notice line shows.
  */
 private fun RemoteViews.stand(
     stale: String?,
     bucket: SizeBucket,
     again: Boolean,
     below: Int,
-) {
+): Boolean {
     val small = bucket == SizeBucket.SMALL
+    val notice = again || (stale != null && !small)
     show(below, stale.takeIf { small }, Palette::textMuted)
-    setViewVisibility(R.id.notice_row, if (again || (stale != null && !small)) View.VISIBLE else View.GONE)
+    setViewVisibility(R.id.notice_row, if (notice) View.VISIBLE else View.GONE)
     show(R.id.notice_stale, stale.takeUnless { small }, Palette::textMuted)
+    return notice
 }
 
 /** Widens the flat layout's "now" column to the card's width. */

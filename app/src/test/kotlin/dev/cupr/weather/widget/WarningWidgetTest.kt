@@ -490,8 +490,8 @@ class WarningWidgetTest : WidgetTestBase() {
             // The short form's top and "Stand"'s bottom inside the text area, and the text area inside the card.
             assertTrue("$size ${form.top}", form.top >= 0)
             assertTrue("$size ${stand.bottom} ${text.height}", stand.bottom <= text.height)
-            assertEquals("$size", form.height, dp(20))
-            assertEquals("$size", stand.height, dp(16))
+            assertEquals("$size", dp(20), form.height)
+            assertEquals("$size", dp(16), stand.height)
             val top = column.top + text.top
             assertTrue("$size $top", top >= widget.paddingTop)
             assertTrue("$size", top + text.height <= widget.height - widget.paddingBottom)
@@ -520,6 +520,57 @@ class WarningWidgetTest : WidgetTestBase() {
 
         val widget = laidOut(WidgetHost.view(application, id), size)
         assertEquals(dp(71), widget.findViewById<View>(R.id.now_text).width)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `in a row too low for the plain text at 9 sp it ends in an ellipsis in the lines that fit`() {
+        signIn()
+        written(
+            """{"schema_version":1,"now":{}}""".warned(ORKAN),
+            fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)),
+        )
+        // 54 dp inside, 18 dp left between the short form and "Stand".
+        val size = SizeF(129f, 70f)
+        val id = WidgetHost.place(application, size)
+
+        val widget = laidOut(WidgetHost.view(application, id), size)
+        val plain = widget.text(R.id.widget_plain)
+        assertEquals(sp(9f), plain.textSize, 0.5f)
+        assertEquals(1, plain.maxLines)
+        assertTrue(plain.layout.getEllipsisCount(plain.lineCount - 1) > 0)
+        val text = widget.findViewById<View>(R.id.now_text)
+        assertTrue(
+            "${widget.findViewById<View>(R.id.stale).bottom} ${text.height}",
+            widget.findViewById<View>(R.id.stale).bottom <= text.height,
+        )
+        assertTrue(text.height <= widget.height - widget.paddingTop - widget.paddingBottom)
+
+        // Drawn again without a warning, the same view takes its own size and lines back.
+        written("""{"schema_version":1,"now":{}}""")
+        Widgets.update(application)
+        val alone = WidgetHost.view(application, id).text(R.id.widget_plain)
+        assertEquals(sp(14f), alone.textSize, 0.5f)
+        assertEquals(Int.MAX_VALUE, alone.maxLines)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `one row high a plain text with a warning but no Stand, or with neither, keeps its 14 sp and its lines`() {
+        signIn()
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN))
+        for (size in listOf(flat, SizeBucket.sizeOf(columns = 2, rows = 1))) {
+            val plain = laidOut(placed(size), size).text(R.id.widget_plain)
+            assertEquals("$size", sp(14f), plain.textSize, 0.5f)
+            assertEquals("$size", Int.MAX_VALUE, plain.maxLines)
+        }
+
+        written("""{"schema_version":1,"now":{}}""")
+        val plain = laidOut(placed(flat), flat).text(R.id.widget_plain)
+        assertEquals(sp(14f), plain.textSize, 0.5f)
+        assertEquals(Int.MAX_VALUE, plain.maxLines)
     }
 
     private fun assertShortForm(
