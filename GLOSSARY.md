@@ -64,7 +64,7 @@ _Avoid_: banner
 ### Short form
 
 A warning in the small and flat size buckets, in the place of "now"'s line: "Warnung" or "Unwetter" by its level, the
-symbol of its kind and "+N" (D47).
+symbol of its kind and "+N", the word giving way to a warning sign where it does not fit (D47).
 
 ### Prototype
 
