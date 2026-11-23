@@ -9,13 +9,14 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - **Dependency change**: `mise run deps-refresh` rewrites the lock files (`*.lockfile`) and `gradle/verification-metadata.xml`, which every build checks; commit them with the change after reading the diff.
 - **Known build notice**: `mergeDebugUnitTestManifest` reports that `androidx.work.WorkManagerInitializer` "was tagged … to remove other declarations but no other declaration present". Leave it and don't report it (D28). It is a problem only if a built manifest under `app/build/intermediates` contains that initializer, or the app's own manifest step reports it too.
 - **Weather icons**: generated, never edited by hand; `mise run icons` writes them from `icons/weather` (D38).
+- **Warning symbols**: generated, never edited by hand; `mise run symbols` writes them from `icons/symbols` (D48).
 - **Versions**: libraries and Gradle plugins in `gradle/libs.versions.toml`, Gradle in `gradle/wrapper/gradle-wrapper.properties`, the JDK in `mise.toml` and CI's `JAVA_VERSION`, Python in `mise.toml` and CI's `PYTHON_VERSION`, the Android SDK packages and command-line tools in `mise.toml`'s `setup`, the GitHub Actions in the workflows; the reason for a version held back stands beside it.
 - **App version**: `version.txt`, kept by release-please (`.github/workflows/release.yml`); the version code follows from it (`app/build.gradle.kts`). Never edit `version.txt` or `CHANGELOG.md` by hand.
 
 ## Tests
 
 - Unit tests under `app/src/test`, JUnit 4 with Robolectric for anything that needs Android, Compose's test rule for the app's screen; `mise run test` runs them, the gate runs them with coverage.
-- The weather icon script's own tests live in `scripts/` (Python's unittest); WeatherIconsTest runs them and the script's `--check` with mise's Python.
+- The weather icon and warning symbol scripts' own tests live in `scripts/` (Python's unittest); WeatherIconsTest runs them and the weather icon script's `--check`, WarningSymbolsTest the warning symbol script's, with mise's Python.
 
 ## Conventions
 
