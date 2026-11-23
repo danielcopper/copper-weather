@@ -31,7 +31,7 @@ An Android app with home-screen widgets that show the weather from Home Assistan
 - Run the gate once; never start a second Gradle run in the same tree while one is still going.
 - Absolute paths in every command (`git -C <worktree>`); the shell's working directory resets between calls.
 - Scratch files go in the agent's scratchpad, never inside the worktree.
-- Clean up only your own processes, by PID; stop the Gradle daemon with `./gradlew --stop`, never with `pkill -f`.
+- Clean up only your own processes, by PID, never with `pkill -f`. Leave the Gradle daemon running: `./gradlew --stop` stops every daemon of this Gradle version under the same Gradle user home, so builds of other sessions fail with it; an idle daemon ends itself after three hours.
 
 ## Pipeline
 
