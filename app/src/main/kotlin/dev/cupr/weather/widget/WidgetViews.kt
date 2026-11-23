@@ -111,7 +111,7 @@ internal object WidgetViews {
             views.setViewLayoutMargin(R.id.now_text, RemoteViews.MARGIN_START, 0f, TypedValue.COMPLEX_UNIT_PX)
             views.show(R.id.stale, stale, Palette::textMuted)
             // The short form and "Stand" stay whole; the text shrinks, and may end shorter, in what they leave (D47).
-            // The tiles' row is at least the line's height, the slot's own least (styles.xml).
+            // The tiles' row is at least the line's height, the short-form slot's own least height (D47).
             val tiles =
                 content.warning?.let {
                     maxOf(

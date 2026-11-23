@@ -153,9 +153,8 @@ internal object WarningViews {
         height: Float?,
     ): Float = context.tiles(warning, width, height).side
 
-    /** A warning's word (D47): "Warnung" for the DWD's levels 1 and 2, "Unwetter" for 3 and 4. */
-    private fun Context.word(warning: WidgetContent.Warning): String =
-        getString(if (warning.level.severe) R.string.warning_word_severe else R.string.warning_word)
+    /** A warning's word (D47). */
+    private fun Context.word(warning: WidgetContent.Warning): String = levelWord(warning.level)
 
     /** "+N" for the N more warnings that apply, none without: the band's (D47). */
     private fun Context.more(warning: WidgetContent.Warning): String? =
@@ -194,6 +193,10 @@ private fun Context.aspect(kind: WarningKind): Float {
  * level's word alone for a kind without one.
  */
 private fun Context.describe(kind: WidgetContent.KindCount): String {
-    val word = getString(if (kind.level.severe) R.string.warning_word_severe else R.string.warning_word)
+    val word = levelWord(kind.level)
     return kind.kind.word?.let { getString(R.string.warning_tile, word, getString(it)) } ?: word
 }
+
+/** A level's word (D47): "Warnung" for the DWD's levels 1 and 2, "Unwetter" for 3 and 4. */
+private fun Context.levelWord(level: WarningLevel): String =
+    getString(if (level.severe) R.string.warning_word_severe else R.string.warning_word)

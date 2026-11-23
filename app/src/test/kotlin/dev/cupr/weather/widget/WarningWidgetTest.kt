@@ -420,6 +420,24 @@ class WarningWidgetTest : WidgetTestBase() {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(qualifiers = "+xxhdpi")
+    fun `in a wide low row the plain text leaves Stand whole though the tiles are lower than a line`() {
+        signIn()
+        val old = SampleWeather.NOW.minus(Duration.ofHours(2))
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN), fetchedAt = old)
+        // 66 dp high the tiles fall below the line's 20 dp, which the short-form slot keeps as its least height (D47).
+        val size = SizeF(388f, 66f)
+        val widget = laidOut(placed(size), size)
+        val text = widget.findViewById<ViewGroup>(R.id.now_text)
+        val form = widget.findViewById<View>(R.id.short_form)
+        val stand = widget.findViewById<View>(R.id.stale)
+        assertTrue(WidgetHost.visible(stand, widget))
+        assertTrue("${form.top}", form.top >= 0)
+        assertTrue("${stand.bottom} ${text.height}", stand.bottom <= text.height)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
     fun `a flat widget drawn from a plain text to the weather gives its text area back its 71 dp`() {
         signIn()
         val size = SizeF(388f, 95f)
