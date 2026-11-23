@@ -44,7 +44,7 @@ class WeatherIconsTest {
     }
 
     @Test
-    fun `each warning kind has its own symbol, 24 dp large, and every symbol is a kind's`() {
+    fun `each warning kind has its own symbol 24 dp high, a composite wider and a little higher`() {
         val symbols =
             R.drawable::class.java.fields
                 .filter { it.name.startsWith("symbol_") }
@@ -53,9 +53,19 @@ class WeatherIconsTest {
         assertEquals(symbols.toSet(), WarningKind.entries.map { it.symbol }.toSet())
         assertEquals(WarningKind.entries.size, symbols.size)
         val density = application.resources.displayMetrics.density
+        val composites = setOf(WarningKind.FROST, WarningKind.HEAT, WarningKind.ICE)
         for (kind in WarningKind.entries) {
             val drawable = checkNotNull(application.getDrawable(kind.symbol)) { kind.name }
-            assertEquals(kind.name, (SYMBOL_DP * density).toInt(), drawable.intrinsicWidth)
+            val width = drawable.intrinsicWidth / density
+            val height = drawable.intrinsicHeight / density
+            if (kind in composites) {
+                // The second symbol reaches up to 0.7 dp above the main one's top (D48).
+                assertTrue(kind.name + " $height", height >= SYMBOL_DP && height <= SYMBOL_DP + 1)
+                assertTrue(kind.name + " $width", width > SYMBOL_DP)
+            } else {
+                assertEquals(kind.name, SYMBOL_DP, height, 0.5f)
+                assertEquals(kind.name, SYMBOL_DP, width, 0.5f)
+            }
         }
     }
 

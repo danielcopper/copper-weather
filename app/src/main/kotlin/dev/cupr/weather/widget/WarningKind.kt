@@ -4,12 +4,12 @@ import androidx.annotation.DrawableRes
 import dev.cupr.weather.R
 
 /**
- * The kind of a warning, from its event code, EC_II, by the DWD's groups of the codes, and its symbol, one of Google's
- * Material Symbols (D48). The groups are those of the "CAP DWD Profile" 2.1.14 (17 October 2023), section 3.3, without
- * the codes it marks as optional members; where a code belongs to several groups, its kind is the group its event's
- * name names (section 3.1): a thunderstorm with gusts, rain or hail is a thunderstorm, a snow drift is snow, a thaw is
- * a thaw. A code outside them, also the test warnings and the powerline vibrations, which have no symbol of their own,
- * shows [OTHER]'s warning sign.
+ * The kind of a warning, from its event code, EC_II, by the DWD's groups of the codes, and its symbol, made of Google's
+ * Material Symbols after the official services' pictograms, frost, heat and ice composed of two (D48). The groups are
+ * those of the "CAP DWD Profile" 2.1.14 (17 October 2023), section 3.3, without the codes it marks as optional members;
+ * where a code belongs to several groups, its kind is the group its event's name names (section 3.1): a thunderstorm
+ * with gusts, rain or hail is a thunderstorm, a snow drift is snow, a thaw is a thaw. A code outside them, also the
+ * test warnings and the powerline vibrations, which have no symbol of their own, shows [OTHER]'s warning sign.
  */
 enum class WarningKind(
     @param:DrawableRes val symbol: Int,
@@ -23,28 +23,28 @@ enum class WarningKind(
     ),
 
     /** WIND, the coast's and the lakes' winds among them. */
-    WIND(R.drawable.symbol_air, "11 12 13 51 52 53 54 55 56 57 58"),
+    WIND(R.drawable.symbol_wind, "11 12 13 51 52 53 54 55 56 57 58"),
 
     /** RAIN. */
-    RAIN(R.drawable.symbol_rainy, "61 62 63 64 65 66"),
+    RAIN(R.drawable.symbol_rain, "61 62 63 64 65 66"),
 
     /** SNOWFALL and SNOWDRIFT. */
-    SNOW(R.drawable.symbol_weather_snowy, "70 71 72 73 74 75 76"),
+    SNOW(R.drawable.symbol_snow, "70 71 72 73 74 75 76"),
 
     /** FOG. */
-    FOG(R.drawable.symbol_foggy, "59"),
+    FOG(R.drawable.symbol_fog, "59"),
 
     /** FROST. */
-    FROST(R.drawable.symbol_severe_cold, "22 82 83"),
+    FROST(R.drawable.symbol_frost, "22 82 83"),
 
     /** SLIPPERINESS, BLACK_ICE and RIME_ICE: icy surfaces and glaze. */
-    ICE(R.drawable.symbol_ac_unit, "84 85 86 87"),
+    ICE(R.drawable.symbol_ice, "84 85 86 87"),
 
     /** THAW. */
-    THAW(R.drawable.symbol_water_drop, "88 89"),
+    THAW(R.drawable.symbol_thaw, "88 89"),
 
     /** UV. */
-    UV(R.drawable.symbol_sunny, "246"),
+    UV(R.drawable.symbol_uv, "246"),
 
     /**
      * HEAT; the profile's group lists only 247, while its events (section 3.1) add 248, EXTREME HITZE, which is heat
@@ -53,7 +53,7 @@ enum class WarningKind(
     HEAT(R.drawable.symbol_heat, "247 248"),
 
     /** Any other code, or none. */
-    OTHER(R.drawable.symbol_warning, ""),
+    OTHER(R.drawable.symbol_other, ""),
     ;
 
     private val codes =

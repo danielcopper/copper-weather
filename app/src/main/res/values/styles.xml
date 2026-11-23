@@ -290,6 +290,14 @@
         <item name="android:textSize">@dimen/widget_short_text</item>
     </style>
 
+    <!-- Where the word does not fit, the warning sign in its place (D47). -->
+    <style name="WeatherWidget.ShortAlert">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">@dimen/widget_short_gap</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
     <style name="WeatherWidget.ShortSymbol">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

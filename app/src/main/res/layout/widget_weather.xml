@@ -117,6 +117,13 @@
                 style="@style/WeatherWidget.ShortWord" />
 
             <ImageView
+                android:id="@+id/short_alert"
+                style="@style/WeatherWidget.ShortAlert"
+                android:importantForAccessibility="no"
+                android:src="@drawable/symbol_other"
+                android:visibility="gone" />
+
+            <ImageView
                 android:id="@+id/short_symbol"
                 style="@style/WeatherWidget.ShortSymbol"
                 android:importantForAccessibility="no" />

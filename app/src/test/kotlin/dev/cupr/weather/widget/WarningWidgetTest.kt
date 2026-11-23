@@ -62,11 +62,11 @@ class WarningWidgetTest : WidgetTestBase() {
 
         val strip = placed(flat)
         assertEquals(listOf("7°", "Warnung", "9°", "3°"), strip.shown().take(4))
-        assertShortForm(strip, Palette.LIGHT.scale3, R.drawable.symbol_air)
+        assertShortForm(strip, Palette.LIGHT.scale3, R.drawable.symbol_wind)
 
         val square = placed(small)
         assertEquals(listOf("7°", "9°", "3°", "Warnung"), square.shown())
-        assertShortForm(square, Palette.LIGHT.scale3, R.drawable.symbol_air)
+        assertShortForm(square, Palette.LIGHT.scale3, R.drawable.symbol_wind)
         assertFalse(WidgetHost.visible(square.findViewById(R.id.band), square))
     }
 
@@ -83,7 +83,7 @@ class WarningWidgetTest : WidgetTestBase() {
         for (size in listOf(flat, small)) {
             val widget = placed(size)
             assertTrue(widget.shown().containsAll(listOf("Unwetter", "+1")))
-            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_air)
+            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_wind)
             assertEquals(Palette.LIGHT.scale4, widget.text(R.id.short_more).currentTextColor)
         }
     }
@@ -116,7 +116,7 @@ class WarningWidgetTest : WidgetTestBase() {
 
         assertEquals("Unwetter", widget.shown().first())
         assertTrue(WidgetHost.visible(widget.findViewById(R.id.band_symbol), widget))
-        assertEquals(R.drawable.symbol_rainy, widget.image(R.id.band_symbol))
+        assertEquals(R.drawable.symbol_rain, widget.image(R.id.band_symbol))
         assertEquals(
             PorterDuffColorFilter(Palette.LIGHT.scale5, PorterDuff.Mode.SRC_ATOP),
             widget.findViewById<ImageView>(R.id.band_symbol).colorFilter,
@@ -152,7 +152,7 @@ class WarningWidgetTest : WidgetTestBase() {
         val band = placed(wide)
         assertEquals(Palette.DARK.scale4, band.text(R.id.band_text).currentTextColor)
         assertEquals(tint(Palette.DARK.scale4), band.findViewById<View>(R.id.band).backgroundTintList?.defaultColor)
-        assertShortForm(placed(flat), Palette.DARK.scale4, R.drawable.symbol_air, palette = Palette.DARK)
+        assertShortForm(placed(flat), Palette.DARK.scale4, R.drawable.symbol_wind, palette = Palette.DARK)
     }
 
     @Test
@@ -171,7 +171,7 @@ class WarningWidgetTest : WidgetTestBase() {
             val widget = placed(small)
             val word = if (level >= 3) "Unwetter" else "Warnung"
             assertEquals("$level", word, widget.text(R.id.short_word).text.toString())
-            assertShortForm(widget, colour, R.drawable.symbol_severe_cold)
+            assertShortForm(widget, colour, R.drawable.symbol_frost)
         }
     }
 
@@ -297,13 +297,68 @@ class WarningWidgetTest : WidgetTestBase() {
         // The small line, 106 dp: at 14 sp.
         val square = fits(small)
         assertEquals(sp(14f), square.text(R.id.short_word).textSize, 0.5f)
-        // At 2 x 1 the text area is 47 dp: the symbol and "+1" alone.
+        // At 2 x 1 the text area is 47 dp: the warning sign in the word's place, the kind's symbol and "+1" (D47).
         val narrow = fits(SizeBucket.sizeOf(columns = 2, rows = 1))
         assertFalse(WidgetHost.visible(narrow.findViewById(R.id.short_word), narrow))
+        assertTrue(WidgetHost.visible(narrow.findViewById(R.id.short_alert), narrow))
         assertTrue(WidgetHost.visible(narrow.findViewById(R.id.short_more), narrow))
+        assertEquals(sp(10.5f), narrow.text(R.id.short_more).textSize, 0.5f)
+        val pill = narrow.findViewById<ViewGroup>(R.id.short_pill)
+        assertEquals(
+            listOf(R.id.short_alert, R.id.short_symbol, R.id.short_more),
+            (0 until pill.childCount)
+                .map {
+                    pill.getChildAt(
+                        it,
+                    )
+                }.filter { WidgetHost.visible(it, narrow) }
+                .map { it.id },
+        )
         // One warning alone: "Unwetter" and its symbol at 12 sp in the flat text area, 69.2 dp.
         written(SampleWeather.full().warned(ORKAN))
         assertEquals(sp(12f), fits(SizeF(388f, 95f)).text(R.id.short_word).textSize, 0.5f)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `where the word does not fit, the warning sign stands in its place before the kind's symbol`() {
+        signIn()
+        written(SampleWeather.full().warned(GUSTS, FROST))
+
+        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
+
+        assertFalse(WidgetHost.visible(widget.findViewById(R.id.short_word), widget))
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.short_alert), widget))
+        assertEquals(R.drawable.symbol_wind, widget.image(R.id.short_symbol))
+        assertEquals(
+            PorterDuffColorFilter(Palette.LIGHT.scale3, PorterDuff.Mode.SRC_ATOP),
+            widget.findViewById<ImageView>(R.id.short_alert).colorFilter,
+        )
+        assertEquals(listOf("7°", "+1"), widget.shown().take(2))
+        // With the word, no sign; and a kind whose symbol is the warning sign shows it once.
+        val strip = placed(flat)
+        assertFalse(WidgetHost.visible(strip.findViewById(R.id.short_alert), strip))
+        written(SampleWeather.full().warned("""{"level":2,"type":98}"""))
+        val other = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
+        assertFalse(WidgetHost.visible(other.findViewById(R.id.short_alert), other))
+        assertEquals(R.drawable.symbol_other, other.image(R.id.short_symbol))
+    }
+
+    @Test
+    fun `a composite symbol is as much wider than high as its drawable, in the short form and the band`() {
+        signIn()
+        written(SampleWeather.full().warned("""{"level":1,"type":82}"""))
+        val frost = checkNotNull(application.getDrawable(R.drawable.symbol_frost))
+        val aspect = frost.intrinsicWidth.toFloat() / frost.intrinsicHeight
+
+        val square = placed(small)
+        val symbol = square.findViewById<View>(R.id.short_symbol).layoutParams
+        assertEquals(R.drawable.symbol_frost, square.image(R.id.short_symbol))
+        assertEquals(symbol.height * aspect, symbol.width.toFloat(), 1f)
+        assertTrue(symbol.width > symbol.height)
+        val band = placed(wide).findViewById<View>(R.id.band_symbol).layoutParams
+        assertEquals(dp(16) * aspect, band.width.toFloat(), 1f)
     }
 
     private fun assertShortForm(

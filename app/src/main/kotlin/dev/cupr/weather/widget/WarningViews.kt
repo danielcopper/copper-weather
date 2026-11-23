@@ -42,14 +42,19 @@ internal object WarningViews {
         views.ground(R.id.band, warning.level)
         views.show(R.id.band_text, warning.headline ?: context.word(warning), colour)
         views.setViewVisibility(R.id.band_symbol, if (warning.headline == null) View.VISIBLE else View.GONE)
-        if (warning.headline == null) views.symbol(R.id.band_symbol, warning)
+        if (warning.headline == null) {
+            views.symbol(R.id.band_symbol, warning)
+            // A composite symbol is wider than high (D48): its width follows, so it keeps the band's height.
+            val width = context.resources.dimen(R.dimen.widget_band_symbol) * context.aspect(warning)
+            views.setViewLayoutWidth(R.id.band_symbol, width, TypedValue.COMPLEX_UNIT_DIP)
+        }
         views.show(R.id.band_more, context.more(warning), colour)
     }
 
     /**
      * A warning's short form (D47), or nothing without [warning]: its word, the symbol of its kind and "+N" when more
-     * apply, at the size [fit] finds for the [width] dp the line has, from [largest] down; without the word where even
-     * the least size does not fit it.
+     * apply, at the size [fit] finds for the [width] dp the line has, from [largest] down; where even the least size
+     * does not fit the word, the warning sign stands in its place, unless the kind's symbol is the warning sign itself.
      */
     fun shortForm(
         context: Context,
@@ -63,18 +68,27 @@ internal object WarningViews {
         val colour = { palette: Palette -> palette.warningColour(warning.level) }
         val word = context.word(warning)
         val more = context.more(warning)
-        val fit = context.resources.fit(word, more, width, largest)
+        val aspect = context.aspect(warning)
+        val alert = warning.kind != WarningKind.OTHER
+        val fit = context.resources.fit(word, more, width, largest, aspect, alert)
         views.ground(R.id.short_pill, warning.level)
         views.show(R.id.short_word, word.takeIf { fit.word }, colour)
+        val sign = !fit.word && alert
+        views.setViewVisibility(R.id.short_alert, if (sign) View.VISIBLE else View.GONE)
+        if (sign) {
+            views.tint(R.id.short_alert, warning.level)
+            views.setViewLayoutWidth(R.id.short_alert, fit.symbol, TypedValue.COMPLEX_UNIT_PX)
+            views.setViewLayoutHeight(R.id.short_alert, fit.symbol, TypedValue.COMPLEX_UNIT_PX)
+        }
         views.show(R.id.short_more, more, colour)
         views.setTextViewTextSize(R.id.short_word, TypedValue.COMPLEX_UNIT_PX, fit.text)
         views.setTextViewTextSize(R.id.short_more, TypedValue.COMPLEX_UNIT_PX, fit.text)
         views.symbol(R.id.short_symbol, warning)
-        views.setViewLayoutWidth(R.id.short_symbol, fit.symbol, TypedValue.COMPLEX_UNIT_PX)
+        views.setViewLayoutWidth(R.id.short_symbol, fit.symbol * aspect, TypedValue.COMPLEX_UNIT_PX)
         views.setViewLayoutHeight(R.id.short_symbol, fit.symbol, TypedValue.COMPLEX_UNIT_PX)
     }
 
-    /** A short form's text size and symbol size in px, and whether its word shows (D47). */
+    /** A short form's text size and symbol height in px, and whether its word shows (D47). */
     private class Fit(
         val text: Float,
         val symbol: Float,
@@ -82,21 +96,33 @@ internal object WarningViews {
     )
 
     /**
-     * The short form of [word], its symbol and [more] at the largest of the sizes from [largest] down to
-     * `widget_short_text_least` at which it fits [width] dp with a dp to spare, as measured in the widget's font; where
-     * none does, without the word at the largest that fits, or the least.
+     * The short form of [word], its symbol, [aspect] times as wide as high, and [more] at the largest of the sizes from
+     * [largest] down to `widget_short_text_least` at which it fits [width] dp with a dp to spare, as measured in the
+     * widget's font; where none does, without the word, the warning sign in its place when [alert], at the largest
+     * that fits, or the least.
      */
     private fun Resources.fit(
         word: String,
         more: String?,
         width: Float,
         @DimenRes largest: Int,
+        aspect: Float,
+        alert: Boolean,
     ): Fit {
         val sizes = sizes(largest, R.dimen.widget_short_text_least)
         val gap = dimen(R.dimen.widget_short_gap)
         val widthAt = { px: Float, withWord: Boolean ->
-            2 * dimen(R.dimen.widget_short_padding) + dp(px * SYMBOL_PER_TEXT) +
-                (if (withWord) widthOf(word, px) + gap else 0f) +
+            val symbol = dp(px * SYMBOL_PER_TEXT)
+            2 * dimen(R.dimen.widget_short_padding) + symbol * aspect +
+                (
+                    if (withWord) {
+                        widthOf(word, px) + gap
+                    } else if (alert) {
+                        symbol + gap
+                    } else {
+                        0f
+                    }
+                ) +
                 (more?.let { widthOf(it, px, Typeface.BOLD) + gap } ?: 0f)
         }
         val room = width - dimen(R.dimen.widget_flat_fit_slack)
@@ -134,12 +160,19 @@ internal object WarningViews {
         warning: WidgetContent.Warning,
     ) {
         setImageViewResource(id, warning.kind.symbol)
-        setColorInt(
-            id,
-            "setColorFilter",
-            Palette.LIGHT.warningColour(warning.level),
-            Palette.DARK.warningColour(warning.level),
-        )
+        tint(id, warning.level)
+    }
+
+    /** Tints the image view [id] in the colour of a warning of [level], light and dark. */
+    private fun RemoteViews.tint(
+        id: Int,
+        level: Int,
+    ) = setColorInt(id, "setColorFilter", Palette.LIGHT.warningColour(level), Palette.DARK.warningColour(level))
+
+    /** How many times as wide as high the symbol of [warning]'s kind is, a composite wider than 1 (D48). */
+    private fun Context.aspect(warning: WidgetContent.Warning): Float {
+        val symbol = checkNotNull(getDrawable(warning.kind.symbol)) { "no symbol ${warning.kind}" }
+        return symbol.intrinsicWidth.toFloat() / symbol.intrinsicHeight
     }
 }
 
