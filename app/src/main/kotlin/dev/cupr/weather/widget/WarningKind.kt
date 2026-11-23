@@ -1,6 +1,7 @@
 package dev.cupr.weather.widget
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import dev.cupr.weather.R
 
 /**
@@ -11,6 +12,8 @@ enum class WarningKind(
     @param:DrawableRes val symbol: Int,
     /** The symbol centred on a square, for the short form's tile (D47, D48). */
     @param:DrawableRes val tile: Int,
+    /** The kind's word a screen reader reads with the tile (D47), none for any other. */
+    @param:StringRes val word: Int?,
     /** The event codes of the kind, as the DWD's tables list them, apart by spaces. */
     table: String,
 ) {
@@ -18,6 +21,7 @@ enum class WarningKind(
     THUNDERSTORM(
         R.drawable.symbol_thunderstorm,
         R.drawable.tile_thunderstorm,
+        R.string.warning_kind_thunderstorm,
         "31 33 34 36 38 40 41 42 44 45 46 48 49 90 91 92 93 95 96",
     ),
 
@@ -25,6 +29,7 @@ enum class WarningKind(
     WIND(
         R.drawable.symbol_wind,
         R.drawable.tile_wind,
+        R.string.warning_kind_wind,
         "11 12 13 51 52 53 54 55 56 57 58",
     ),
 
@@ -32,6 +37,7 @@ enum class WarningKind(
     RAIN(
         R.drawable.symbol_rain,
         R.drawable.tile_rain,
+        R.string.warning_kind_rain,
         "61 62 63 64 65 66",
     ),
 
@@ -39,6 +45,7 @@ enum class WarningKind(
     SNOW(
         R.drawable.symbol_snow,
         R.drawable.tile_snow,
+        R.string.warning_kind_snow,
         "70 71 72 73 74 75 76",
     ),
 
@@ -46,6 +53,7 @@ enum class WarningKind(
     FOG(
         R.drawable.symbol_fog,
         R.drawable.tile_fog,
+        R.string.warning_kind_fog,
         "59",
     ),
 
@@ -53,6 +61,7 @@ enum class WarningKind(
     FROST(
         R.drawable.symbol_frost,
         R.drawable.tile_frost,
+        R.string.warning_kind_frost,
         "22 82 83",
     ),
 
@@ -60,6 +69,7 @@ enum class WarningKind(
     ICE(
         R.drawable.symbol_ice,
         R.drawable.tile_ice,
+        R.string.warning_kind_ice,
         "84 85 86 87",
     ),
 
@@ -67,6 +77,7 @@ enum class WarningKind(
     THAW(
         R.drawable.symbol_thaw,
         R.drawable.tile_thaw,
+        R.string.warning_kind_thaw,
         "88 89",
     ),
 
@@ -74,6 +85,7 @@ enum class WarningKind(
     UV(
         R.drawable.symbol_uv,
         R.drawable.tile_uv,
+        R.string.warning_kind_uv,
         "246",
     ),
 
@@ -81,6 +93,7 @@ enum class WarningKind(
     HEAT(
         R.drawable.symbol_heat,
         R.drawable.tile_heat,
+        R.string.warning_kind_heat,
         "247 248",
     ),
 
@@ -88,6 +101,7 @@ enum class WarningKind(
     OTHER(
         R.drawable.symbol_other,
         R.drawable.tile_other,
+        null,
         "",
     ),
     ;

@@ -55,7 +55,7 @@
 
             <LinearLayout
                 android:id="@+id/short_form"
-                style="@style/WeatherWidget.ShortSlot.Flat"
+                style="@style/WeatherWidget.ShortSlot"
                 android:visibility="gone">
 
                 <LinearLayout

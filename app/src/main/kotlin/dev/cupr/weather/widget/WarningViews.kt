@@ -92,9 +92,15 @@ internal object WarningViews {
             tile.setViewLayoutHeight(R.id.short_tile, side, TypedValue.COMPLEX_UNIT_PX)
             val before = if (index == 0) 0f else gap
             tile.setViewLayoutMargin(R.id.short_tile, RemoteViews.MARGIN_START, before, TypedValue.COMPLEX_UNIT_PX)
+            tile.setContentDescription(R.id.short_tile, context.describe(kind))
             views.addView(R.id.short_tiles, tile)
         }
         views.show(R.id.short_more, fit.more, warning.level::colour)
+        val others = warning.kinds.drop(fit.tiles).sumOf { it.count }
+        if (others > 0) {
+            val spoken = context.resources.getQuantityString(R.plurals.warning_more_description, others, others)
+            views.setContentDescription(R.id.short_more, spoken)
+        }
     }
 
     /** How many of a short form's tiles show, at what side in dp, and "+N" for the warnings of the others (D47). */
@@ -181,4 +187,13 @@ internal object WarningViews {
 private fun Context.aspect(kind: WarningKind): Float {
     val symbol = checkNotNull(getDrawable(kind.symbol)) { "no symbol $kind" }
     return symbol.intrinsicWidth.toFloat() / symbol.intrinsicHeight
+}
+
+/**
+ * What a screen reader reads for a tile of [kind] (D47): its level's word and the kind's, "Warnung: Glätte", or the
+ * level's word alone for a kind without one.
+ */
+private fun Context.describe(kind: WidgetContent.KindCount): String {
+    val word = getString(if (kind.level.severe) R.string.warning_word_severe else R.string.warning_word)
+    return kind.kind.word?.let { getString(R.string.warning_tile, word, getString(it)) } ?: word
 }

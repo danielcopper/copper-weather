@@ -2,8 +2,10 @@
 <!-- A tile of a warning's short form (D47): the symbol of a kind that
      applies, centred on its tile drawable (D48), on a ground WarningViews
      tints in that warning's level's colour at 16 %; WarningViews sets its
-     image, its colours, its size and its gap before it. -->
+     image, its colours, its size, its gap before it and the description a
+     screen reader reads, "Warnung: Glätte", which stands for the word
+     here until it does. -->
 <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/short_tile"
     style="@style/WeatherWidget.ShortTile"
-    android:importantForAccessibility="no" />
+    android:contentDescription="@string/warning_word" />

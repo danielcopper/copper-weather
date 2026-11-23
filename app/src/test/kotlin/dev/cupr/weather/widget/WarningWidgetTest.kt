@@ -592,6 +592,45 @@ class WarningWidgetTest : WidgetTestBase() {
         assertEquals(dp(16) * aspect, band.width.toFloat(), 1f)
     }
 
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `the tiles stand centred in the small widget's line as in the flat strip`() {
+        signIn()
+        written(SampleWeather.full().warned(FROST, ORKAN))
+
+        for (size in listOf(small, flat)) {
+            val widget = laidOut(placed(size), size)
+            val slot = widget.findViewById<View>(R.id.short_form)
+            val strip = widget.findViewById<View>(R.id.short_tiles)
+            assertEquals("$size", (slot.width - strip.width) / 2f, strip.left.toFloat(), 1f)
+        }
+    }
+
+    @Test
+    fun `each tile tells a screen reader its level's word and its kind, and +N how many more`() {
+        signIn()
+        written(SampleWeather.full().warned(ORKAN, FROST))
+        val descriptions = { size: SizeF -> tileViews(placed(size)).map { it.contentDescription.toString() } }
+
+        assertEquals(listOf("Unwetter: Sturm", "Warnung: Frost"), descriptions(small))
+        assertEquals(listOf("Unwetter: Sturm", "Warnung: Frost"), descriptions(flat))
+        assertTrue(tileViews(placed(flat)).all { it.isImportantForAccessibility })
+        written(SampleWeather.full().warned("""{"level":1,"type":84}""", """{"level":2,"type":98}"""))
+        // The higher level's kind first; a kind without a word of its own reads as its level's word alone.
+        assertEquals(listOf("Warnung", "Warnung: Glätte"), descriptions(small))
+
+        val five =
+            listOf(84, 22, 52, 61, 59).map { """{"level":1,"type":$it,"start":"${at(-60)}"}""" }.toTypedArray()
+        written(SampleWeather.full().warned(*five))
+        val strip = placed(flat)
+        val more = strip.text(R.id.short_more).text.toString()
+        assertTrue(more, more.startsWith("+") && more.drop(1).toInt() >= 2)
+        assertEquals("und ${more.drop(1)} weitere", strip.text(R.id.short_more).contentDescription.toString())
+        val one = application.resources.getQuantityString(R.plurals.warning_more_description, 1, 1)
+        assertEquals("und eine weitere", one)
+    }
+
     /** The short form shows in the line's place, its first tile [tile] in [colour] on its tint (D47). */
     private fun assertShortForm(
         widget: View,
