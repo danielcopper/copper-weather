@@ -97,18 +97,22 @@ internal object WidgetViews {
         val room = Room(context.resources, size, notice = false, band = false)
         val stale = context.standText(content.stale)
         val text = context.getString(content.text)
-        if (bucket == SizeBucket.FLAT) {
+        val res = context.resources
+        val flat = bucket == SizeBucket.FLAT
+        val inside = size.height - 2 * res.dimen(R.dimen.widget_flat_padding)
+        val standHeight = if (stale != null) res.dimen(R.dimen.widget_flat_today_height) else 0f
+        // One row high the tiles leave the text at least a line's 16 dp (D47).
+        val tilesUpTo = (inside - standHeight - res.dimen(R.dimen.widget_flat_today_height)).takeIf { flat }
+        if (flat) {
             for (id in flatParts + flatNowParts) views.setViewVisibility(id, View.GONE)
             views.setViewVisibility(R.id.now_column, View.VISIBLE)
             views.fullWidthNow()
             views.setViewLayoutMargin(R.id.now_text, RemoteViews.MARGIN_START, 0f, TypedValue.COMPLEX_UNIT_PX)
             views.show(R.id.stale, stale, Palette::textMuted)
             // The short form and "Stand" stay whole; the text shrinks, and may end shorter, in what they leave (D47).
-            val res = context.resources
             val height =
-                size.height - 2 * res.dimen(R.dimen.widget_flat_padding) -
-                    (if (content.warning != null) res.dimen(R.dimen.widget_line_height) else 0f) -
-                    (if (stale != null) res.dimen(R.dimen.widget_flat_today_height) else 0f)
+                inside - standHeight -
+                    (content.warning?.let { WarningViews.tileSide(context, it, room.inside(), tilesUpTo) } ?: 0f)
             val fit = res.plainFit(text, room.inside(), height.takeIf { content.warning != null || stale != null })
             views.setTextViewTextSize(R.id.widget_plain, TypedValue.COMPLEX_UNIT_PX, fit.size)
             views.setInt(R.id.widget_plain, "setMaxLines", fit.lines)
@@ -117,7 +121,7 @@ internal object WidgetViews {
             views.setViewVisibility(R.id.widget_notice, View.GONE)
             views.stand(stale, bucket, again = false, below = R.id.plain_stale)
         }
-        WarningViews.show(context, views, content.warning, bucket, room.inside())
+        WarningViews.show(context, views, content.warning, bucket, room.inside(), tilesUpTo)
         views.show(R.id.widget_plain, text, Palette::text)
         views.setOnClickPendingIntent(R.id.widget, Taps.app(context))
     }
@@ -226,7 +230,15 @@ internal object WidgetViews {
         } else {
             line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
-        WarningViews.show(context, views, content.warning, SizeBucket.FLAT, text)
+        // The tiles leave the temperature and today's line their rows (D36).
+        val res = context.resources
+        val tilesUpTo =
+            size.height - 2 *
+                res.dimen(
+                    R.dimen.widget_flat_padding,
+                ) - res.dimen(R.dimen.widget_flat_temperature_height) -
+                res.dimen(R.dimen.widget_flat_today_height)
+        WarningViews.show(context, views, content.warning, SizeBucket.FLAT, text, tilesUpTo)
         // Today's high, low and rain below, or "Stand 14:30" in their place, also below "Neu anmelden" (D16); with
         // "Neu anmelden", 36 dp high, today's line gives way (D36).
         val stale = context.standText(content.stale)

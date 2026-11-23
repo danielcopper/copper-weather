@@ -25,6 +25,12 @@ three ways (D48):
   bold beside the rays, rather than taken from a font, so no font is needed when
   the widget draws.
 
+For the short form's tiles (D47) it writes each kind's symbol again as
+app/src/main/res/drawable/tile_<kind>.xml: a square of one side for all kinds,
+centred on the centre of the main symbol's own bounds, so a composite's main
+symbol stands where a plain one does; half its side is the farthest any symbol
+draws from that centre, and MARGIN.
+
 Every copy must be used by one of them. The script takes exactly that shape of
 SVG and fails, naming the file, on anything else: another root, viewBox, size
 or element, a second path, a path with another attribute than d, an empty path,
@@ -52,6 +58,7 @@ SOURCES = ROOT / "icons" / "symbols"
 RES = ROOT / "app" / "src" / "main" / "res"
 DRAWABLE = "drawable"
 PREFIX = "symbol_"
+TILE_PREFIX = "tile_"
 SVG = "{http://www.w3.org/2000/svg}"
 # What path data may hold: its commands, numbers and separators, nothing that could leave the attribute it is put in.
 PATH_GRAMMAR = re.compile(r"[MmLlHhVvCcSsQqTtAaZz0-9eE+\-.,\s]*")
@@ -168,29 +175,79 @@ def group(paths, translate_x=0.0, translate_y=float(EM), scale=1.0):
     return "".join(lines)
 
 
+class Figure:
+    """A symbol's groups, each (paths, translate x, translate y, scale) in the main symbol's em, y from 0 at its top;
+    the box of what they draw there; the centre of the main symbol's own bounds; its source and what it changes."""
+
+    def __init__(self, groups, box, centre, source, change=None):
+        self.groups = groups
+        self.box = box
+        self.centre = centre
+        self.source = source
+        self.change = change
+
+    def drawable(self, left, top, width, height):
+        """The VectorDrawable of the viewport from (left, top), width × height in the em's units."""
+        xml = "".join(group(paths, x - left, y - top, scale) for paths, x, y, scale in self.groups)
+        return vector(self.source, width, height, xml, self.change)
+
+
+def placed_box(data, name, x, y, scale):
+    """The bounds of the path data moved and scaled as a group does it."""
+    x0, y0, x1, y1 = bounds(data, name)
+    return x + scale * x0, y + scale * y0, x + scale * x1, y + scale * y1
+
+
+def union(*boxes):
+    return min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)
+
+
+def centre_of(box):
+    return (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+
+
 def plain(paths, name):
     """A Material Symbol as it is."""
-    return vector(f"icons/symbols/{name}.svg", EM, EM, group([(paths[name], None)]))
+    box = placed_box(paths[name], f"{name}.svg", 0.0, float(EM), 1.0)
+    return Figure([([(paths[name], None)], 0.0, float(EM), 1.0)], box, centre_of(box), f"icons/symbols/{name}.svg")
 
 
 def composed(paths, main, part):
     """The main symbol with the part at its upper right, at PART_SCALE of its size."""
-    main_box = bounds(paths[main], f"{main}.svg")
-    part_box = bounds(paths[part], f"{part}.svg")
-    # Where the part's own coordinates land, in the main's, with y from 0 at the top of the main's em.
+    # Where the part's own coordinates land, in the main's.
     move_x = PART_LEFT * EM
     move_y = PART_TOP * EM + PART_SCALE * EM
-    part_left = move_x + PART_SCALE * part_box[0]
-    part_right = move_x + PART_SCALE * part_box[2]
-    part_top = move_y + PART_SCALE * part_box[1]
-    left = min(main_box[0], part_left) - MARGIN
-    right = max(main_box[2], part_right) + MARGIN
-    top = min(0.0, part_top)
-    groups = group([(paths[main], None)], translate_x=-left, translate_y=EM - top) + group(
-        [(paths[part], None)], translate_x=move_x - left, translate_y=move_y - top, scale=PART_SCALE
-    )
+    main_box = placed_box(paths[main], f"{main}.svg", 0.0, float(EM), 1.0)
+    part_box = placed_box(paths[part], f"{part}.svg", move_x, move_y, PART_SCALE)
+    groups = [([(paths[main], None)], 0.0, float(EM), 1.0), ([(paths[part], None)], move_x, move_y, PART_SCALE)]
     change = f"{part} at {fmt(PART_SCALE)} of the size at the upper right of {main}"
-    return vector(f"icons/symbols/{main}.svg and {part}.svg", right - left, EM - top, groups, change)
+    source = f"icons/symbols/{main}.svg and {part}.svg"
+    return Figure(groups, union(main_box, part_box), centre_of(main_box), source, change)
+
+
+def symbol_drawable(figure):
+    """The symbol: the em's height, grown where a part reaches above it, as wide as what it draws with MARGIN at each
+    side where it is wider than the em, else the em."""
+    x0, y0, x1, _ = figure.box
+    if len(figure.groups) == 1:
+        return figure.drawable(0.0, 0.0, EM, EM)
+    left, right, top = x0 - MARGIN, x1 + MARGIN, min(0.0, y0)
+    return figure.drawable(left, top, right - left, EM - top)
+
+
+def tile_half(figures):
+    """Half a tile's side: the farthest any symbol draws from its main symbol's centre, and MARGIN beyond."""
+    return MARGIN + max(
+        max(cx - x0, x1 - cx, cy - y0, y1 - cy)
+        for figure in figures
+        for (x0, y0, x1, y1), (cx, cy) in [(figure.box, figure.centre)]
+    )
+
+
+def tile_drawable(figure, half):
+    """The tile's symbol: a square of the common side around the main symbol's centre, so each stands centred."""
+    cx, cy = figure.centre
+    return figure.drawable(cx - half, cy - half, 2 * half, 2 * half)
 
 
 def subpaths(data, name):
@@ -246,11 +303,12 @@ def uv(paths):
             rays.append(data)
     if not rays:
         raise Unsupported(f"{UV_SUN}.svg: no rays outside its disc")
-    return vector(
+    box = placed_box(" ".join(rays), f"{UV_SUN}.svg", 0.0, float(EM), 1.0)
+    return Figure(
+        [([(" ".join(rays), None), (letters(), LETTER_STROKE)], 0.0, float(EM), 1.0)],
+        box,
+        (cx, cy + EM),
         f"icons/symbols/{UV_SUN}.svg",
-        EM,
-        EM,
-        group([(" ".join(rays), None), (letters(), LETTER_STROKE)]),
         "its disc left out, and the letters UV, drawn by the script, in its middle",
     )
 
@@ -268,15 +326,18 @@ def outputs(sources=SOURCES, res=RES):
     unused = sorted(set(paths) - needed)
     if unused:
         raise Unsupported(f"{', '.join(n + '.svg' for n in unused)}: not used by any symbol")
-    drawables = {kind: plain(paths, name) for kind, name in PLAIN.items()}
-    drawables |= {kind: composed(paths, *pair) for kind, pair in COMPOSED.items()}
-    drawables["uv"] = uv(paths)
-    return {res / DRAWABLE / f"{PREFIX}{kind}.xml": text for kind, text in drawables.items()}
+    figures = {kind: plain(paths, name) for kind, name in PLAIN.items()}
+    figures |= {kind: composed(paths, *pair) for kind, pair in COMPOSED.items()}
+    figures["uv"] = uv(paths)
+    half = tile_half(figures.values())
+    written = {res / DRAWABLE / f"{PREFIX}{kind}.xml": symbol_drawable(f) for kind, f in figures.items()}
+    written |= {res / DRAWABLE / f"{TILE_PREFIX}{kind}.xml": tile_drawable(f, half) for kind, f in figures.items()}
+    return written
 
 
 def existing(res=RES):
-    """The symbols' drawables in the repo now."""
-    return set((res / DRAWABLE).glob(PREFIX + "*.xml"))
+    """The symbols' and the tiles' drawables in the repo now."""
+    return set((res / DRAWABLE).glob(PREFIX + "*.xml")) | set((res / DRAWABLE).glob(TILE_PREFIX + "*.xml"))
 
 
 def run(check, sources=SOURCES, res=RES, err=None, out=None):

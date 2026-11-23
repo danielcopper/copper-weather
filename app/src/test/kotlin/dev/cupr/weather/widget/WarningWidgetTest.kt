@@ -60,18 +60,19 @@ class WarningWidgetTest : WidgetTestBase() {
         signIn()
         written(SampleWeather.full(rainIn = Duration.ofMinutes(25)).warned(GUSTS))
 
+        // A tile, no word (D47).
         val strip = placed(flat)
-        assertEquals(listOf("7°", "Warnung", "9°", "3°"), strip.shown().take(4))
-        assertShortForm(strip, Palette.LIGHT.scale3, R.drawable.symbol_wind)
+        assertEquals(listOf("7°", "9°", "3°"), strip.shown().take(3))
+        assertShortForm(strip, Palette.LIGHT.scale3, R.drawable.tile_wind)
 
         val square = placed(small)
-        assertEquals(listOf("7°", "9°", "3°", "Warnung"), square.shown())
-        assertShortForm(square, Palette.LIGHT.scale3, R.drawable.symbol_wind)
+        assertEquals(listOf("7°", "9°", "3°"), square.shown())
+        assertShortForm(square, Palette.LIGHT.scale3, R.drawable.tile_wind)
         assertFalse(WidgetHost.visible(square.findViewById(R.id.band), square))
     }
 
     @Test
-    fun `two warnings that apply show the higher level and +1 in the band, both symbols in the short form`() {
+    fun `two warnings that apply show the higher level and +1 in the band, a tile each in the short form`() {
         signIn()
         written(SampleWeather.full().warned(FROST, ORKAN))
 
@@ -80,16 +81,14 @@ class WarningWidgetTest : WidgetTestBase() {
         assertEquals(Palette.LIGHT.scale4, band.text(R.id.band_more).currentTextColor)
         assertEquals(tint(Palette.LIGHT.scale4), band.findViewById<View>(R.id.band).backgroundTintList?.defaultColor)
 
-        // The short form shows the word in the higher level's colour and the symbols of both, no "+1" (D47).
-        for (size in listOf(flat, small)) {
+        // The short form shows a tile for each, each in its own level's colour, no word and no "+1" (D47).
+        for (size in listOf(flat, small, SizeBucket.sizeOf(columns = 2, rows = 1))) {
             val widget = placed(size)
-            assertTrue(widget.shown().contains("Unwetter"))
-            assertFalse(widget.shown().contains("+1"))
-            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_wind)
-            assertEquals(listOf(R.drawable.symbol_wind, R.drawable.symbol_frost), symbols(widget))
-            for (symbol in symbolViews(widget)) {
-                assertEquals(PorterDuffColorFilter(Palette.LIGHT.scale4, PorterDuff.Mode.SRC_ATOP), symbol.colorFilter)
-            }
+            assertFalse("$size", widget.shown().any { it == "+1" || it == "Unwetter" || it == "Warnung" })
+            assertEquals("$size", listOf(R.drawable.tile_wind, R.drawable.tile_frost), tiles(widget))
+            val (orkan, frost) = tileViews(widget)
+            assertTile(orkan, Palette.LIGHT.scale4)
+            assertTile(frost, Palette.LIGHT.scale2)
         }
     }
 
@@ -113,7 +112,7 @@ class WarningWidgetTest : WidgetTestBase() {
     }
 
     @Test
-    fun `a band without a headline shows the short form's word and symbol`() {
+    fun `a band without a headline shows its level's word and its symbol`() {
         signIn()
         written(SampleWeather.full().warned("""{"level":4,"type":62}"""))
 
@@ -163,11 +162,11 @@ class WarningWidgetTest : WidgetTestBase() {
         val band = placed(wide)
         assertEquals(Palette.DARK.scale4, band.text(R.id.band_text).currentTextColor)
         assertEquals(tint(Palette.DARK.scale4), band.findViewById<View>(R.id.band).backgroundTintList?.defaultColor)
-        assertShortForm(placed(flat), Palette.DARK.scale4, R.drawable.symbol_wind, palette = Palette.DARK)
+        assertShortForm(placed(flat), Palette.DARK.scale4, R.drawable.tile_wind, palette = Palette.DARK)
     }
 
     @Test
-    fun `each level takes its colour of the intensity scale and its word`() {
+    fun `each level takes its colour of the intensity scale`() {
         signIn()
         val levels =
             listOf(
@@ -179,10 +178,7 @@ class WarningWidgetTest : WidgetTestBase() {
 
         for ((level, colour) in levels) {
             written(SampleWeather.full().warned("""{"level":$level,"type":22}"""))
-            val widget = placed(small)
-            val word = if (level >= 3) "Unwetter" else "Warnung"
-            assertEquals("$level", word, widget.text(R.id.short_word).text.toString())
-            assertShortForm(widget, colour, R.drawable.symbol_frost)
+            assertShortForm(placed(small), colour, R.drawable.tile_frost)
         }
     }
 
@@ -194,7 +190,8 @@ class WarningWidgetTest : WidgetTestBase() {
 
         val widget = placed(flat)
 
-        assertEquals(listOf("7°", "Warnung", "9°", "3°"), widget.shown().take(4))
+        assertTrue(WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
+        assertEquals(listOf("7°", "9°", "3°"), widget.shown().take(3))
         assertFalse(widget.shown().contains("Neu anmelden"))
         // Wide, "Neu anmelden" keeps its notice line below "now".
         assertTrue(placed(wide).shown().contains("Neu anmelden"))
@@ -285,100 +282,6 @@ class WarningWidgetTest : WidgetTestBase() {
     }
 
     @Test
-    @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Config(qualifiers = "+xxhdpi")
-    fun `the short form fits the flat text area and the small line, its word left out where even 9 sp is too wide`() {
-        signIn()
-        written(SampleWeather.full().warned(FROST, ORKAN))
-        val fits = { size: SizeF ->
-            val widget = laidOut(placed(size), size)
-            val pill = widget.findViewById<ViewGroup>(R.id.short_pill)
-            val slot = widget.findViewById<View>(R.id.short_form)
-            assertTrue("$size ${pill.width} ${slot.width}", pill.width <= slot.width)
-            for (id in listOf(R.id.short_word, R.id.short_more)) {
-                val text = widget.text(id)
-                if (WidgetHost.visible(text, widget)) {
-                    assertTrue("$size $id", text.paint.measureText(text.text.toString()) <= text.width)
-                }
-            }
-            widget
-        }
-
-        // The flat text area, 71 dp beside the days: "Unwetter" and both symbols at 9.5 sp, 69.3 dp.
-        val strip = fits(SizeF(388f, 95f))
-        val word = strip.text(R.id.short_word)
-        assertTrue(WidgetHost.visible(word, strip))
-        assertEquals(sp(9.5f), word.textSize, 0.5f)
-        assertEquals(2, symbols(strip).size)
-        // The small line, 106 dp: at 14 sp.
-        val square = fits(small)
-        assertEquals(sp(14f), square.text(R.id.short_word).textSize, 0.5f)
-        // At 2 x 1 the text area is 47 dp: the warning sign in the word's place and both symbols, at 10 sp (D47).
-        val narrow = fits(SizeBucket.sizeOf(columns = 2, rows = 1))
-        assertFalse(WidgetHost.visible(narrow.findViewById(R.id.short_word), narrow))
-        assertTrue(WidgetHost.visible(narrow.findViewById(R.id.short_alert), narrow))
-        assertFalse(WidgetHost.visible(narrow.findViewById(R.id.short_more), narrow))
-        assertEquals(sp(10f), narrow.findViewById<View>(R.id.short_alert).layoutParams.height / 1.1f, 1f)
-        val pill = narrow.findViewById<ViewGroup>(R.id.short_pill)
-        assertEquals(
-            listOf(R.id.short_alert, R.id.short_symbols),
-            (0 until pill.childCount)
-                .map {
-                    pill.getChildAt(
-                        it,
-                    )
-                }.filter { WidgetHost.visible(it, narrow) }
-                .map { it.id },
-        )
-        // One warning alone: "Unwetter" and its symbol at 12 sp in the flat text area, 69.2 dp.
-        written(SampleWeather.full().warned(ORKAN))
-        assertEquals(sp(12f), fits(SizeF(388f, 95f)).text(R.id.short_word).textSize, 0.5f)
-    }
-
-    @Test
-    @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Config(qualifiers = "+xxhdpi")
-    fun `where the word does not fit, the warning sign stands in its place before the kind's symbol`() {
-        signIn()
-        written(SampleWeather.full().warned(GUSTS, FROST))
-
-        val widget = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
-
-        assertFalse(WidgetHost.visible(widget.findViewById(R.id.short_word), widget))
-        assertTrue(WidgetHost.visible(widget.findViewById(R.id.short_alert), widget))
-        assertEquals(R.drawable.symbol_wind, widget.image(R.id.short_symbol))
-        assertEquals(
-            PorterDuffColorFilter(Palette.LIGHT.scale3, PorterDuff.Mode.SRC_ATOP),
-            widget.findViewById<ImageView>(R.id.short_alert).colorFilter,
-        )
-        assertEquals(listOf(R.drawable.symbol_wind, R.drawable.symbol_frost), symbols(widget))
-        assertFalse(widget.shown().contains("+1"))
-        // With the word, no sign; and a kind whose symbol is the warning sign shows it once.
-        val strip = placed(flat)
-        assertFalse(WidgetHost.visible(strip.findViewById(R.id.short_alert), strip))
-        written(SampleWeather.full().warned("""{"level":2,"type":98}"""))
-        val other = placed(SizeBucket.sizeOf(columns = 2, rows = 1))
-        assertFalse(WidgetHost.visible(other.findViewById(R.id.short_alert), other))
-        assertEquals(R.drawable.symbol_other, other.image(R.id.short_symbol))
-    }
-
-    @Test
-    fun `a composite symbol is as much wider than high as its drawable, in the short form and the band`() {
-        signIn()
-        written(SampleWeather.full().warned("""{"level":1,"type":82}"""))
-        val frost = checkNotNull(application.getDrawable(R.drawable.symbol_frost))
-        val aspect = frost.intrinsicWidth.toFloat() / frost.intrinsicHeight
-
-        val square = placed(small)
-        val symbol = square.findViewById<View>(R.id.short_symbol).layoutParams
-        assertEquals(R.drawable.symbol_frost, square.image(R.id.short_symbol))
-        assertEquals(symbol.height * aspect, symbol.width.toFloat(), 1f)
-        assertTrue(symbol.width > symbol.height)
-        val band = placed(wide).findViewById<View>(R.id.band_symbol).layoutParams
-        assertEquals(dp(16) * aspect, band.width.toFloat(), 1f)
-    }
-
-    @Test
     fun `a tall widget whose only notice is Stand shows a day fewer, and the fresh one all`() {
         signIn()
         written(SampleWeather.full(), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
@@ -408,7 +311,7 @@ class WarningWidgetTest : WidgetTestBase() {
         for (size in listOf(small, flat, narrow)) {
             val widget = WidgetHost.view(application, ids.getValue(size))
             assertEquals("$size", text, widget.shown().last())
-            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_wind)
+            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.tile_wind)
             val order = drawn(widget)
             assertTrue("$size", order.indexOf(R.id.short_form) < order.indexOf(R.id.widget_plain))
         }
@@ -497,13 +400,14 @@ class WarningWidgetTest : WidgetTestBase() {
             // The short form's top and "Stand"'s bottom inside the text area, and the text area inside the card.
             assertTrue("$size ${form.top}", form.top >= 0)
             assertTrue("$size ${stand.bottom} ${text.height}", stand.bottom <= text.height)
-            assertEquals("$size", dp(20), form.height)
+            // One tile, 32 dp (D47).
+            assertEquals("$size", dp(32), form.height)
             assertEquals("$size", dp(16), stand.height)
             val top = column.top + text.top
             assertTrue("$size $top", top >= widget.paddingTop)
             assertTrue("$size", top + text.height <= widget.height - widget.paddingBottom)
         }
-        // At 2 x 1 the text has 50 dp between them: it shrinks below its 14 sp.
+        // At 2 x 1 the text has 38 dp between them: it shrinks below its 14 sp.
         val narrow = laidOut(placed(SizeBucket.sizeOf(columns = 2, rows = 1)), SizeBucket.sizeOf(columns = 2, rows = 1))
         assertTrue(narrow.text(R.id.widget_plain).textSize < sp(14f))
         // Without a warning the plain text keeps its size.
@@ -580,84 +484,136 @@ class WarningWidgetTest : WidgetTestBase() {
         assertEquals(Int.MAX_VALUE, plain.maxLines)
     }
 
-    @Test
-    @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Config(qualifiers = "+xxhdpi")
-    fun `with several warnings the short form shows a symbol for each kind that fits and +N for the rest`() {
-        signIn()
-        val ice = """{"level":1,"type":84,"start":"${at(-60)}"}"""
-        val frost = """{"level":1,"type":22,"start":"${at(-60)}"}"""
-        val wind = """{"level":1,"type":52,"start":"${at(-60)}"}"""
-
-        // The owner's case, ice and frost: the word and both symbols, in the flat strip at 9 sp, in the small line at
-        // 14 sp.
-        written(SampleWeather.full().warned(ice, frost))
-        for ((size, sp) in listOf(SizeF(388f, 95f) to 9f, small to 14f)) {
-            val widget = laidOut(placed(size), size)
-            assertEquals("$size", listOf(R.drawable.symbol_ice, R.drawable.symbol_frost), symbols(widget))
-            assertFalse("$size", widget.shown().any { it.startsWith("+") })
-            assertEquals("$size", sp(sp), widget.text(R.id.short_word).textSize, 0.5f)
-        }
-
-        // Three: in the small line all three, in the flat strip only the first and "+2".
-        written(SampleWeather.full().warned(ice, frost, wind))
-        val square = laidOut(placed(small), small)
-        assertEquals(
-            listOf(R.drawable.symbol_ice, R.drawable.symbol_frost, R.drawable.symbol_wind),
-            symbols(square),
-        )
-        assertFalse(square.shown().any { it.startsWith("+") })
-        val strip = laidOut(placed(SizeF(388f, 95f)), SizeF(388f, 95f))
-        assertEquals(listOf(R.drawable.symbol_ice), symbols(strip))
-        assertTrue(strip.shown().contains("+2"))
-        val pill = strip.findViewById<View>(R.id.short_pill)
-        assertTrue("${pill.width}", pill.width <= strip.findViewById<View>(R.id.short_form).width)
-    }
-
-    @Test
-    fun `two warnings of the same kind show its symbol once and no +1 in the short form`() {
-        signIn()
-        written(SampleWeather.full().warned(GUSTS, ORKAN))
-
-        for (size in listOf(flat, small)) {
-            val widget = placed(size)
-            assertEquals("$size", listOf(R.drawable.symbol_wind), symbols(widget))
-            assertFalse("$size", widget.shown().contains("+1"))
-        }
-        // The band still counts the other warning.
-        assertEquals(listOf(ORKAN_HEADLINE, "+1"), placed(wide).shown().take(2))
-    }
-
-    /** The symbols the short form shows, its kinds' in order (D47). */
-    private fun symbolViews(widget: View): List<ImageView> {
-        val strip = widget.findViewById<ViewGroup>(R.id.short_symbols)
+    /** The short form's tiles, its kinds' in order (D47). */
+    private fun tileViews(widget: View): List<ImageView> {
+        val strip = widget.findViewById<ViewGroup>(R.id.short_tiles)
         return (0 until strip.childCount).map { strip.getChildAt(it) as ImageView }
     }
 
-    private fun symbols(widget: View): List<Int> =
-        symbolViews(widget).map {
+    private fun tiles(widget: View): List<Int> =
+        tileViews(widget).map {
             org.robolectric.Shadows
                 .shadowOf(it.drawable)
                 .createdFromResId
         }
 
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `the tiles take the largest side that fits the flat text area, the small line and 2 x 1, each square`() {
+        signIn()
+        written(SampleWeather.full().warned(FROST, ORKAN))
+        val narrow = SizeBucket.sizeOf(columns = 2, rows = 1)
+        // Two tiles: 32 dp in the flat strip's 71 dp and the small line's 106 dp, 21 dp in the 47 dp at 2 x 1.
+        for ((size, side) in listOf(SizeF(388f, 95f) to 32, small to 32, narrow to 21)) {
+            val widget = laidOut(placed(size), size)
+            val tiles = tileViews(widget)
+            assertEquals("$size", 2, tiles.size)
+            for (tile in tiles) assertEquals("$size", listOf(dp(side), dp(side)), listOf(tile.width, tile.height))
+            val strip = widget.findViewById<View>(R.id.short_tiles)
+            assertTrue("$size ${strip.width}", strip.width <= widget.findViewById<View>(R.id.short_form).width)
+            assertEquals("$size", dp(3), tiles[1].left - tiles[0].right)
+        }
+        // In a row lower than the guidance's, 54 dp inside, the tiles leave the temperature and today's line their
+        // rows: 8 dp would be left, so they take their least side, 18 dp.
+        val low = SizeF(388f, 70f)
+        assertEquals(listOf(dp(18), dp(18)), tileViews(laidOut(placed(low), low)).map { it.height })
+        // One warning: one tile, 32 dp.
+        written(SampleWeather.full().warned(ORKAN))
+        val one = tileViews(laidOut(placed(narrow), narrow))
+        assertEquals(listOf(dp(32)), one.map { it.width })
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `more kinds than fit show as many tiles as fit and +N in the highest level's colour`() {
+        signIn()
+        val ice = """{"level":1,"type":84,"start":"${at(-60)}"}"""
+        val frost = """{"level":1,"type":22,"start":"${at(-60)}"}"""
+        val wind = """{"level":2,"type":52,"start":"${at(-60)}"}"""
+        val rain = """{"level":1,"type":61,"start":"${at(-60)}"}"""
+        val narrow = SizeBucket.sizeOf(columns = 2, rows = 1)
+
+        // The owner's case, ice and frost: both tiles everywhere, no "+N".
+        written(SampleWeather.full().warned(ice, frost))
+        for (size in listOf(flat, small, narrow)) {
+            val widget = placed(size)
+            assertEquals("$size", listOf(R.drawable.tile_ice, R.drawable.tile_frost), tiles(widget))
+            assertFalse("$size", widget.shown().any { it.startsWith("+") })
+        }
+
+        // Three kinds: all three in the flat strip and the small line, the highest level's first; at 2 x 1 one tile
+        // and "+2".
+        written(SampleWeather.full().warned(ice, frost, wind))
+        val three = listOf(R.drawable.tile_wind, R.drawable.tile_ice, R.drawable.tile_frost)
+        for (size in listOf(flat, small)) assertEquals("$size", three, tiles(placed(size)))
+        val two = placed(narrow)
+        assertEquals(listOf(R.drawable.tile_wind), tiles(two))
+        assertEquals("+2", two.text(R.id.short_more).text.toString())
+        assertEquals(Palette.LIGHT.scale3, two.text(R.id.short_more).currentTextColor)
+
+        // Four: in the flat strip two and "+2", in the small line all four.
+        written(SampleWeather.full().warned(ice, frost, wind, rain))
+        val strip = laidOut(placed(flat), flat)
+        assertEquals(2, tiles(strip).size)
+        assertEquals("+2", strip.text(R.id.short_more).text.toString())
+        val more = strip.text(R.id.short_more)
+        assertTrue(more.paint.measureText("+2") <= more.width)
+        assertEquals(4, tiles(placed(small)).size)
+    }
+
+    @Test
+    fun `two warnings of the same kind show one tile and no +1 in the short form`() {
+        signIn()
+        written(SampleWeather.full().warned(GUSTS, ORKAN))
+
+        for (size in listOf(flat, small)) {
+            val widget = placed(size)
+            assertEquals("$size", listOf(R.drawable.tile_wind), tiles(widget))
+            assertFalse("$size", widget.shown().contains("+1"))
+            // The tile in the higher level's colour of the two.
+            assertTile(tileViews(widget).single(), Palette.LIGHT.scale4)
+        }
+        // The band still counts the other warning.
+        assertEquals(listOf(ORKAN_HEADLINE, "+1"), placed(wide).shown().take(2))
+    }
+
+    @Test
+    fun `a composite symbol keeps its width in the band, and its tile in the short form is square`() {
+        signIn()
+        written(SampleWeather.full().warned("""{"level":1,"type":82}"""))
+        val frost = checkNotNull(application.getDrawable(R.drawable.symbol_frost))
+        val aspect = frost.intrinsicWidth.toFloat() / frost.intrinsicHeight
+
+        val tile = tileViews(placed(small)).single().layoutParams
+        assertEquals(tile.width, tile.height)
+        val band = placed(wide).findViewById<View>(R.id.band_symbol).layoutParams
+        assertEquals(dp(16) * aspect, band.width.toFloat(), 1f)
+    }
+
+    /** The short form shows in the line's place, its first tile [tile] in [colour] on its tint (D47). */
     private fun assertShortForm(
         widget: View,
         colour: Int,
-        symbol: Int,
+        tile: Int,
         palette: Palette = Palette.LIGHT,
     ) {
         assertTrue(WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
         assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line), widget))
         assertFalse(WidgetHost.visible(widget.findViewById(R.id.now_line_long), widget))
-        assertEquals(colour, widget.text(R.id.short_word).currentTextColor)
-        assertEquals(tint(colour), widget.findViewById<View>(R.id.short_pill).backgroundTintList?.defaultColor)
-        assertEquals(symbol, widget.image(R.id.short_symbol))
-        assertEquals(
-            PorterDuffColorFilter(colour, PorterDuff.Mode.SRC_ATOP),
-            widget.findViewById<ImageView>(R.id.short_symbol).colorFilter,
-        )
+        assertEquals(tile, tiles(widget).first())
+        assertTile(tileViews(widget).first(), colour)
         assertTrue(colour in listOf(palette.scale2, palette.scale3, palette.scale4, palette.scale5))
+    }
+
+    /** A tile in [colour] on [colour] at 16 %. */
+    private fun assertTile(
+        tile: ImageView,
+        colour: Int,
+    ) {
+        assertEquals(PorterDuffColorFilter(colour, PorterDuff.Mode.SRC_ATOP), tile.colorFilter)
+        assertEquals(tint(colour), tile.backgroundTintList?.defaultColor)
     }
 
     /** The visible children of the card, by id, from the top. */

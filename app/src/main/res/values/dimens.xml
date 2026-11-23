@@ -66,11 +66,11 @@
     <dimen name="widget_flat_day_text_least">7sp</dimen>
     <dimen name="widget_flat_day_low_gap">3dp</dimen>
     <!-- For a text the app sizes to fit, today's rain, the days' highs and
-         lows and a warning's short form (D36, D41, D47): the step between the
-         sizes it tries, and the room it
-         leaves, since a launcher lays a view out in whole pixels, a day can
-         get a pixel less than its share and a text's view rounds its width
-         up; a dp holds those two pixels from twice the base density up. -->
+         lows and a plain text (D36, D41, D47): the step between the sizes it
+         tries; and the room it leaves there and for a warning's tiles, since
+         a launcher lays a view out in whole pixels, a day can get a pixel
+         less than its share and a text's view rounds its width up; a dp
+         holds those two pixels from twice the base density up. -->
     <dimen name="widget_text_step">0.5sp</dimen>
     <dimen name="widget_fit_slack">1dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
@@ -91,13 +91,13 @@
     <dimen name="widget_band_more_gap">6dp</dimen>
     <dimen name="widget_band_symbol">16dp</dimen>
     <!-- The short form in the line's place in the small and the flat bucket
-         (D47): its word's and "+N"'s largest size there and the least the app
-         shrinks them to, the room inside its ground at each side, and the
-         gaps between its word, its symbol and "+N". -->
-    <dimen name="widget_short_text">14sp</dimen>
-    <dimen name="widget_short_flat_text">13sp</dimen>
-    <dimen name="widget_short_text_least">9sp</dimen>
-    <dimen name="widget_short_padding">3dp</dimen>
+         (D47): its tiles' side, largest and least, the step between the
+         sides the app tries, and the gap between the tiles and before "+N";
+         and the gap between the band's word and its symbol. -->
+    <dimen name="widget_tile_largest">32dp</dimen>
+    <dimen name="widget_tile_least">18dp</dimen>
+    <dimen name="widget_tile_step">1dp</dimen>
+    <dimen name="widget_tile_gap">3dp</dimen>
     <dimen name="widget_short_gap">2dp</dimen>
     <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->

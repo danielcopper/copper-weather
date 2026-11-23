@@ -51,6 +51,24 @@ class WarningSymbolsTest {
         }
     }
 
+    @Test
+    fun `each warning kind has its own tile, all squares of one side`() {
+        val tiles =
+            R.drawable::class.java.fields
+                .filter { it.name.startsWith("tile_") }
+                .map { it.getInt(null) }
+
+        assertEquals(tiles.toSet(), WarningKind.entries.map { it.tile }.toSet())
+        assertEquals(WarningKind.entries.size, tiles.size)
+        val sides =
+            WarningKind.entries.map {
+                val drawable = checkNotNull(application.getDrawable(it.tile)) { it.name }
+                assertEquals(it.name, drawable.intrinsicWidth, drawable.intrinsicHeight)
+                drawable.intrinsicWidth
+            }
+        assertEquals(1, sides.toSet().size)
+    }
+
     private companion object {
         /** A Material Symbol's size (D48). */
         const val SYMBOL_DP = 24f

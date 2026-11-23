@@ -183,7 +183,7 @@ class WidgetContentTest {
                 WarningKind.WIND,
                 "Amtliche WARNUNG vor STURMBÖEN",
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.MODERATE)),
             ),
             WidgetContent.warning(listOf(warning()), now),
         )
@@ -202,7 +202,7 @@ class WidgetContentTest {
                 WarningKind.WIND,
                 "Amtliche WARNUNG vor STURMBÖEN",
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.MODERATE)),
             ),
             WidgetContent.warning(listOf(warning(start = null)), now),
         )
@@ -212,7 +212,7 @@ class WidgetContentTest {
                 WarningKind.WIND,
                 "Amtliche WARNUNG vor STURMBÖEN",
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.MODERATE)),
             ),
             WidgetContent.warning(listOf(warning(start = Duration.ofDays(-3), end = null)), now),
         )
@@ -222,7 +222,7 @@ class WidgetContentTest {
                 WarningKind.WIND,
                 "Amtliche WARNUNG vor STURMBÖEN",
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.MODERATE)),
             ),
             WidgetContent.warning(listOf(warning(start = null, end = null)), now),
         )
@@ -243,9 +243,9 @@ class WidgetContentTest {
                 more = 2,
                 kinds =
                     listOf(
-                        WidgetContent.KindCount(WarningKind.WIND, 1),
-                        WidgetContent.KindCount(WarningKind.FROST, 1),
-                        WidgetContent.KindCount(WarningKind.RAIN, 1),
+                        WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.SEVERE),
+                        WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR),
+                        WidgetContent.KindCount(WarningKind.RAIN, 1, WarningLevel.SEVERE),
                     ),
             ),
             WidgetContent.warning(listOf(frost, gusts, rain, later), now),
@@ -258,8 +258,8 @@ class WidgetContentTest {
                 more = 1,
                 kinds =
                     listOf(
-                        WidgetContent.KindCount(WarningKind.WIND, 1),
-                        WidgetContent.KindCount(WarningKind.FROST, 1),
+                        WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.SEVERE),
+                        WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR),
                     ),
             ),
             WidgetContent.warning(listOf(frost, gusts), now),
@@ -268,9 +268,9 @@ class WidgetContentTest {
         val gusts2 = warning(level = 2, type = 52, headline = "Amtliche WARNUNG vor STURMBÖEN")
         assertEquals(
             listOf(
-                WidgetContent.KindCount(WarningKind.WIND, 2),
-                WidgetContent.KindCount(WarningKind.FROST, 1),
-                WidgetContent.KindCount(WarningKind.RAIN, 1),
+                WidgetContent.KindCount(WarningKind.WIND, 2, WarningLevel.SEVERE),
+                WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR),
+                WidgetContent.KindCount(WarningKind.RAIN, 1, WarningLevel.SEVERE),
             ),
             WidgetContent.warning(listOf(frost, gusts2, gusts, rain), now)?.kinds,
         )
@@ -305,7 +305,7 @@ class WidgetContentTest {
                 WarningKind.OTHER,
                 null,
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.OTHER, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.OTHER, 1, WarningLevel.MINOR)),
             ),
             WidgetContent.warning(listOf(warning(level = null, type = null, headline = null)), now),
         )
@@ -347,7 +347,7 @@ class WidgetContentTest {
                 WarningKind.FROST,
                 "Amtliche WARNUNG vor FROST",
                 more = 0,
-                kinds = listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+                kinds = listOf(WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR)),
             ),
             weather(SampleWeather.data(warnings)).warning,
         )
@@ -381,7 +381,7 @@ class WidgetContentTest {
                     WarningKind.WIND,
                     null,
                     more = 0,
-                    kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1)),
+                    kinds = listOf(WidgetContent.KindCount(WarningKind.WIND, 1, WarningLevel.MODERATE)),
                 ),
                 WidgetContent.warning(listOf(warning(headline = headline)), now),
             )
@@ -430,7 +430,7 @@ class WidgetContentTest {
                 WarningKind.FROST,
                 "Amtliche WARNUNG vor FROST",
                 0,
-                listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+                listOf(WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR)),
             )
 
         assertEquals(WidgetContent.Plain(R.string.widget_no_data, frost, null), content(empty))
@@ -455,7 +455,7 @@ class WidgetContentTest {
                 WarningKind.FROST,
                 "Amtliche WARNUNG vor FROST",
                 0,
-                listOf(WidgetContent.KindCount(WarningKind.FROST, 1)),
+                listOf(WidgetContent.KindCount(WarningKind.FROST, 1, WarningLevel.MINOR)),
             )
 
         assertEquals(

@@ -35,7 +35,7 @@ class ConvertTest(unittest.TestCase):
         self.paths[warning_symbols.UV_SUN] = SUN
 
     def test_a_symbol_as_it_is_keeps_its_path_on_a_viewport_of_960_moved_down_by_960(self):
-        xml = warning_symbols.plain(self.paths, "air")
+        xml = warning_symbols.symbol_drawable(warning_symbols.plain(self.paths, "air"))
         self.assertIn('android:viewportWidth="960"', xml)
         self.assertIn('android:viewportHeight="960"', xml)
         self.assertIn('android:width="24dp"', xml)
@@ -44,12 +44,12 @@ class ConvertTest(unittest.TestCase):
         self.assertIn("from icons/symbols/air.svg", xml)
 
     def test_its_fill_is_a_palette_colour_the_widget_tints(self):
-        xml = warning_symbols.plain(self.paths, "air")
+        xml = warning_symbols.symbol_drawable(warning_symbols.plain(self.paths, "air"))
         self.assertIn('android:fillColor="@color/palette_text"', xml)
         self.assertNotIn("#", xml)
 
     def test_a_composite_puts_the_second_symbol_at_055_at_the_upper_right_reaching_beyond_the_corner(self):
-        xml = warning_symbols.composed(self.paths, "thermometer", "ac_unit")
+        xml = warning_symbols.symbol_drawable(warning_symbols.composed(self.paths, "thermometer", "ac_unit"))
         groups = re.findall(r"<group ([^>]*)>", xml)
         self.assertEqual(2, len(groups))
         self.assertIn('android:scaleX="0.55"', groups[1])
@@ -64,7 +64,7 @@ class ConvertTest(unittest.TestCase):
         self.assertEqual(round(numbers(xml, "viewportWidth") / 40, 2), numbers(xml, "width"))
 
     def test_uv_keeps_the_sun_s_rays_without_its_disc_and_strokes_the_letters_in_their_middle(self):
-        xml = warning_symbols.uv(self.paths)
+        xml = warning_symbols.symbol_drawable(warning_symbols.uv(self.paths))
         data = re.findall(r'android:pathData="([^"]*)"', xml)
         self.assertEqual(["M440,-920h80v160h-80Z"], data[:1])
         self.assertNotIn("a240", data[0])
@@ -72,6 +72,24 @@ class ConvertTest(unittest.TestCase):
         self.assertIn('android:strokeWidth="80"', xml)
         # The letters centred on the sun's centre: the U from 295 and the V to 665, from -580 to -380.
         self.assertTrue(data[1].startswith("M295,-580 V-440 A60,60 0 0,0 415,-440 V-580 M525,-580 L595,-380 L665,-580"))
+
+    def test_a_tile_is_a_square_of_one_side_for_all_centred_on_the_main_symbol(self):
+        figures = [
+            warning_symbols.plain(self.paths, "air"),
+            warning_symbols.composed(self.paths, "thermometer", "ac_unit"),
+        ]
+        half = warning_symbols.tile_half(figures)
+        # The composite's part reaches farthest from its main symbol's centre: 720 + 0.55 * 680 - 480, and MARGIN.
+        self.assertEqual(round(720 + 0.55 * 680 - 480 + 80, 2), round(half, 2))
+        for figure in figures:
+            xml = warning_symbols.tile_drawable(figure, half)
+            self.assertEqual(round(2 * half, 2), numbers(xml, "viewportWidth"))
+            self.assertEqual(round(2 * half, 2), numbers(xml, "viewportHeight"))
+            # The main symbol's centre, (480, -480) of its path for the stand-in square, at the tile's centre.
+            first = re.search(r"<group ([^>]*)>", xml).group(1)
+            x = float(re.search(r'translateX="([-0-9.]+)"', first).group(1))
+            y = float(re.search(r'translateY="([-0-9.]+)"', first).group(1))
+            self.assertEqual((half, half), (x + 480, y - 480))
 
     def test_a_moveto_with_more_points_keeps_them_as_lines(self):
         pieces = warning_symbols.subpaths("M10-10 20-20ZM480-480m5 5 1 1Z", "t.svg")
@@ -120,7 +138,7 @@ class RunTest(unittest.TestCase):
         self.assertEqual(0, self.run_script(check=False)[0])
         written = sorted(p.name for p in (self.res / "drawable").iterdir())
         kinds = [*warning_symbols.PLAIN, *warning_symbols.COMPOSED, "uv"]
-        self.assertEqual(sorted(f"symbol_{kind}.xml" for kind in kinds), written)
+        self.assertEqual(sorted(f"{prefix}{kind}.xml" for kind in kinds for prefix in ("symbol_", "tile_")), written)
         self.assertEqual((0, ""), self.run_script(check=True))
 
     def test_a_drawable_changed_by_hand_or_without_its_source_fails_the_check(self):

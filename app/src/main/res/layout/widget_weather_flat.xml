@@ -59,28 +59,12 @@
                 android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/short_pill"
-                    style="@style/WeatherWidget.Short">
+                    android:id="@+id/short_tiles"
+                    style="@style/WeatherWidget.ShortTiles" />
 
-                    <TextView
-                        android:id="@+id/short_word"
-                        style="@style/WeatherWidget.ShortWord" />
-
-                    <ImageView
-                        android:id="@+id/short_alert"
-                        style="@style/WeatherWidget.ShortAlert"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/symbol_other"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/short_symbols"
-                        style="@style/WeatherWidget.ShortSymbols" />
-
-                    <TextView
-                        android:id="@+id/short_more"
-                        style="@style/WeatherWidget.ShortMore" />
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/short_more"
+                    style="@style/WeatherWidget.ShortMore" />
             </LinearLayout>
 
             <TextView

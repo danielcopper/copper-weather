@@ -11,7 +11,7 @@
     <string name="widget_sign_in_again">Neu anmelden</string>
     <!-- When the snapshot was fetched, while that is over an hour ago (D16): "14:30", on another day "21.11. 14:30". -->
     <string name="widget_stale">Stand %1$s</string>
-    <!-- A warning's short form (D47): its word by the DWD's level, "Warnung" for 1 and 2, "Unwetter" for 3 and 4, and how many more warnings apply. -->
+    <!-- A warning band without a headline (D47): its word by the DWD's level, "Warnung" for 1 and 2, "Unwetter" for 3 and 4; and "+N", how many more warnings apply, in the band and the short form. -->
     <string name="warning_word">Warnung</string>
     <string name="warning_word_severe">Unwetter</string>
     <string name="warning_more">+%1$d</string>

@@ -234,7 +234,7 @@
 
     <!-- The warning band across the top in the wide and tall buckets (D47):
          the headline unchanged on one line, ending in "…" where it must, and
-         "+N" at its right; without a headline the short form's word and
+         "+N" at its right; without a headline its level's word and its
          symbol. WarningViews tints its ground and colours its text and symbol
          in the warning's level. -->
     <style name="WeatherWidget.Band">
@@ -285,12 +285,14 @@
     </style>
 
     <!-- The short form in the line's place in the small and the flat bucket
-         (D47): its word, the symbol of its kind and "+N" on a tinted ground,
-         at the start of the line or, in the flat bucket, centred in the text
-         area; WarningViews sets their sizes to fit and colours them. -->
+         (D47): a tile for each kind of warning that applies and "+N" for the
+         kinds that do not fit, at the start of the line or, in the flat
+         bucket, centred in the text area; WarningViews sets their sizes to
+         fit and colours them. -->
     <style name="WeatherWidget.ShortSlot">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">@dimen/widget_line_height</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/widget_line_height</item>
         <item name="android:gravity">start|center_vertical</item>
         <item name="android:orientation">horizontal</item>
     </style>
@@ -299,54 +301,28 @@
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="WeatherWidget.Short">
+    <style name="WeatherWidget.ShortTiles">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:baselineAligned">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- A kind's tile: its symbol centred on the tinted rounded ground. -->
+    <style name="WeatherWidget.ShortTile">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/widget_short</item>
-        <item name="android:baselineAligned">false</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:orientation">horizontal</item>
-        <item name="android:paddingStart">@dimen/widget_short_padding</item>
-        <item name="android:paddingEnd">@dimen/widget_short_padding</item>
-    </style>
-
-    <style name="WeatherWidget.ShortWord">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginEnd">@dimen/widget_short_gap</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:textSize">@dimen/widget_short_text</item>
-    </style>
-
-    <!-- Where the word does not fit, the warning sign in its place (D47). -->
-    <style name="WeatherWidget.ShortAlert">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginEnd">@dimen/widget_short_gap</item>
-        <item name="android:scaleType">fitCenter</item>
-    </style>
-
-    <!-- The symbols of the kinds that apply, side by side (D47). -->
-    <style name="WeatherWidget.ShortSymbols">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:baselineAligned">false</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:orientation">horizontal</item>
-    </style>
-
-    <style name="WeatherWidget.ShortSymbol">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
         <item name="android:scaleType">fitCenter</item>
     </style>
 
     <style name="WeatherWidget.ShortMore">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginStart">@dimen/widget_short_gap</item>
+        <item name="android:layout_marginStart">@dimen/widget_tile_gap</item>
         <item name="android:maxLines">1</item>
-        <item name="android:textSize">@dimen/widget_short_text</item>
+        <item name="android:textSize">@dimen/widget_line_flat_text</item>
         <item name="android:textStyle">bold</item>
     </style>
 
