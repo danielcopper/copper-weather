@@ -212,7 +212,7 @@ def subpaths(data, name):
         x, y = points[0]
         # Pairs after a moveto's first are linetos, relative after a relative one, as SVG reads them.
         lines_to = [("l" if move == "m" else "L", numbers[2:])] if len(numbers) > 2 else []
-        text = "".join(command + " ".join(map(weather_icons.fmt, values)) for command, values in lines_to + rest)
+        text = "".join(command + " ".join(map(fmt, values)) for command, values in lines_to + rest)
         out.append((f"M{fmt(x)},{fmt(y)}{text}", points))
     return out
 

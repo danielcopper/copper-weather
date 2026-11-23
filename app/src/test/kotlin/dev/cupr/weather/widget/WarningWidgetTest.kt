@@ -435,24 +435,75 @@ class WarningWidgetTest : WidgetTestBase() {
         for (size in listOf(small, flat, narrow)) {
             val widget = WidgetHost.view(application, ids.getValue(size))
             assertEquals("$size", listOf(text, "Stand 11:40"), widget.shown().takeLast(2))
-            assertEquals(
-                Palette.LIGHT.textMuted,
-                widget
-                    .text(
-                        if (size ==
-                            small
-                        ) {
-                            R.id.plain_stale
-                        } else {
-                            R.id.stale
-                        },
-                    ).currentTextColor,
-            )
+            val stand = if (size == small) R.id.plain_stale else R.id.stale
+            assertEquals(Palette.LIGHT.textMuted, widget.text(stand).currentTextColor)
         }
+
+        // The same widgets with the weather again: no plain text and no "Stand" left over.
+        written(SampleWeather.full())
+        Widgets.update(application)
+        assertEquals(
+            listOf("7°", "9°", "3°", "Teilweise bewölkt"),
+            WidgetHost.view(application, ids.getValue(small)).shown(),
+        )
 
         written("""{"schema_version":1,"now":{}}""", fetchedAt = old)
         Widgets.update(application)
         for ((size, id) in ids) assertEquals("$size", listOf(text), WidgetHost.view(application, id).shown())
+    }
+
+    @Test
+    fun `a wide widget drawn from a refused sign-in's weather to a plain text says Stand alone in its notice line`() {
+        signIn()
+        written(SampleWeather.full())
+        Services.account(application).reject()
+        val id = WidgetHost.place(application, wide)
+        assertEquals(
+            listOf("Neu anmelden"),
+            WidgetHost.shown(WidgetHost.view(application, id).findViewById(R.id.notice_row)),
+        )
+
+        val old = SampleWeather.NOW.minus(Duration.ofHours(2))
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN), fetchedAt = old)
+        Widgets.update(application)
+
+        val widget = WidgetHost.view(application, id)
+        assertEquals(listOf("Stand 11:40"), WidgetHost.shown(widget.findViewById(R.id.notice_row)))
+        assertEquals(listOf(ORKAN_HEADLINE, "Stand 11:40", "Nicht angemeldet – zum Anmelden tippen"), widget.shown())
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `one row high the plain text shrinks so the short form and Stand stay whole`() {
+        signIn()
+        val old = SampleWeather.NOW.minus(Duration.ofHours(2))
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN), fetchedAt = old)
+
+        for (size in listOf(SizeBucket.sizeOf(columns = 2, rows = 1), SizeF(129f, 95f), flat)) {
+            val widget = laidOut(placed(size), size)
+            val text = widget.findViewById<ViewGroup>(R.id.now_text)
+            val form = widget.findViewById<View>(R.id.short_form)
+            val stand = widget.findViewById<View>(R.id.stale)
+            val column = widget.findViewById<View>(R.id.now_column)
+            assertTrue("$size", WidgetHost.visible(stand, widget))
+            // The short form's top and "Stand"'s bottom inside the text area, and the text area inside the card.
+            assertTrue("$size ${form.top}", form.top >= 0)
+            assertTrue("$size ${stand.bottom} ${text.height}", stand.bottom <= text.height)
+            assertEquals("$size", form.height, dp(20))
+            assertEquals("$size", stand.height, dp(16))
+            val top = column.top + text.top
+            assertTrue("$size $top", top >= widget.paddingTop)
+            assertTrue("$size", top + text.height <= widget.height - widget.paddingBottom)
+        }
+        // At 2 x 1 the text has 50 dp between them: it shrinks below its 14 sp.
+        val narrow = laidOut(placed(SizeBucket.sizeOf(columns = 2, rows = 1)), SizeBucket.sizeOf(columns = 2, rows = 1))
+        assertTrue(narrow.text(R.id.widget_plain).textSize < sp(14f))
+        // Without a warning the plain text keeps its size.
+        written("""{"schema_version":1,"now":{}}""", fetchedAt = old)
+        val alone = laidOut(placed(SizeBucket.sizeOf(columns = 2, rows = 1)), SizeBucket.sizeOf(columns = 2, rows = 1))
+        assertEquals(sp(14f), alone.text(R.id.widget_plain).textSize, 0.5f)
+        assertEquals(Int.MAX_VALUE, alone.text(R.id.widget_plain).maxLines)
     }
 
     @Test

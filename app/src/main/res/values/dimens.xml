@@ -74,6 +74,10 @@
     <dimen name="widget_text_step">0.5sp</dimen>
     <dimen name="widget_fit_slack">1dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
+    <!-- A plain text, and the least size it shrinks to one row high where a
+         warning's short form and "Stand" leave it too little room (D47). -->
+    <dimen name="widget_plain_text">14sp</dimen>
+    <dimen name="widget_plain_text_least">9sp</dimen>
     <!-- The gap after "Neu anmelden" before "Stand 14:30" in the notice line
          (D16). -->
     <dimen name="widget_notice_gap">8dp</dimen>

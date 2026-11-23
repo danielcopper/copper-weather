@@ -216,8 +216,9 @@
         <item name="android:gravity">center</item>
     </style>
 
-    <!-- The room below "now" or the warning that a plain text fills, centred
-         in it, with "Stand 14:30" at its foot in the small bucket (D16). -->
+    <!-- The room a plain text fills, below a warning or "Stand" while they
+         show, centred in it, with "Stand 14:30" at its foot in the small
+         bucket (D16). -->
     <style name="WeatherWidget.PlainArea">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">match_parent</item>
@@ -342,8 +343,9 @@
 
     <style name="WeatherWidget.Plain">
         <item name="android:layout_width">match_parent</item>
+        <item name="android:ellipsize">end</item>
         <item name="android:gravity">center</item>
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">@dimen/widget_plain_text</item>
     </style>
 
     <!-- The hours: a strip of cells sharing its width. -->

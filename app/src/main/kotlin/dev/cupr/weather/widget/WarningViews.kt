@@ -21,6 +21,9 @@ internal object WarningViews {
     /** A short form's symbol beside its text: its size for each of the text's (D47). */
     private const val SYMBOL_PER_TEXT = 1.1f
 
+    /** Whether the size [bucket] shows a warning as the band, the wide and the tall one, else the short form (D47). */
+    fun showsBand(bucket: SizeBucket): Boolean = bucket == SizeBucket.WIDE || bucket == SizeBucket.TALL
+
     /**
      * A warning that applies, or none, as the size [bucket] shows it (D47): the band in the wide and tall buckets, the
      * short form in the small and the flat one, [width] dp wide there.

@@ -95,23 +95,30 @@ internal object WidgetViews {
         bucket: SizeBucket,
     ) {
         val room = Room(context.resources, size, notice = false, band = false)
-        val stale = content.stale?.let { context.getString(R.string.widget_stale, it) }
+        val stale = context.standText(content.stale)
+        val text = context.getString(content.text)
         if (bucket == SizeBucket.FLAT) {
             for (id in flatParts + flatNowParts) views.setViewVisibility(id, View.GONE)
             views.setViewVisibility(R.id.now_column, View.VISIBLE)
             views.fullWidthNow()
             views.setViewLayoutMargin(R.id.now_text, RemoteViews.MARGIN_START, 0f, TypedValue.COMPLEX_UNIT_PX)
             views.show(R.id.stale, stale, Palette::textMuted)
+            // The short form and "Stand" stay whole; the text shrinks, and may end shorter, in what they leave (D47).
+            val res = context.resources
+            val height =
+                size.height - 2 * res.dimen(R.dimen.widget_flat_padding) -
+                    (if (content.warning != null) res.dimen(R.dimen.widget_line_height) else 0f) -
+                    (if (stale != null) res.dimen(R.dimen.widget_flat_today_height) else 0f)
+            val fit = res.plainFit(text, room.inside(), height.takeIf { content.warning != null || stale != null })
+            views.setTextViewTextSize(R.id.widget_plain, TypedValue.COMPLEX_UNIT_PX, fit.size)
+            views.setInt(R.id.widget_plain, "setMaxLines", fit.lines)
         } else {
             for (id in parts) views.setViewVisibility(id, View.GONE)
-            val small = bucket == SizeBucket.SMALL
             views.setViewVisibility(R.id.widget_notice, View.GONE)
-            views.setViewVisibility(R.id.notice_row, if (stale != null && !small) View.VISIBLE else View.GONE)
-            views.show(R.id.notice_stale, stale.takeUnless { small }, Palette::textMuted)
-            views.show(R.id.plain_stale, stale.takeIf { small }, Palette::textMuted)
+            views.stand(stale, bucket, again = false, below = R.id.plain_stale)
         }
         WarningViews.show(context, views, content.warning, bucket, room.inside())
-        views.show(R.id.widget_plain, context.getString(content.text), Palette::text)
+        views.show(R.id.widget_plain, text, Palette::text)
         views.setOnClickPendingIntent(R.id.widget, Taps.app(context))
     }
 
@@ -125,7 +132,7 @@ internal object WidgetViews {
     ) {
         val small = bucket == SizeBucket.SMALL
         now(context, views, content.now, compact = small, animation)
-        val stale = context.standText(content)
+        val stale = context.standText(content.stale)
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         // In the small bucket "Stand 14:30" takes the place of today's high and low (D16).
         views.today(
@@ -134,22 +141,15 @@ internal object WidgetViews {
             R.id.now_low_below,
             content.now.today.takeIf { small && stale == null },
         )
-        views.show(R.id.stale, stale.takeIf { small }, Palette::textMuted)
-        // The notice line: "Neu anmelden", and in the wide and tall buckets "Stand 14:30" after it (D16, D33).
-        val noticeStale = stale.takeUnless { small }
-        views.setViewVisibility(
-            R.id.notice_row,
-            if (content.signInAgain || noticeStale != null) View.VISIBLE else View.GONE,
-        )
-        views.show(R.id.notice_stale, noticeStale, Palette::textMuted)
+        views.stand(stale, bucket, again = content.signInAgain, below = R.id.stale)
         val room =
             Room(
                 context.resources,
                 size,
-                notice = content.signInAgain || noticeStale != null,
-                band = content.warning != null && !small,
+                notice = content.signInAgain || (stale != null && !small),
+                band = content.warning != null && WarningViews.showsBand(bucket),
             )
-        val short = content.warning.takeIf { small }
+        val short = content.warning.takeUnless { WarningViews.showsBand(bucket) }
         if (short != null) {
             views.setViewVisibility(R.id.now_line, View.GONE)
             views.setViewVisibility(R.id.now_line_long, View.GONE)
@@ -229,7 +229,7 @@ internal object WidgetViews {
         WarningViews.show(context, views, content.warning, SizeBucket.FLAT, text)
         // Today's high, low and rain below, or "Stand 14:30" in their place, also below "Neu anmelden" (D16); with
         // "Neu anmelden", 36 dp high, today's line gives way (D36).
-        val stale = context.standText(content)
+        val stale = context.standText(content.stale)
         views.show(R.id.stale, stale, Palette::textMuted)
         flatToday(context, views, content.now.takeUnless { again || stale != null }, room, text)
 
@@ -474,9 +474,24 @@ private fun RemoteViews.nowIcon(
     icon(context, R.id.now_icon, R.id.now_icon_animated, icon, animation.now)
 }
 
-/** "Stand 14:30" while the snapshot is old (D16), else none. */
-private fun Context.standText(content: WidgetContent.Weather): String? =
-    content.stale?.let { getString(R.string.widget_stale, it) }
+/** "Stand 14:30" for the snapshot fetched at [stale] (D16), none without. */
+private fun Context.standText(stale: String?): String? = stale?.let { getString(R.string.widget_stale, it) }
+
+/**
+ * Places "Stand 14:30" ([stale]) as [bucket] shows it (D16): in the small bucket in the view [below], in the wide and
+ * tall ones in the notice line after "Neu anmelden", which shows while [again]; the other place empty.
+ */
+private fun RemoteViews.stand(
+    stale: String?,
+    bucket: SizeBucket,
+    again: Boolean,
+    below: Int,
+) {
+    val small = bucket == SizeBucket.SMALL
+    show(below, stale.takeIf { small }, Palette::textMuted)
+    setViewVisibility(R.id.notice_row, if (again || (stale != null && !small)) View.VISIBLE else View.GONE)
+    show(R.id.notice_stale, stale.takeUnless { small }, Palette::textMuted)
+}
 
 /** Widens the flat layout's "now" column to the card's width. */
 private fun RemoteViews.fullWidthNow() =

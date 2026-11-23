@@ -10,12 +10,13 @@
      14:30"), the hours and the days as the size bucket shows them, or a
      plain text instead, below the band or the short form while a warning
      applies (D47), with "Stand 14:30" then in the notice line or below the
-     text (D16), on the card. Every part starts hidden; WidgetViews shows the
-     ones it fills, adds the hours and days, and sets the texts' colours from
-     the palette, light and dark (D7). The card, "now" and the hours' strip
-     take their looks from styles.xml, as the picker's preview does, and so
-     do "Neu anmelden" and the plain text but for their heights; the days'
-     list carries its own. The whole card is one tap. -->
+     text (D16), on the card. Every part but the plain text's area starts
+     hidden; WidgetViews shows the ones it fills, adds the hours and days,
+     and sets the texts' colours from the palette, light and dark (D7). The
+     card, "now" and the hours' strip take their looks from styles.xml, as
+     the picker's preview does, and so do "Neu anmelden" and the plain text
+     but for their heights; the days' list carries its own. The whole card is
+     one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">
