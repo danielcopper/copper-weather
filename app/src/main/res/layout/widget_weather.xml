@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget "Wetter" (D12-D14, D33, D36): the warning band across the
-     top while a warning applies, in the wide and tall buckets (D47); "now"
-     (its image, still or animated in the frame beside it (D43, D44), the
+<!-- The widget "Wetter" (D12-D14, D33, D36): the warning band across the top
+     while a warning applies, in the wide and tall buckets (D47); "now" (its
+     image, still or animated in the frame beside it (D43, D44), the
      temperature, today's high and low beside it or, in the small bucket,
      below it, where "Stand 14:30" takes their place there (D16), then the
      rain hint or the condition, or in the small bucket a warning's short
@@ -9,12 +9,13 @@
      sign-in is no longer usable and, in the wide and tall buckets, "Stand
      14:30"), the hours and the days as the size bucket shows them, or a
      plain text instead, below the band or the short form while a warning
-     applies (D18), on the card. Every part starts hidden; WidgetViews
-     shows the ones it fills, adds the hours and days, and sets the texts'
-     colours from the palette, light and dark (D7). The card, "now" and the
-     hours' strip take their looks from styles.xml, as the picker's preview
-     does, and so do "Neu anmelden" and the plain text but for their heights;
-     the days' list carries its own. The whole card is one tap. -->
+     applies (D47), with "Stand 14:30" then in the notice line or below the
+     text (D16), on the card. Every part starts hidden; WidgetViews shows the
+     ones it fills, adds the hours and days, and sets the texts' colours from
+     the palette, light and dark (D7). The card, "now" and the hours' strip
+     take their looks from styles.xml, as the picker's preview does, and so
+     do "Neu anmelden" and the plain text but for their heights; the days'
+     list carries its own. The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.Card">
@@ -169,9 +170,19 @@
         android:orientation="vertical"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/widget_plain"
-        style="@style/WeatherWidget.Plain"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+    <FrameLayout
+        android:id="@+id/plain_area"
+        style="@style/WeatherWidget.PlainArea">
+
+        <TextView
+            android:id="@+id/widget_plain"
+            style="@style/WeatherWidget.Plain"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/plain_stale"
+            style="@style/WeatherWidget.Stale.Plain"
+            android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>

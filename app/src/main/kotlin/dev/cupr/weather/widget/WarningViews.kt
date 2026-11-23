@@ -22,10 +22,38 @@ internal object WarningViews {
     private const val SYMBOL_PER_TEXT = 1.1f
 
     /**
+     * A warning that applies, or none, as the size [bucket] shows it (D47): the band in the wide and tall buckets, the
+     * short form in the small and the flat one, [width] dp wide there.
+     */
+    fun show(
+        context: Context,
+        views: RemoteViews,
+        warning: WidgetContent.Warning?,
+        bucket: SizeBucket,
+        width: Float,
+    ) {
+        when (bucket) {
+            SizeBucket.FLAT -> {
+                shortForm(context, views, warning, width, R.dimen.widget_short_flat_text)
+            }
+
+            SizeBucket.SMALL -> {
+                band(context, views, null)
+                shortForm(context, views, warning, width, R.dimen.widget_short_text)
+            }
+
+            SizeBucket.WIDE, SizeBucket.TALL -> {
+                band(context, views, warning)
+                shortForm(context, views, null, width, R.dimen.widget_short_text)
+            }
+        }
+    }
+
+    /**
      * The warning band (D47), or nothing without [warning]: its headline unchanged on one line, ending in "…" where it
      * must, without one the short form's word and symbol side by side, and "+N" at its right when more apply.
      */
-    fun band(
+    private fun band(
         context: Context,
         views: RemoteViews,
         warning: WidgetContent.Warning?,
@@ -52,7 +80,7 @@ internal object WarningViews {
      * apply, at the size [fit] finds for the [width] dp the line has, from [largest] down; where even the least size
      * does not fit the word, the warning sign stands in its place, unless the kind's symbol is the warning sign itself.
      */
-    fun shortForm(
+    private fun shortForm(
         context: Context,
         views: RemoteViews,
         warning: WidgetContent.Warning?,

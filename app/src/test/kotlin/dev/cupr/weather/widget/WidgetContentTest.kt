@@ -1,5 +1,6 @@
 package dev.cupr.weather.widget
 
+import android.util.Log
 import dev.cupr.weather.R
 import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.store.Account
@@ -223,13 +224,15 @@ class WidgetContentTest {
     @Test
     fun `a level absent or outside 1 to 4 counts as the nearest of them, a headline and a type may be absent`() {
         val shown =
-            listOf(null, 0, -2, 1, 2, 3, 4, 5, 20).associateWith {
+            listOf(null, Int.MIN_VALUE, 0, -2, 1, 2, 3, 4, 5, 20, Int.MAX_VALUE).associateWith {
                 WidgetContent.warning(listOf(warning(level = it)), now)?.level
             }
 
         assertEquals(
             mapOf(
                 null to WarningLevel.MINOR,
+                Int.MIN_VALUE to WarningLevel.MINOR,
+                Int.MAX_VALUE to WarningLevel.EXTREME,
                 0 to WarningLevel.MINOR,
                 -2 to WarningLevel.MINOR,
                 1 to WarningLevel.MINOR,
@@ -305,16 +308,20 @@ class WidgetContentTest {
     @Test
     fun `a blank headline reads as none`() {
         for (headline in listOf("", "  ")) {
-            assertNull(WidgetContent.warning(listOf(warning(headline = headline)), now)?.headline)
+            assertEquals(
+                WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, null, more = 0),
+                WidgetContent.warning(listOf(warning(headline = headline)), now),
+            )
         }
     }
 
     private fun content(
         data: String,
         state: Account.State = Account.State.SIGNED_IN,
+        fetchedAt: Instant = now,
     ): WidgetContent {
         val read = SensorData.read(Json.parseToJsonElement(data).jsonObject) as SensorData.Read.Readable
-        return WidgetContent.of(state, Snapshot(now, read.data), SampleWeather.CLOCK)
+        return WidgetContent.of(state, Snapshot(fetchedAt, read.data), SampleWeather.CLOCK)
     }
 
     private val frostWarning =
@@ -325,14 +332,20 @@ class WidgetContentTest {
         ShadowLog.clear()
         assertNull((content(SampleWeather.data()) as WidgetContent.Weather).warning)
         assertEquals(
-            listOf("The snapshot has no warnings: the warning sensor delivers nothing"),
-            ShadowLog.getLogsForTag("WidgetContent").map { it.msg },
+            listOf(Log.WARN to "The snapshot has no warnings: the warning sensor delivers nothing"),
+            ShadowLog.getLogsForTag("WidgetContent").map { it.type to it.msg },
         )
 
         ShadowLog.clear()
         assertNull((content(SampleWeather.data(""","warnings":[]""")) as WidgetContent.Weather).warning)
         assertNull((content(SampleWeather.data(""","warnings":{}""")) as WidgetContent.Weather).warning)
         assertEquals(1, ShadowLog.getLogsForTag("WidgetContent").size)
+
+        // Signed out, or without a snapshot, there is nothing to read the warnings of.
+        ShadowLog.clear()
+        content(SampleWeather.data(), Account.State.SIGNED_OUT)
+        WidgetContent.of(Account.State.SIGNED_IN, null, SampleWeather.CLOCK)
+        assertEquals(emptyList<ShadowLog.LogItem>(), ShadowLog.getLogsForTag("WidgetContent"))
     }
 
     @Test
@@ -340,16 +353,35 @@ class WidgetContentTest {
         val empty = """{"schema_version":1$frostWarning}"""
         val frost = WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", 0)
 
-        assertEquals(WidgetContent.Plain(R.string.widget_no_data, frost), content(empty))
+        assertEquals(WidgetContent.Plain(R.string.widget_no_data, frost, null), content(empty))
         assertEquals(
-            WidgetContent.Plain(R.string.widget_signed_out, frost),
+            WidgetContent.Plain(R.string.widget_signed_out, frost, null),
             content(empty, Account.State.REJECTED),
         )
         // Signed out, the snapshot left behind is no one's (D31).
         assertEquals(
-            WidgetContent.Plain(R.string.widget_signed_out, null),
+            WidgetContent.Plain(R.string.widget_signed_out, null, null),
             content(SampleWeather.data(frostWarning), Account.State.SIGNED_OUT),
         )
-        assertEquals(WidgetContent.Plain(R.string.widget_no_data, null), content("""{"schema_version":1}"""))
+        assertEquals(WidgetContent.Plain(R.string.widget_no_data, null, null), content("""{"schema_version":1}"""))
+    }
+
+    @Test
+    fun `an old snapshot's plain text says Stand beside a warning, and alone it does not`() {
+        val old = now.minus(Duration.ofHours(2))
+        val frost = WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", 0)
+
+        assertEquals(
+            WidgetContent.Plain(R.string.widget_no_data, frost, "11:40"),
+            content("""{"schema_version":1$frostWarning}""", fetchedAt = old),
+        )
+        assertEquals(
+            WidgetContent.Plain(R.string.widget_signed_out, frost, "11:40"),
+            content("""{"schema_version":1$frostWarning}""", Account.State.REJECTED, old),
+        )
+        assertEquals(
+            WidgetContent.Plain(R.string.widget_no_data, null, null),
+            content("""{"schema_version":1,"warnings":[]}""", fetchedAt = old),
+        )
     }
 }

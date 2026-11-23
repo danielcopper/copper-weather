@@ -25,11 +25,13 @@ import kotlin.math.roundToLong
 sealed interface WidgetContent {
     /**
      * No weather to show: a plain text on the card; and the [warning] that applies, if any, which shows above it while
-     * the snapshot is someone's (D18).
+     * the snapshot is someone's (D47), with when the snapshot was fetched while that is over an hour ago ([stale],
+     * D16), none without a warning.
      */
     data class Plain(
         @param:StringRes val text: Int,
         val warning: Warning?,
+        val stale: String?,
     ) : WidgetContent
 
     /**
@@ -149,8 +151,8 @@ sealed interface WidgetContent {
          * neither a temperature nor a condition the app knows counts as none. Signed in without one, "Noch keine
          * Daten"; without one otherwise, or signed out, "Nicht angemeldet"; else the snapshot's weather, with "Neu
          * anmelden" while the sign-in is refused or unreadable. A warning of the snapshot that applies shows with
-         * either, as long as someone is signed in, also with a refused or unreadable sign-in (D18, D32); a snapshot
-         * without `warnings` is logged (D17).
+         * either, as long as someone is signed in, also with a refused or unreadable sign-in (D47, D32), and with a
+         * plain text "Stand 14:30" only beside it (D16); a snapshot without `warnings` is logged (D15).
          */
         fun of(
             state: Account.State,
@@ -164,13 +166,14 @@ sealed interface WidgetContent {
             }
             val warning = warning(warnings.orEmpty(), clock.instant())
             val data = shown?.data?.takeIf { it.temperature != null || Condition.of(it.condition)?.word != null }
+            val plainStale = shown?.takeIf { warning != null }?.let { stale(it, clock) }
             return when {
                 data == null && state == Account.State.SIGNED_IN -> {
-                    Plain(R.string.widget_no_data, warning)
+                    Plain(R.string.widget_no_data, warning, plainStale)
                 }
 
                 data == null -> {
-                    Plain(R.string.widget_signed_out, warning)
+                    Plain(R.string.widget_signed_out, warning, plainStale)
                 }
 
                 else -> {
@@ -231,8 +234,7 @@ sealed interface WidgetContent {
         /**
          * The warning to show at [now] of [warnings] (D15): of those that apply, their start passed or absent and
          * their end not reached or absent, the one of the highest level, the first sent among equals, with how many
-         * more apply; none when none applies. A level absent or below 1 counts as 1, one above 4 as 4; a blank
-         * headline as none.
+         * more apply; none when none applies; a blank headline as none.
          */
         internal fun warning(
             warnings: List<SensorData.Warning>,

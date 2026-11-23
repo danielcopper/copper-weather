@@ -390,27 +390,85 @@ class WarningWidgetTest : WidgetTestBase() {
         signIn()
         written("""{"schema_version":1,"now":{}}""".warned(ORKAN))
         val text = "Noch keine Daten – zum Öffnen tippen"
+        val narrow = SizeBucket.sizeOf(columns = 2, rows = 1)
+        val ids = listOf(wide, tall, small, flat, narrow).associateWith { WidgetHost.place(application, it) }
 
         for (size in listOf(wide, tall)) {
-            val widget = placed(size)
+            val widget = WidgetHost.view(application, ids.getValue(size))
             assertEquals("$size", listOf(ORKAN_HEADLINE, text), widget.shown())
-            assertEquals(listOf(R.id.band, R.id.widget_plain), shownParts(widget))
+            assertEquals(listOf(R.id.band, R.id.plain_area), shownParts(widget))
         }
-        for (size in listOf(small, flat, SizeBucket.sizeOf(columns = 2, rows = 1))) {
-            val widget = placed(size)
+        for (size in listOf(small, flat, narrow)) {
+            val widget = WidgetHost.view(application, ids.getValue(size))
             assertEquals("$size", text, widget.shown().last())
-            assertTrue("$size", WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
             assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_wind)
-            val form = widget.findViewById<View>(R.id.short_form)
-            val plain = widget.findViewById<View>(R.id.widget_plain)
-            assertEquals("$size", form.parent, plain.parent)
-            val parent = form.parent as ViewGroup
-            assertTrue("$size", parent.indexOfChild(form) < parent.indexOfChild(plain))
+            val order = drawn(widget)
+            assertTrue("$size", order.indexOf(R.id.short_form) < order.indexOf(R.id.widget_plain))
         }
 
+        // The same widgets, the warning gone: the plain text alone.
         written("""{"schema_version":1,"now":{}}""")
         Widgets.update(application)
-        for (size in listOf(wide, small, flat)) assertEquals(listOf(text), placed(size).shown())
+        for ((size, id) in ids) {
+            val widget = WidgetHost.view(application, id)
+            assertEquals("$size", listOf(text), widget.shown())
+            for (part in listOf(R.id.band, R.id.short_form)) {
+                assertFalse("$size", widget.findViewById<View>(part)?.let { WidgetHost.visible(it, widget) } == true)
+            }
+        }
+    }
+
+    @Test
+    fun `beside a warning above the plain text an old snapshot says Stand, without one the text stands alone`() {
+        signIn()
+        val old = SampleWeather.NOW.minus(Duration.ofHours(2))
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN), fetchedAt = old)
+        val text = "Noch keine Daten – zum Öffnen tippen"
+        val narrow = SizeBucket.sizeOf(columns = 2, rows = 1)
+        val ids = listOf(wide, tall, small, flat, narrow).associateWith { WidgetHost.place(application, it) }
+
+        for (size in listOf(wide, tall)) {
+            val widget = WidgetHost.view(application, ids.getValue(size))
+            assertEquals("$size", listOf(ORKAN_HEADLINE, "Stand 11:40", text), widget.shown())
+            assertEquals(listOf("Stand 11:40"), WidgetHost.shown(widget.findViewById(R.id.notice_row)))
+        }
+        for (size in listOf(small, flat, narrow)) {
+            val widget = WidgetHost.view(application, ids.getValue(size))
+            assertEquals("$size", listOf(text, "Stand 11:40"), widget.shown().takeLast(2))
+            assertEquals(
+                Palette.LIGHT.textMuted,
+                widget
+                    .text(
+                        if (size ==
+                            small
+                        ) {
+                            R.id.plain_stale
+                        } else {
+                            R.id.stale
+                        },
+                    ).currentTextColor,
+            )
+        }
+
+        written("""{"schema_version":1,"now":{}}""", fetchedAt = old)
+        Widgets.update(application)
+        for ((size, id) in ids) assertEquals("$size", listOf(text), WidgetHost.view(application, id).shown())
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers = "+xxhdpi")
+    fun `a flat widget drawn from a plain text to the weather gives its text area back its 71 dp`() {
+        signIn()
+        val size = SizeF(388f, 95f)
+        val id = WidgetHost.place(application, size)
+        assertEquals(listOf("Noch keine Daten – zum Öffnen tippen"), WidgetHost.view(application, id).shown())
+
+        written(SampleWeather.full())
+        Widgets.update(application)
+
+        val widget = laidOut(WidgetHost.view(application, id), size)
+        assertEquals(dp(71), widget.findViewById<View>(R.id.now_text).width)
     }
 
     private fun assertShortForm(
@@ -443,6 +501,20 @@ class WarningWidgetTest : WidgetTestBase() {
             }.filter { WidgetHost.visible(it, widget) }
             .map { it.id }
     }
+
+    /** The ids of [view] and every view below it, depth first, as they are drawn from the top. */
+    private fun drawn(view: View): List<Int> =
+        listOf(view.id) +
+            (
+                (view as? ViewGroup)?.let { group ->
+                    (0 until group.childCount).flatMap {
+                        drawn(
+                            group.getChildAt(it),
+                        )
+                    }
+                }
+                    ?: emptyList()
+            )
 
     /** [colour] at 16 %, a warning's ground. */
     private fun tint(colour: Int) = ColorUtils.setAlphaComponent(colour, Math.round(0.16f * 255))

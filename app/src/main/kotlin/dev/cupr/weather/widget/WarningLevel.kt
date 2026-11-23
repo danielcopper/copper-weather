@@ -30,6 +30,6 @@ enum class WarningLevel(
 
     companion object {
         /** The DWD's [level]: absent or below 1 counts as 1, above 4 as 4 (D15). */
-        fun of(level: Int?): WarningLevel = entries[((level ?: 1) - 1).coerceIn(0, entries.size - 1)]
+        fun of(level: Int?): WarningLevel = entries[(level ?: 1).coerceIn(1, entries.size) - 1]
     }
 }

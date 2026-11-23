@@ -148,8 +148,8 @@
     </style>
 
     <!-- "Neu anmelden" and the plain text instead of the weather:
-         widget_weather.xml gives the notice its height, Notice.Flat the flat
-         one's; each layout gives the plain text its height. -->
+         Notice.InRow gives the notice its height in the row, Notice.Flat the
+         flat one's; each layout gives the plain text its height. -->
     <style name="WeatherWidget.Notice">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:gravity">center_vertical</item>
@@ -207,6 +207,20 @@
         <item name="android:gravity">center_vertical</item>
         <item name="android:maxLines">1</item>
         <item name="android:textSize">@dimen/widget_notice_text</item>
+    </style>
+
+    <!-- Below a plain text with a warning above it in the small bucket, at the
+         foot of the plain text's area and centred as the text (D16, D47). -->
+    <style name="WeatherWidget.Stale.Plain">
+        <item name="android:layout_gravity">bottom</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- The room below "now" or the warning that a plain text fills, centred
+         in it, with "Stand 14:30" at its foot in the small bucket (D16). -->
+    <style name="WeatherWidget.PlainArea">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
     </style>
 
     <style name="WeatherWidget.Stale.Flat">

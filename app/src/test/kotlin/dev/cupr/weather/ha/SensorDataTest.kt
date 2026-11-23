@@ -106,7 +106,7 @@ class SensorDataTest {
             data.warnings,
         )
         assertEquals(emptyList<SensorData.Warning>(), data("""{"warnings":[]}""").warnings)
-        // Absent or not a list: the warning sensor delivers nothing, which is not the same as no warning (D17).
+        // Absent or not a list: the warning sensor delivers nothing, which is not the same as no warning (D15).
         assertNull(data("{}").warnings)
         assertNull(data("""{"warnings":{}}""").warnings)
         assertNull(data("""{"warnings":null}""").warnings)

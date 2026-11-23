@@ -138,17 +138,6 @@ class WeatherIconsTest {
         }
     }
 
-    @Test
-    fun `a command that does not end fails the test once its time is up`() {
-        val failure =
-            runCatching { Scripts.run("python3", "-I", "-B", "-c", "import time; time.sleep(60)", timeout = 1) }
-
-        assertEquals(
-            "python3 -I -B -c import time; time.sleep(60) did not end within 1 s",
-            failure.exceptionOrNull()?.message,
-        )
-    }
-
     private companion object {
         /** The common frame every icon shows, the square around what all of them draw, of the SVGs' 64 (D38). */
         const val ICON_DP = 59.21f

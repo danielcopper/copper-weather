@@ -86,6 +86,7 @@ class ConvertTest(unittest.TestCase):
             symbol(body=f'<path d="{PATH}" fill="red"/>'),
             symbol(body=""),
             symbol(body='<path d="M0 0&quot; android:fillColor=&quot;red"/>'),
+            symbol(body='<path d=" "/>'),
             "<svg",
         ]:
             with self.subTest(text=text), self.assertRaises(Unsupported) as raised:
