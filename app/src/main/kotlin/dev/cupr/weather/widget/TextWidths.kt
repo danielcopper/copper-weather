@@ -70,8 +70,10 @@ internal fun Resources.plainFit(
             .build()
     }
     val fits = sizes.firstOrNull { dp(layout(it, Int.MAX_VALUE).height.toFloat()) <= height }
-    // At the least size, the most lines whose layout, the last ending in "…", fits; at least one.
-    val least = layout(sizes.last(), Int.MAX_VALUE).lineCount
-    val lines = (least downTo 1).firstOrNull { dp(layout(sizes.last(), it).height.toFloat()) <= height } ?: 1
-    return if (fits != null) PlainFit(fits, Int.MAX_VALUE) else PlainFit(sizes.last(), lines)
+    return fits?.let { PlainFit(it, Int.MAX_VALUE) } ?: run {
+        // At the least size, the most lines whose layout, the last ending in "…", fits; at least one.
+        val least = layout(sizes.last(), Int.MAX_VALUE).lineCount
+        val lines = (least downTo 1).firstOrNull { dp(layout(sizes.last(), it).height.toFloat()) <= height } ?: 1
+        PlainFit(sizes.last(), lines)
+    }
 }
