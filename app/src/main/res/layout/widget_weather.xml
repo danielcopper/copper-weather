@@ -8,7 +8,8 @@
      form in their place, and the notice line with "Neu anmelden" while the
      sign-in is no longer usable and, in the wide and tall buckets, "Stand
      14:30"), the hours and the days as the size bucket shows them, or a
-     plain text instead, on the card. Every part starts hidden; WidgetViews
+     plain text instead, below the band or the short form while a warning
+     applies (D18), on the card. Every part starts hidden; WidgetViews
      shows the ones it fills, adds the hours and days, and sets the texts'
      colours from the palette, light and dark (D7). The card, "now" and the
      hours' strip take their looks from styles.xml, as the picker's preview
@@ -24,14 +25,19 @@
         android:visibility="gone">
 
         <TextView
-            android:id="@+id/band_text"
-            style="@style/WeatherWidget.BandText" />
+            android:id="@+id/band_word"
+            style="@style/WeatherWidget.BandWord"
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/band_symbol"
             style="@style/WeatherWidget.BandSymbol"
             android:importantForAccessibility="no"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/band_text"
+            style="@style/WeatherWidget.BandText" />
 
         <TextView
             android:id="@+id/band_more"
@@ -141,9 +147,7 @@
 
         <TextView
             android:id="@+id/widget_notice"
-            style="@style/WeatherWidget.Notice"
-            android:layout_height="@dimen/widget_notice_height"
-            android:layout_marginEnd="8dp"
+            style="@style/WeatherWidget.Notice.InRow"
             android:visibility="gone" />
 
         <TextView

@@ -44,7 +44,7 @@ internal object WidgetViews {
         views.removeAllViews(R.id.days)
         views.card(settings)
         when (content) {
-            is WidgetContent.Plain -> plain(context, views, content, flat)
+            is WidgetContent.Plain -> plain(context, views, content, size, bucket)
             is WidgetContent.Weather if flat -> flatWeather(context, views, content, size, settings)
             is WidgetContent.Weather -> weather(context, views, content, size, bucket, settings.animation)
         }
@@ -67,13 +67,53 @@ internal object WidgetViews {
             R.id.days,
         )
 
+    /** The parts of the flat layout's "now" column a plain text hides, all but its short form and itself. */
+    private val flatNowParts =
+        intArrayOf(
+            R.id.now_icon,
+            R.id.now_icon_animated,
+            R.id.now_temperature,
+            R.id.now_line,
+            R.id.now_line_long,
+            R.id.widget_notice,
+            R.id.now_today_flat,
+            R.id.stale,
+        )
+
+    /**
+     * A plain text on the card, below a warning that applies (D18): the band in the wide and tall buckets, the short
+     * form in the small and the flat one, where the text stands in "now"'s text area, widened to the card.
+     */
     private fun plain(
         context: Context,
         views: RemoteViews,
         content: WidgetContent.Plain,
-        flat: Boolean,
+        size: SizeF,
+        bucket: SizeBucket,
     ) {
-        for (id in if (flat) flatParts else parts) views.setViewVisibility(id, View.GONE)
+        val room = Room(context.resources, size, notice = false, band = false)
+        if (bucket == SizeBucket.FLAT) {
+            for (id in flatParts + flatNowParts) views.setViewVisibility(id, View.GONE)
+            views.setViewVisibility(R.id.now_column, View.VISIBLE)
+            views.setViewLayoutWidth(
+                R.id.now_column,
+                ViewGroup.LayoutParams.MATCH_PARENT.toFloat(),
+                TypedValue.COMPLEX_UNIT_PX,
+            )
+            views.setViewLayoutMargin(R.id.now_text, RemoteViews.MARGIN_START, 0f, TypedValue.COMPLEX_UNIT_PX)
+            WarningViews.shortForm(context, views, content.warning, room.inside(), R.dimen.widget_short_flat_text)
+        } else {
+            for (id in parts) views.setViewVisibility(id, View.GONE)
+            val small = bucket == SizeBucket.SMALL
+            WarningViews.band(context, views, content.warning.takeUnless { small })
+            WarningViews.shortForm(
+                context,
+                views,
+                content.warning.takeIf { small },
+                room.inside(),
+                R.dimen.widget_short_text,
+            )
+        }
         views.show(R.id.widget_plain, context.getString(content.text), Palette::text)
         views.setOnClickPendingIntent(R.id.widget, Taps.app(context))
     }
@@ -91,7 +131,7 @@ internal object WidgetViews {
         val band = content.warning.takeUnless { small }
         WarningViews.band(context, views, band)
         now(context, views, content.now, compact = small, animation)
-        val stale = content.stale?.let { context.getString(R.string.widget_stale, it) }
+        val stale = context.standText(content)
         views.today(R.id.now_today, R.id.now_high, R.id.now_low, content.now.today.takeUnless { small })
         // In the small bucket "Stand 14:30" takes the place of today's high and low (D16).
         views.today(
@@ -137,7 +177,7 @@ internal object WidgetViews {
 
         val hours = if (small) emptyList() else content.hours.take(room.hours())
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, animation) }
-        rest(context, views, content, flat = false)
+        rest(context, views, content, notice = content.signInAgain)
         val days = if (bucket == SizeBucket.TALL) content.days.take(room.days(hours.isNotEmpty())) else emptyList()
         views.rows(R.id.days, days) { WidgetRows.day(context, it, animation) }
     }
@@ -156,6 +196,12 @@ internal object WidgetViews {
         settings: WidgetSettings,
     ) {
         views.setViewVisibility(R.id.now_column, View.VISIBLE)
+        views.setViewLayoutMargin(
+            R.id.now_text,
+            RemoteViews.MARGIN_START,
+            context.resources.dimen(R.dimen.widget_flat_now_gap),
+            TypedValue.COMPLEX_UNIT_DIP,
+        )
         views.show(R.id.now_temperature, content.now.temperature, Palette::text)
         val room = Room(context.resources, size, notice = content.signInAgain, band = false)
         val wide = SizeBucket.wide(size)
@@ -190,9 +236,9 @@ internal object WidgetViews {
             line(context, views, room, content.now.line, twoLineRoom = text, lineText = R.dimen.widget_line_flat_text)
         }
         WarningViews.shortForm(context, views, content.warning, text, R.dimen.widget_short_flat_text)
-        // Today's high, low and rain below, or "Stand 14:30" in their place (D16); with "Neu anmelden", 36 dp high,
-        // both give way (D36).
-        val stale = content.stale?.let { context.getString(R.string.widget_stale, it) }.takeUnless { again }
+        // Today's high, low and rain below, or "Stand 14:30" in their place, also below "Neu anmelden" (D16); with
+        // "Neu anmelden", 36 dp high, today's line gives way (D36).
+        val stale = context.standText(content)
         views.show(R.id.stale, stale, Palette::textMuted)
         flatToday(context, views, content.now.takeUnless { again || stale != null }, room, text)
 
@@ -201,21 +247,18 @@ internal object WidgetViews {
         val degrees = room.flatDayDegrees(days.map { it.highLow })
         views.rows(R.id.days, days) { WidgetRows.flatDay(context, it, degrees, settings.animation) }
         views.rows(R.id.hours, hours) { WidgetRows.hour(context, it, settings.animation) }
-        rest(context, views, content, flat = true)
+        rest(context, views, content, notice = again)
     }
 
     /**
-     * What both layouts show after "now" and its parts: "Neu anmelden" while it applies, but in the [flat] bucket not
-     * while a warning takes its place there; no plain text; the tap.
+     * What both layouts show after "now" and its parts: "Neu anmelden" while [notice] says so, no plain text, the tap.
      */
     private fun rest(
         context: Context,
         views: RemoteViews,
         content: WidgetContent.Weather,
-        flat: Boolean,
+        notice: Boolean,
     ) {
-        // In the flat bucket a warning's short form takes the line's place before "Neu anmelden" (D47).
-        val notice = content.signInAgain && !(flat && content.warning != null)
         val again = context.getString(R.string.widget_sign_in_again).takeIf { notice }
         views.show(R.id.widget_notice, again, Palette::accent)
         views.show(R.id.widget_plain, null, Palette::text)
@@ -346,7 +389,7 @@ internal object WidgetViews {
             val text = resources.getDimension(R.dimen.widget_flat_today_text)
             val left =
                 width - resources.widthOf(today, text, R.dimen.widget_flat_today_low_gap) -
-                    dimen(R.dimen.widget_flat_today_rain_gap) - dimen(R.dimen.widget_flat_fit_slack)
+                    dimen(R.dimen.widget_flat_today_rain_gap) - dimen(R.dimen.widget_fit_slack)
             return resources
                 .sizes(R.dimen.widget_flat_today_text, R.dimen.widget_flat_today_text_least)
                 .firstOrNull { resources.widthOf(rain, it) <= left }
@@ -358,7 +401,7 @@ internal object WidgetViews {
          */
         fun flatDayDegrees(days: List<WidgetContent.HighLow>): Float {
             val day = flatStripRoom / days.size - dimen(R.dimen.widget_flat_day_gap)
-            val half = (day - dimen(R.dimen.widget_flat_day_low_gap)) / 2 - dimen(R.dimen.widget_flat_fit_slack)
+            val half = (day - dimen(R.dimen.widget_flat_day_low_gap)) / 2 - dimen(R.dimen.widget_fit_slack)
             val sizes = resources.sizes(R.dimen.widget_flat_day_text, R.dimen.widget_flat_day_text_least)
             return sizes.firstOrNull { size ->
                 days.all {
@@ -439,3 +482,7 @@ private fun RemoteViews.nowIcon(
     }
     icon(context, R.id.now_icon, R.id.now_icon_animated, icon, animation.now)
 }
+
+/** "Stand 14:30" while the snapshot is old (D16), else none. */
+private fun Context.standText(content: WidgetContent.Weather): String? =
+    content.stale?.let { getString(R.string.widget_stale, it) }

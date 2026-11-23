@@ -71,13 +71,14 @@ data class SensorData internal constructor(
             }
 
     /**
-     * `warnings`, every warning the DWD issued, also those that begin later, in the order sent; a field absent, of
-     * another kind or, for `level` and `type`, not a whole number reads as absent, as does a start or an end that is
-     * not a time with an offset. An element that is not an object is left out.
+     * `warnings`, every warning the DWD issued, also those that begin later, in the order sent; none when the field is
+     * absent or not a list, which says the warning sensor delivers nothing, where `[]` says there is no warning (D3).
+     * A field of a warning absent, of another kind or, for `level` and `type`, not a whole number reads as absent, as
+     * does a start or an end that is not a time with an offset. An element that is not an object is left out.
      */
-    val warnings: List<Warning>
+    val warnings: List<Warning>?
         get() =
-            entries("warnings").map { warning ->
+            (json["warnings"] as? JsonArray)?.filterIsInstance<JsonObject>()?.map { warning ->
                 Warning(
                     level = warning.whole("level"),
                     type = warning.whole("type"),

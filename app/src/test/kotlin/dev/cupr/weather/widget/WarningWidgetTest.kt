@@ -116,6 +116,12 @@ class WarningWidgetTest : WidgetTestBase() {
 
         assertEquals("Unwetter", widget.shown().first())
         assertTrue(WidgetHost.visible(widget.findViewById(R.id.band_symbol), widget))
+        // The word and the symbol side by side at the band's start, its text's empty room after them.
+        val laid = laidOut(widget, wide)
+        val word = laid.findViewById<View>(R.id.band_word)
+        val symbol = laid.findViewById<View>(R.id.band_symbol)
+        assertEquals(dp(2), symbol.left - word.right)
+        assertEquals(View.INVISIBLE, laid.findViewById<View>(R.id.band_text).visibility)
         assertEquals(R.drawable.symbol_rain, widget.image(R.id.band_symbol))
         assertEquals(
             PorterDuffColorFilter(Palette.LIGHT.scale5, PorterDuff.Mode.SRC_ATOP),
@@ -232,7 +238,7 @@ class WarningWidgetTest : WidgetTestBase() {
     }
 
     @Test
-    fun `with Neu anmelden the notice line says Stand after it in the wide and tall buckets`() {
+    fun `with Neu anmelden the notice line says Stand after it, and the flat bucket says it below it`() {
         signIn()
         written(SampleWeather.full(), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
         Services.account(application).reject()
@@ -243,8 +249,12 @@ class WarningWidgetTest : WidgetTestBase() {
         assertEquals(listOf("Neu anmelden", "Stand 11:40"), WidgetHost.shown(row))
         assertEquals(Palette.LIGHT.accent, widget.text(R.id.widget_notice).currentTextColor)
         assertEquals(Palette.LIGHT.textMuted, widget.text(R.id.notice_stale).currentTextColor)
-        // In the flat bucket "Neu anmelden" takes the line's and today's line's place, and Stand gives way with it.
-        assertEquals(listOf("7°", "Neu anmelden"), placed(flat).shown().take(2))
+        // In the flat bucket "Neu anmelden" takes the line's place and today's line gives way; Stand keeps its place
+        // (D16).
+        assertEquals(
+            listOf("7°", "Neu anmelden", "Stand 11:40"),
+            placed(SizeBucket.sizeOf(columns = 2, rows = 1)).shown(),
+        )
     }
 
     @Test
@@ -359,6 +369,48 @@ class WarningWidgetTest : WidgetTestBase() {
         assertTrue(symbol.width > symbol.height)
         val band = placed(wide).findViewById<View>(R.id.band_symbol).layoutParams
         assertEquals(dp(16) * aspect, band.width.toFloat(), 1f)
+    }
+
+    @Test
+    fun `a tall widget whose only notice is Stand shows a day fewer, and the fresh one all`() {
+        signIn()
+        written(SampleWeather.full(), fetchedAt = SampleWeather.NOW.minus(Duration.ofHours(2)))
+        val id = WidgetHost.place(application, tall)
+        val old = WidgetHost.view(application, id)
+        assertEquals(listOf("Stand 11:40"), WidgetHost.shown(old.findViewById(R.id.notice_row)))
+        assertEquals(4, WidgetHost.days(old).size)
+
+        written(SampleWeather.full())
+        Widgets.update(application)
+        assertEquals(5, WidgetHost.days(WidgetHost.view(application, id)).size)
+    }
+
+    @Test
+    fun `a warning that applies shows above the plain text of a snapshot without a usable now, in each bucket`() {
+        signIn()
+        written("""{"schema_version":1,"now":{}}""".warned(ORKAN))
+        val text = "Noch keine Daten – zum Öffnen tippen"
+
+        for (size in listOf(wide, tall)) {
+            val widget = placed(size)
+            assertEquals("$size", listOf(ORKAN_HEADLINE, text), widget.shown())
+            assertEquals(listOf(R.id.band, R.id.widget_plain), shownParts(widget))
+        }
+        for (size in listOf(small, flat, SizeBucket.sizeOf(columns = 2, rows = 1))) {
+            val widget = placed(size)
+            assertEquals("$size", text, widget.shown().last())
+            assertTrue("$size", WidgetHost.visible(widget.findViewById(R.id.short_form), widget))
+            assertShortForm(widget, Palette.LIGHT.scale4, R.drawable.symbol_wind)
+            val form = widget.findViewById<View>(R.id.short_form)
+            val plain = widget.findViewById<View>(R.id.widget_plain)
+            assertEquals("$size", form.parent, plain.parent)
+            val parent = form.parent as ViewGroup
+            assertTrue("$size", parent.indexOfChild(form) < parent.indexOfChild(plain))
+        }
+
+        written("""{"schema_version":1,"now":{}}""")
+        Widgets.update(application)
+        for (size in listOf(wide, small, flat)) assertEquals(listOf(text), placed(size).shown())
     }
 
     private fun assertShortForm(

@@ -1,9 +1,12 @@
 package dev.cupr.weather.widget
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.StringRes
 import dev.cupr.weather.R
+import dev.cupr.weather.app.CLOCK_TIME
 import dev.cupr.weather.app.Services
+import dev.cupr.weather.app.sameDay
 import dev.cupr.weather.ha.SensorData
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.Snapshot
@@ -20,9 +23,13 @@ import kotlin.math.roundToLong
  * plain text when there is none to show. Which of it fits is the size bucket's matter ([WidgetViews]).
  */
 sealed interface WidgetContent {
-    /** No weather to show: a plain text on the card. */
+    /**
+     * No weather to show: a plain text on the card; and the [warning] that applies, if any, which shows above it while
+     * the snapshot is someone's (D18).
+     */
     data class Plain(
         @param:StringRes val text: Int,
+        val warning: Warning?,
     ) : WidgetContent
 
     /**
@@ -36,16 +43,16 @@ sealed interface WidgetContent {
         val hours: List<Hour>,
         val days: List<Day>,
         val signInAgain: Boolean,
-        val warning: Warning? = null,
-        val stale: String? = null,
+        val warning: Warning?,
+        val stale: String?,
     ) : WidgetContent
 
     /**
-     * The warning the widget shows (D15, D47): of those that apply, the one of the highest [level], 1 to 4, its
-     * [kind] and its [headline] as the DWD wrote it, none without one; and how many more apply ([more]).
+     * The warning the widget shows (D15, D47): of those that apply, the one of the highest [level], its [kind] and its
+     * [headline] as the DWD wrote it, none without one or with a blank one; and how many more apply ([more]).
      */
     data class Warning(
-        val level: Int,
+        val level: WarningLevel,
         val kind: WarningKind,
         val headline: String?,
         val more: Int,
@@ -126,9 +133,10 @@ sealed interface WidgetContent {
         /** How old the snapshot may be before the widget says when it was fetched (D16). */
         private val STALE_AFTER: Duration = Duration.ofHours(1)
 
-        /** The DWD's warning levels, the lowest and the highest (D15). */
-        private const val LOWEST_LEVEL = 1
-        private const val HIGHEST_LEVEL = 4
+        private const val TAG = "WidgetContent"
+
+        /** The day before a time on another day than today: "21.11." (D16). */
+        private val DAY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.")
 
         /** What the widget shows now, from the sign-in and the snapshot the app keeps, at [clock]'s time and zone. */
         fun read(
@@ -140,26 +148,34 @@ sealed interface WidgetContent {
          * What the widget shows for [state] and [snapshot] at [clock]'s time, in its zone (D33). A snapshot with
          * neither a temperature nor a condition the app knows counts as none. Signed in without one, "Noch keine
          * Daten"; without one otherwise, or signed out, "Nicht angemeldet"; else the snapshot's weather, with "Neu
-         * anmelden" while the sign-in is refused or unreadable.
+         * anmelden" while the sign-in is refused or unreadable. A warning of the snapshot that applies shows with
+         * either, as long as someone is signed in, also with a refused or unreadable sign-in (D18, D32); a snapshot
+         * without `warnings` is logged (D17).
          */
         fun of(
             state: Account.State,
             snapshot: Snapshot?,
             clock: Clock,
         ): WidgetContent {
-            val data = snapshot?.data?.takeIf { it.temperature != null || Condition.of(it.condition)?.word != null }
+            val shown = snapshot?.takeIf { state != Account.State.SIGNED_OUT }
+            val warnings = shown?.data?.warnings
+            if (shown != null && warnings == null) {
+                Log.w(TAG, "The snapshot has no warnings: the warning sensor delivers nothing")
+            }
+            val warning = warning(warnings.orEmpty(), clock.instant())
+            val data = shown?.data?.takeIf { it.temperature != null || Condition.of(it.condition)?.word != null }
             return when {
                 data == null && state == Account.State.SIGNED_IN -> {
-                    Plain(R.string.widget_no_data)
+                    Plain(R.string.widget_no_data, warning)
                 }
 
-                data == null || state == Account.State.SIGNED_OUT -> {
-                    Plain(R.string.widget_signed_out)
+                data == null -> {
+                    Plain(R.string.widget_signed_out, warning)
                 }
 
                 else -> {
-                    weather(data, clock, state == Account.State.REJECTED || state == Account.State.UNREADABLE)
-                        .copy(warning = warning(data.warnings, clock.instant()), stale = stale(snapshot, clock))
+                    val again = state == Account.State.REJECTED || state == Account.State.UNREADABLE
+                    weather(data, clock, again, warning, stale(shown, clock))
                 }
             }
         }
@@ -168,6 +184,8 @@ sealed interface WidgetContent {
             data: SensorData,
             clock: Clock,
             signInAgain: Boolean,
+            warning: Warning?,
+            stale: String?,
         ): Weather {
             val now = clock.instant()
             val today = LocalDate.now(clock)
@@ -205,25 +223,30 @@ sealed interface WidgetContent {
                             )
                         },
                 signInAgain = signInAgain,
+                warning = warning,
+                stale = stale,
             )
         }
 
         /**
          * The warning to show at [now] of [warnings] (D15): of those that apply, their start passed or absent and
          * their end not reached or absent, the one of the highest level, the first sent among equals, with how many
-         * more apply; none when none applies. A level absent, below 1 or above 4 counts as the nearest of 1 and 4.
+         * more apply; none when none applies. A level absent or below 1 counts as 1, one above 4 as 4; a blank
+         * headline as none.
          */
         internal fun warning(
             warnings: List<SensorData.Warning>,
             now: Instant,
         ): Warning? {
             val applying = warnings.filter { (it.start == null || it.start <= now) && (it.end == null || now < it.end) }
-            val shown = applying.maxByOrNull { level(it) } ?: return null
-            return Warning(level(shown), WarningKind.of(shown.type), shown.headline, applying.size - 1)
+            val shown = applying.maxByOrNull { WarningLevel.of(it.level) } ?: return null
+            return Warning(
+                level = WarningLevel.of(shown.level),
+                kind = WarningKind.of(shown.type),
+                headline = shown.headline?.takeUnless(String::isBlank),
+                more = applying.size - 1,
+            )
         }
-
-        private fun level(warning: SensorData.Warning): Int =
-            (warning.level ?: LOWEST_LEVEL).coerceIn(LOWEST_LEVEL, HIGHEST_LEVEL)
 
         /**
          * When [snapshot] was fetched, while that is over an hour before [clock]'s time (D16): its time as "14:30" in
@@ -236,11 +259,8 @@ sealed interface WidgetContent {
             if (Duration.between(snapshot.fetchedAt, clock.instant()) <= STALE_AFTER) return null
             val at = snapshot.fetchedAt.atZone(clock.zone)
             val time = at.format(CLOCK_TIME)
-            return if (at.toLocalDate() == LocalDate.now(clock)) time else "${at.format(DAY)} $time"
+            return if (sameDay(snapshot.fetchedAt, clock.instant(), clock.zone)) time else "${at.format(DAY)} $time"
         }
-
-        private val CLOCK_TIME = DateTimeFormatter.ofPattern("HH:mm")
-        private val DAY = DateTimeFormatter.ofPattern("dd.MM.")
 
         /**
          * Whether "now" shows the night form (D36): at night; in the morning's twilight too and not in the evening's,

@@ -4,12 +4,8 @@ import androidx.annotation.DrawableRes
 import dev.cupr.weather.R
 
 /**
- * The kind of a warning, from its event code, EC_II, by the DWD's groups of the codes, and its symbol, made of Google's
- * Material Symbols after the official services' pictograms, frost, heat and ice composed of two (D48). The groups are
- * those of the "CAP DWD Profile" 2.1.14 (17 October 2023), section 3.3, without the codes it marks as optional members;
- * where a code belongs to several groups, its kind is the group its event's name names (section 3.1): a thunderstorm
- * with gusts, rain or hail is a thunderstorm, a snow drift is snow, a thaw is a thaw. A code outside them, also the
- * test warnings and the powerline vibrations, which have no symbol of their own, shows [OTHER]'s warning sign.
+ * The kind of a warning, from its event code, EC_II, by the DWD's groups of the codes (D48), and its symbol; a code
+ * outside them, or none, shows [OTHER]'s warning sign.
  */
 enum class WarningKind(
     @param:DrawableRes val symbol: Int,
@@ -46,10 +42,7 @@ enum class WarningKind(
     /** UV. */
     UV(R.drawable.symbol_uv, "246"),
 
-    /**
-     * HEAT; the profile's group lists only 247, while its events (section 3.1) add 248, EXTREME HITZE, which is heat
-     * too.
-     */
+    /** HEAT. */
     HEAT(R.drawable.symbol_heat, "247 248"),
 
     /** Any other code, or none. */

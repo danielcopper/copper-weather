@@ -13,65 +13,38 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import java.io.File
-import java.util.concurrent.TimeUnit
 
 /**
  * The weather icons (D38, D43): the drawables and the animated icons' layouts in the repo are what
  * `scripts/weather_icons.py` writes from the SVGs in `icons/weather`, the script converts what it should and refuses
- * the rest, and each condition finds its image, still and animated. The warnings' symbols (D48) likewise: what
- * `scripts/warning_symbols.py` writes from the Material Symbols in `icons/symbols`, each kind's loading.
+ * the rest, and each condition finds its image, still and animated.
  */
 @RunWith(RobolectricTestRunner::class)
 class WeatherIconsTest {
     private val application = ApplicationProvider.getApplicationContext<Application>()
 
-    /** The repository's root; the tests run in the app module's folder. */
-    private val root = File("..").canonicalFile
-
     @Test
     fun `the weather drawables are what the script writes from the SVGs`() {
-        val (code, output) = run("python3", "-I", "-B", "scripts/weather_icons.py", "--check")
+        val (code, output) = Scripts.run("python3", "-I", "-B", "scripts/weather_icons.py", "--check")
 
         assertEquals(output, 0, code)
-    }
-
-    @Test
-    fun `the warning symbols are what their script writes from the Material Symbols`() {
-        val (code, output) = run("python3", "-I", "-B", "scripts/warning_symbols.py", "--check")
-
-        assertEquals(output, 0, code)
-    }
-
-    @Test
-    fun `each warning kind has its own symbol 24 dp high, a composite wider and a little higher`() {
-        val symbols =
-            R.drawable::class.java.fields
-                .filter { it.name.startsWith("symbol_") }
-                .map { it.getInt(null) }
-
-        assertEquals(symbols.toSet(), WarningKind.entries.map { it.symbol }.toSet())
-        assertEquals(WarningKind.entries.size, symbols.size)
-        val density = application.resources.displayMetrics.density
-        val composites = setOf(WarningKind.FROST, WarningKind.HEAT, WarningKind.ICE)
-        for (kind in WarningKind.entries) {
-            val drawable = checkNotNull(application.getDrawable(kind.symbol)) { kind.name }
-            val width = drawable.intrinsicWidth / density
-            val height = drawable.intrinsicHeight / density
-            if (kind in composites) {
-                // The second symbol reaches up to 0.7 dp above the main one's top (D48).
-                assertTrue(kind.name + " $height", height >= SYMBOL_DP && height <= SYMBOL_DP + 1)
-                assertTrue(kind.name + " $width", width > SYMBOL_DP)
-            } else {
-                assertEquals(kind.name, SYMBOL_DP, height, 0.5f)
-                assertEquals(kind.name, SYMBOL_DP, width, 0.5f)
-            }
-        }
     }
 
     @Test
     fun `the script converts what the SVGs use and refuses anything else`() {
-        val (code, output) = run("python3", "-I", "-B", "-m", "unittest", "discover", "-s", "scripts", "-t", "scripts")
+        val (code, output) =
+            Scripts.run(
+                "python3",
+                "-I",
+                "-B",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "scripts",
+                "-t",
+                "scripts",
+            )
 
         assertEquals(output, 0, code)
         assertTrue(output, output.contains("OK"))
@@ -165,35 +138,10 @@ class WeatherIconsTest {
         }
     }
 
-    /**
-     * Runs [command] in the repository's root; its exit code and what it wrote. The output goes to a file, so a command
-     * that hangs fails the test after [timeout] seconds rather than blocking a read of its output.
-     */
-    private fun run(
-        vararg command: String,
-        timeout: Long = TIMEOUT_SECONDS,
-    ): Pair<Int, String> {
-        val log = File.createTempFile("weather-icons", ".log")
-        try {
-            val process =
-                ProcessBuilder(*command)
-                    .directory(root)
-                    .redirectErrorStream(true)
-                    .redirectOutput(log)
-                    .start()
-            if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                error("${command.joinToString(" ")} did not end within $timeout s")
-            }
-            return process.exitValue() to log.readText()
-        } finally {
-            log.delete()
-        }
-    }
-
     @Test
     fun `a command that does not end fails the test once its time is up`() {
-        val failure = runCatching { run("python3", "-I", "-B", "-c", "import time; time.sleep(60)", timeout = 1) }
+        val failure =
+            runCatching { Scripts.run("python3", "-I", "-B", "-c", "import time; time.sleep(60)", timeout = 1) }
 
         assertEquals(
             "python3 -I -B -c import time; time.sleep(60) did not end within 1 s",
@@ -204,9 +152,5 @@ class WeatherIconsTest {
     private companion object {
         /** The common frame every icon shows, the square around what all of them draw, of the SVGs' 64 (D38). */
         const val ICON_DP = 59.21f
-
-        /** A Material Symbol's size (D48). */
-        const val SYMBOL_DP = 24f
-        const val TIMEOUT_SECONDS = 60L
     }
 }

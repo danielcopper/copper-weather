@@ -83,7 +83,7 @@ class SensorDataTest {
     }
 
     @Test
-    fun `the warnings read their level, type, headline, start and end, each absent as sent or of another kind`() {
+    fun `the warnings read their fields, each absent as sent or of another kind, and an absent list as none`() {
         val data =
             data(
                 """{"warnings":[{"level":2,"type":52,"headline":"Amtliche WARNUNG vor STURMBÖEN",""" +
@@ -106,7 +106,10 @@ class SensorDataTest {
             data.warnings,
         )
         assertEquals(emptyList<SensorData.Warning>(), data("""{"warnings":[]}""").warnings)
-        assertEquals(emptyList<SensorData.Warning>(), data("{}").warnings)
+        // Absent or not a list: the warning sensor delivers nothing, which is not the same as no warning (D17).
+        assertNull(data("{}").warnings)
+        assertNull(data("""{"warnings":{}}""").warnings)
+        assertNull(data("""{"warnings":null}""").warnings)
     }
 
     @Test

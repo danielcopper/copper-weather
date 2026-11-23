@@ -3,7 +3,9 @@ package dev.cupr.weather.signin
 import android.content.Context
 import androidx.annotation.StringRes
 import dev.cupr.weather.R
+import dev.cupr.weather.app.CLOCK_TIME
 import dev.cupr.weather.app.Services
+import dev.cupr.weather.app.sameDay
 import dev.cupr.weather.store.Account
 import dev.cupr.weather.store.FailedFetch
 import dev.cupr.weather.store.FetchCause
@@ -95,7 +97,7 @@ data class Status(
     ): String {
         val local = at.atZone(zone)
         val time = local.format(CLOCK_TIME)
-        val isToday = local.toLocalDate() == now.atZone(zone).toLocalDate()
+        val isToday = sameDay(at, now, zone)
         val args = listOfNotNull(subject, time) + listOfNotNull(local.format(DAY).takeUnless { isToday })
         return context.getString(if (isToday) today else day, *args.toTypedArray())
     }
@@ -115,7 +117,6 @@ data class Status(
             }
 
     companion object {
-        private val CLOCK_TIME = DateTimeFormatter.ofPattern("HH:mm")
         private val DAY = DateTimeFormatter.ofPattern("d. MMMM", Locale.GERMAN)
 
         /**

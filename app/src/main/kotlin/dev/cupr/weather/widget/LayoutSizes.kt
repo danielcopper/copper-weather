@@ -33,7 +33,7 @@ internal fun Resources.dimen(
 ): Float = dp(getDimension(size))
 
 /**
- * The sizes in px from [largest] down to [least], a step of `widget_flat_text_step` apart, largest first: those the app
+ * The sizes in px from [largest] down to [least], a step of `widget_text_step` apart, largest first: those the app
  * picks from for a text it sizes to fit (D36, D41).
  */
 internal fun Resources.sizes(
@@ -41,6 +41,6 @@ internal fun Resources.sizes(
     @DimenRes least: Int,
 ): List<Float> {
     val from = getDimension(largest)
-    val step = getDimension(R.dimen.widget_flat_text_step)
+    val step = getDimension(R.dimen.widget_text_step)
     return (0..Math.round((from - getDimension(least)) / step)).map { from - it * step }
 }

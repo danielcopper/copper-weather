@@ -9,12 +9,16 @@ import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowLog
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 
 /** What the widget makes of the snapshot's weather at a time: its texts and which hours and days (D33, D36, D37). */
+@RunWith(RobolectricTestRunner::class)
 class WidgetContentTest {
     private val now = SampleWeather.NOW
 
@@ -173,7 +177,7 @@ class WidgetContentTest {
     @Test
     fun `a warning that applies shows with its level, kind and headline, and one that begins later does not`() {
         assertEquals(
-            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
             WidgetContent.warning(listOf(warning()), now),
         )
         assertNull(WidgetContent.warning(listOf(warning(start = Duration.ofMinutes(1))), now))
@@ -186,15 +190,15 @@ class WidgetContentTest {
     @Test
     fun `a warning without a start shows at once, and one without an end while the snapshot carries it`() {
         assertEquals(
-            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
             WidgetContent.warning(listOf(warning(start = null)), now),
         )
         assertEquals(
-            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
             WidgetContent.warning(listOf(warning(start = Duration.ofDays(-3), end = null)), now),
         )
         assertEquals(
-            WidgetContent.Warning(2, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
+            WidgetContent.Warning(WarningLevel.MODERATE, WarningKind.WIND, "Amtliche WARNUNG vor STURMBÖEN", more = 0),
             WidgetContent.warning(listOf(warning(start = null, end = null)), now),
         )
     }
@@ -207,11 +211,11 @@ class WidgetContentTest {
         val later = warning(level = 4, start = Duration.ofHours(2))
 
         assertEquals(
-            WidgetContent.Warning(3, WarningKind.WIND, gusts.headline, more = 2),
+            WidgetContent.Warning(WarningLevel.SEVERE, WarningKind.WIND, gusts.headline, more = 2),
             WidgetContent.warning(listOf(frost, gusts, rain, later), now),
         )
         assertEquals(
-            WidgetContent.Warning(3, WarningKind.WIND, gusts.headline, more = 1),
+            WidgetContent.Warning(WarningLevel.SEVERE, WarningKind.WIND, gusts.headline, more = 1),
             WidgetContent.warning(listOf(frost, gusts), now),
         )
     }
@@ -219,13 +223,26 @@ class WidgetContentTest {
     @Test
     fun `a level absent or outside 1 to 4 counts as the nearest of them, a headline and a type may be absent`() {
         val shown =
-            listOf(null, 0, -2, 1, 4, 5, 20).associateWith {
+            listOf(null, 0, -2, 1, 2, 3, 4, 5, 20).associateWith {
                 WidgetContent.warning(listOf(warning(level = it)), now)?.level
             }
 
-        assertEquals(mapOf(null to 1, 0 to 1, -2 to 1, 1 to 1, 4 to 4, 5 to 4, 20 to 4), shown)
         assertEquals(
-            WidgetContent.Warning(1, WarningKind.OTHER, null, more = 0),
+            mapOf(
+                null to WarningLevel.MINOR,
+                0 to WarningLevel.MINOR,
+                -2 to WarningLevel.MINOR,
+                1 to WarningLevel.MINOR,
+                2 to WarningLevel.MODERATE,
+                3 to WarningLevel.SEVERE,
+                4 to WarningLevel.EXTREME,
+                5 to WarningLevel.EXTREME,
+                20 to WarningLevel.EXTREME,
+            ),
+            shown,
+        )
+        assertEquals(
+            WidgetContent.Warning(WarningLevel.MINOR, WarningKind.OTHER, null, more = 0),
             WidgetContent.warning(listOf(warning(level = null, type = null, headline = null)), now),
         )
     }
@@ -234,7 +251,8 @@ class WidgetContentTest {
     fun `the event codes take their kinds by the DWD's groups, a code outside them the warning sign`() {
         val kinds =
             mapOf(
-                WarningKind.THUNDERSTORM to listOf(31, 33, 34, 36, 38, 40, 41, 42, 44, 45, 46, 48, 49, 90, 93, 95, 96),
+                WarningKind.THUNDERSTORM to
+                    listOf(31, 33, 34, 36, 38, 40, 41, 42, 44, 45, 46, 48, 49, 90, 91, 92, 93, 95, 96),
                 WarningKind.WIND to listOf(11, 12, 13, 51, 52, 53, 54, 55, 56, 57, 58),
                 WarningKind.RAIN to listOf(61, 62, 63, 64, 65, 66),
                 WarningKind.SNOW to listOf(70, 71, 72, 73, 74, 75, 76),
@@ -260,7 +278,7 @@ class WidgetContentTest {
                 """"start":"2026-11-20T12:00:00+01:00","end":"2026-11-20T18:00:00+01:00"}]"""
 
         assertEquals(
-            WidgetContent.Warning(1, WarningKind.FROST, "Amtliche WARNUNG vor FROST", more = 0),
+            WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", more = 0),
             weather(SampleWeather.data(warnings)).warning,
         )
         assertNull(weather(SampleWeather.data()).warning)
@@ -282,5 +300,56 @@ class WidgetContentTest {
         assertEquals("11:40", stale(now.minus(Duration.ofHours(2))))
         assertEquals("19.11. 23:40", stale(now.minus(Duration.ofHours(14))))
         assertNull(stale(now.plus(Duration.ofHours(2))))
+    }
+
+    @Test
+    fun `a blank headline reads as none`() {
+        for (headline in listOf("", "  ")) {
+            assertNull(WidgetContent.warning(listOf(warning(headline = headline)), now)?.headline)
+        }
+    }
+
+    private fun content(
+        data: String,
+        state: Account.State = Account.State.SIGNED_IN,
+    ): WidgetContent {
+        val read = SensorData.read(Json.parseToJsonElement(data).jsonObject) as SensorData.Read.Readable
+        return WidgetContent.of(state, Snapshot(now, read.data), SampleWeather.CLOCK)
+    }
+
+    private val frostWarning =
+        ""","warnings":[{"level":1,"type":22,"headline":"Amtliche WARNUNG vor FROST"}]"""
+
+    @Test
+    fun `without a warnings field the content logs it and shows no warning, as with none`() {
+        ShadowLog.clear()
+        assertNull((content(SampleWeather.data()) as WidgetContent.Weather).warning)
+        assertEquals(
+            listOf("The snapshot has no warnings: the warning sensor delivers nothing"),
+            ShadowLog.getLogsForTag("WidgetContent").map { it.msg },
+        )
+
+        ShadowLog.clear()
+        assertNull((content(SampleWeather.data(""","warnings":[]""")) as WidgetContent.Weather).warning)
+        assertNull((content(SampleWeather.data(""","warnings":{}""")) as WidgetContent.Weather).warning)
+        assertEquals(1, ShadowLog.getLogsForTag("WidgetContent").size)
+    }
+
+    @Test
+    fun `a warning that applies shows also with the plain text of a snapshot without a usable now`() {
+        val empty = """{"schema_version":1$frostWarning}"""
+        val frost = WidgetContent.Warning(WarningLevel.MINOR, WarningKind.FROST, "Amtliche WARNUNG vor FROST", 0)
+
+        assertEquals(WidgetContent.Plain(R.string.widget_no_data, frost), content(empty))
+        assertEquals(
+            WidgetContent.Plain(R.string.widget_signed_out, frost),
+            content(empty, Account.State.REJECTED),
+        )
+        // Signed out, the snapshot left behind is no one's (D31).
+        assertEquals(
+            WidgetContent.Plain(R.string.widget_signed_out, null),
+            content(SampleWeather.data(frostWarning), Account.State.SIGNED_OUT),
+        )
+        assertEquals(WidgetContent.Plain(R.string.widget_no_data, null), content("""{"schema_version":1}"""))
     }
 }

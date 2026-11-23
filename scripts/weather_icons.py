@@ -1607,38 +1607,45 @@ def shown(path):
         return path
 
 
-def run(check, sources=SOURCES, res=RES, err=None, out=None):
-    """Writes the drawables of sources into res, or with check only compares them; the exit code."""
+def run(check, sources=SOURCES, res=RES, err=None, out=None, script="weather_icons", make=None, present=None):
+    """Writes the drawables of sources into res, or with check only compares them; the exit code.
+
+    script names the script in its messages; make and present, by default this script's outputs and existing, give
+    the drawables it writes and those of its in the repo now, so the warning symbols' script runs the same way.
+    """
     err = err or sys.stderr
     out = out or sys.stdout
+    make = make or outputs
+    present = present or existing
     try:
-        written = outputs(sources, res)
+        written = make(sources, res)
     except Unsupported as e:
-        print(f"weather_icons: {e}", file=err)
+        print(f"{script}: {e}", file=err)
         return 1
-    stray = existing(res) - set(written)
+    stray = present(res) - set(written)
     if check:
         differ = [p for p, text in written.items() if not p.exists() or p.read_text(encoding="utf-8") != text]
         for path in sorted(differ):
-            print(f"weather_icons: {shown(path)} is not what the script writes", file=err)
+            print(f"{script}: {shown(path)} is not what the script writes", file=err)
         for path in sorted(stray):
-            print(f"weather_icons: {shown(path)} has no source SVG", file=err)
+            print(f"{script}: {shown(path)} has no source SVG", file=err)
         return 1 if differ or stray else 0
     for path in stray:
         path.unlink()
     for path, text in written.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-    print(f"weather_icons: wrote {len(written)} drawables", file=out)
+    print(f"{script}: wrote {len(written)} drawables", file=out)
     return 0
 
 
-def main(argv):
+def main(argv, runner=None, usage=__doc__):
+    """Runs runner, by default this script's run, as the command line says: --check, or nothing to write."""
     check = argv[1:] == ["--check"]
     if argv[1:] and not check:
-        print(__doc__, file=sys.stderr)
+        print(usage, file=sys.stderr)
         return 2
-    return run(check)
+    return (runner or run)(check)
 
 
 if __name__ == "__main__":

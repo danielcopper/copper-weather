@@ -1,15 +1,12 @@
 package dev.cupr.weather.widget
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
-import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
-import androidx.core.graphics.ColorUtils
 import dev.cupr.weather.R
 import dev.cupr.weather.palette.Palette
 
@@ -21,15 +18,12 @@ internal object WarningViews {
     /** The alpha of a warning's ground: 16 % of 255, rounded (D47). */
     private const val TINT_ALPHA = 41
 
-    /** The DWD's level from which a warning is an "Unwetter" (D47). */
-    private const val SEVERE_LEVEL = 3
-
     /** A short form's symbol beside its text: its size for each of the text's (D47). */
     private const val SYMBOL_PER_TEXT = 1.1f
 
     /**
      * The warning band (D47), or nothing without [warning]: its headline unchanged on one line, ending in "…" where it
-     * must, without one the short form's word and symbol, and "+N" at its right when more apply.
+     * must, without one the short form's word and symbol side by side, and "+N" at its right when more apply.
      */
     fun band(
         context: Context,
@@ -38,9 +32,11 @@ internal object WarningViews {
     ) {
         views.setViewVisibility(R.id.band, if (warning == null) View.GONE else View.VISIBLE)
         if (warning == null) return
-        val colour = { palette: Palette -> palette.warningColour(warning.level) }
+        val colour = warning.level::colour
         views.ground(R.id.band, warning.level)
-        views.show(R.id.band_text, warning.headline ?: context.word(warning), colour)
+        // Without a headline its text stays as the empty room before "+N".
+        views.show(R.id.band_text, warning.headline, colour, hidden = View.INVISIBLE)
+        views.show(R.id.band_word, context.word(warning).takeIf { warning.headline == null }, colour)
         views.setViewVisibility(R.id.band_symbol, if (warning.headline == null) View.VISIBLE else View.GONE)
         if (warning.headline == null) {
             views.symbol(R.id.band_symbol, warning)
@@ -65,7 +61,7 @@ internal object WarningViews {
     ) {
         views.setViewVisibility(R.id.short_form, if (warning == null) View.GONE else View.VISIBLE)
         if (warning == null) return
-        val colour = { palette: Palette -> palette.warningColour(warning.level) }
+        val colour = warning.level::colour
         val word = context.word(warning)
         val more = context.more(warning)
         val aspect = context.aspect(warning)
@@ -125,7 +121,7 @@ internal object WarningViews {
                 ) +
                 (more?.let { widthOf(it, px, Typeface.BOLD) + gap } ?: 0f)
         }
-        val room = width - dimen(R.dimen.widget_flat_fit_slack)
+        val room = width - dimen(R.dimen.widget_fit_slack)
         val withWord = sizes.firstOrNull { widthAt(it, true) <= room }
         val text = withWord ?: sizes.firstOrNull { widthAt(it, false) <= room } ?: sizes.last()
         return Fit(text, text * SYMBOL_PER_TEXT, word = withWord != null)
@@ -133,26 +129,17 @@ internal object WarningViews {
 
     /** A warning's word (D47): "Warnung" for the DWD's levels 1 and 2, "Unwetter" for 3 and 4. */
     private fun Context.word(warning: WidgetContent.Warning): String =
-        getString(if (warning.level >= SEVERE_LEVEL) R.string.warning_word_severe else R.string.warning_word)
+        getString(if (warning.level.severe) R.string.warning_word_severe else R.string.warning_word)
 
     /** "+N" for the N more warnings that apply, none without. */
     private fun Context.more(warning: WidgetContent.Warning): String? =
         warning.more.takeIf { it > 0 }?.let { getString(R.string.warning_more, it) }
 
-    /**
-     * Tints the ground of [id], a rounded shape, in the colour of a warning of [level] at 16 %, light and dark: the
-     * tint takes the shape's place in its own colour, as the card's does (D45), so no drawable's number goes through
-     * RemoteViews (D42).
-     */
+    /** Tints the ground of [id] in the colour of a warning of [level] at 16 %, light and dark. */
     private fun RemoteViews.ground(
         id: Int,
-        level: Int,
-    ) = setColorStateList(
-        id,
-        "setBackgroundTintList",
-        ColorStateList.valueOf(ColorUtils.setAlphaComponent(Palette.LIGHT.warningColour(level), TINT_ALPHA)),
-        ColorStateList.valueOf(ColorUtils.setAlphaComponent(Palette.DARK.warningColour(level), TINT_ALPHA)),
-    )
+        level: WarningLevel,
+    ) = tintGround(id, level::colour, TINT_ALPHA)
 
     /** Shows the symbol of [warning]'s kind (D48) in the image view [id], in its level's colour, light and dark. */
     private fun RemoteViews.symbol(
@@ -166,8 +153,8 @@ internal object WarningViews {
     /** Tints the image view [id] in the colour of a warning of [level], light and dark. */
     private fun RemoteViews.tint(
         id: Int,
-        level: Int,
-    ) = setColorInt(id, "setColorFilter", Palette.LIGHT.warningColour(level), Palette.DARK.warningColour(level))
+        level: WarningLevel,
+    ) = setColorInt(id, "setColorFilter", level.colour(Palette.LIGHT), level.colour(Palette.DARK))
 
     /** How many times as wide as high the symbol of [warning]'s kind is, a composite wider than 1 (D48). */
     private fun Context.aspect(warning: WidgetContent.Warning): Float {
@@ -175,20 +162,3 @@ internal object WarningViews {
         return symbol.intrinsicWidth.toFloat() / symbol.intrinsicHeight
     }
 }
-
-private const val LEVEL_NOTE = 1
-private const val LEVEL_CAUTION = 2
-private const val LEVEL_DANGER = 3
-
-/**
- * The colour of a warning of the DWD's [level] on the palette's intensity scale (D47): level 1 `scale2`, 2 `scale3`, 3
- * `scale4`, 4 `scale5`.
- */
-@ColorInt
-internal fun Palette.warningColour(level: Int): Int =
-    when (level) {
-        LEVEL_NOTE -> scale2
-        LEVEL_CAUTION -> scale3
-        LEVEL_DANGER -> scale4
-        else -> scale5
-    }
