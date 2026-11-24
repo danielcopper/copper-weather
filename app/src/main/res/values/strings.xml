@@ -9,6 +9,28 @@
     <string name="widget_signed_out">Nicht angemeldet – zum Anmelden tippen</string>
     <string name="widget_no_data">Noch keine Daten – zum Öffnen tippen</string>
     <string name="widget_sign_in_again">Neu anmelden</string>
+    <!-- When the snapshot was fetched, while that is over an hour ago (D16): "14:30", on another day "21.11. 14:30". -->
+    <string name="widget_stale">Stand %1$s</string>
+    <!-- A warning band without a headline (D47): its word by the DWD's level, "Warnung" for 1 and 2, "Unwetter" for 3 and 4; and "+N", how many more warnings apply, in the band and the short form. -->
+    <string name="warning_word">Warnung</string>
+    <string name="warning_word_severe">Unwetter</string>
+    <string name="warning_more">+%1$d</string>
+    <!-- What a screen reader reads for a tile of the short form (D47): the level's word and the kind, "Warnung: Glätte"; the kinds' words; and for "+N", how many more warnings apply. -->
+    <string name="warning_tile">%1$s: %2$s</string>
+    <string name="warning_kind_thunderstorm">Gewitter</string>
+    <string name="warning_kind_wind">Sturm</string>
+    <string name="warning_kind_rain">Regen</string>
+    <string name="warning_kind_snow">Schnee</string>
+    <string name="warning_kind_fog">Nebel</string>
+    <string name="warning_kind_frost">Frost</string>
+    <string name="warning_kind_ice">Glätte</string>
+    <string name="warning_kind_thaw">Tauwetter</string>
+    <string name="warning_kind_uv">UV-Strahlung</string>
+    <string name="warning_kind_heat">Hitze</string>
+    <plurals name="warning_more_description">
+        <item quantity="one">und eine weitere</item>
+        <item quantity="other">und %1$d weitere</item>
+    </plurals>
     <!-- The widget picker's preview (D40): sample weather, not the user's. -->
     <string name="preview_temperature" translatable="false">7°</string>
     <string name="preview_high" translatable="false">9°</string>

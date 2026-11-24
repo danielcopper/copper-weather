@@ -13,8 +13,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import java.io.File
-import java.util.concurrent.TimeUnit
 
 /**
  * The weather icons (D38, D43): the drawables and the animated icons' layouts in the repo are what
@@ -25,19 +23,28 @@ import java.util.concurrent.TimeUnit
 class WeatherIconsTest {
     private val application = ApplicationProvider.getApplicationContext<Application>()
 
-    /** The repository's root; the tests run in the app module's folder. */
-    private val root = File("..").canonicalFile
-
     @Test
     fun `the weather drawables are what the script writes from the SVGs`() {
-        val (code, output) = run("python3", "-I", "-B", "scripts/weather_icons.py", "--check")
+        val (code, output) = Scripts.run("python3", "-I", "-B", "scripts/weather_icons.py", "--check")
 
         assertEquals(output, 0, code)
     }
 
     @Test
     fun `the script converts what the SVGs use and refuses anything else`() {
-        val (code, output) = run("python3", "-I", "-B", "-m", "unittest", "discover", "-s", "scripts", "-t", "scripts")
+        val (code, output) =
+            Scripts.run(
+                "python3",
+                "-I",
+                "-B",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "scripts",
+                "-t",
+                "scripts",
+            )
 
         assertEquals(output, 0, code)
         assertTrue(output, output.contains("OK"))
@@ -131,45 +138,8 @@ class WeatherIconsTest {
         }
     }
 
-    /**
-     * Runs [command] in the repository's root; its exit code and what it wrote. The output goes to a file, so a command
-     * that hangs fails the test after [timeout] seconds rather than blocking a read of its output.
-     */
-    private fun run(
-        vararg command: String,
-        timeout: Long = TIMEOUT_SECONDS,
-    ): Pair<Int, String> {
-        val log = File.createTempFile("weather-icons", ".log")
-        try {
-            val process =
-                ProcessBuilder(*command)
-                    .directory(root)
-                    .redirectErrorStream(true)
-                    .redirectOutput(log)
-                    .start()
-            if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                error("${command.joinToString(" ")} did not end within $timeout s")
-            }
-            return process.exitValue() to log.readText()
-        } finally {
-            log.delete()
-        }
-    }
-
-    @Test
-    fun `a command that does not end fails the test once its time is up`() {
-        val failure = runCatching { run("python3", "-I", "-B", "-c", "import time; time.sleep(60)", timeout = 1) }
-
-        assertEquals(
-            "python3 -I -B -c import time; time.sleep(60) did not end within 1 s",
-            failure.exceptionOrNull()?.message,
-        )
-    }
-
     private companion object {
         /** The common frame every icon shows, the square around what all of them draw, of the SVGs' 64 (D38). */
         const val ICON_DP = 59.21f
-        const val TIMEOUT_SECONDS = 60L
     }
 }

@@ -65,14 +65,40 @@
     <dimen name="widget_flat_day_text">12sp</dimen>
     <dimen name="widget_flat_day_text_least">7sp</dimen>
     <dimen name="widget_flat_day_low_gap">3dp</dimen>
-    <!-- For a text the app sizes to fit, today's rain and the days' highs and
-         lows (D36, D41): the step between the sizes it tries, and the room it
-         leaves, since a launcher lays a view out in whole pixels, a day can
-         get a pixel less than its share and a text's view rounds its width
-         up; a dp holds those two pixels from twice the base density up. -->
-    <dimen name="widget_flat_text_step">0.5sp</dimen>
-    <dimen name="widget_flat_fit_slack">1dp</dimen>
+    <!-- For a text the app sizes to fit, today's rain, the days' highs and
+         lows and a plain text (D36, D41, D47): the step between the sizes it
+         tries; and the room it leaves there and for a warning's tiles, since
+         a launcher lays a view out in whole pixels, a day can get a pixel
+         less than its share and a text's view rounds its width up; a dp
+         holds those two pixels from twice the base density up. -->
+    <dimen name="widget_text_step">0.5sp</dimen>
+    <dimen name="widget_fit_slack">1dp</dimen>
     <dimen name="widget_notice_height">18dp</dimen>
+    <!-- A plain text, and the least size it shrinks to one row high where a
+         warning's short form and "Stand" leave it too little room (D47). -->
+    <dimen name="widget_plain_text">14sp</dimen>
+    <dimen name="widget_plain_text_least">9sp</dimen>
+    <!-- The gap after "Neu anmelden" before "Stand 14:30" in the notice line
+         (D16). -->
+    <dimen name="widget_notice_gap">8dp</dimen>
+    <!-- The warning band across the top in the wide and tall buckets, and the
+         gap below it, which the days give way to (D47); its text and "+N",
+         their gap, and the symbol a band without a headline shows. -->
+    <dimen name="widget_band_height">22dp</dimen>
+    <dimen name="widget_band_gap">4dp</dimen>
+    <dimen name="widget_band_padding">8dp</dimen>
+    <dimen name="widget_band_text">13sp</dimen>
+    <dimen name="widget_band_more_gap">6dp</dimen>
+    <dimen name="widget_band_symbol">16dp</dimen>
+    <!-- The short form in the line's place in the small and the flat bucket
+         (D47): its tiles' side, largest and least, the step between the
+         sides the app tries, and the gap between the tiles and before "+N";
+         and the gap between the band's word and its symbol. -->
+    <dimen name="widget_tile_largest">28dp</dimen>
+    <dimen name="widget_tile_least">18dp</dimen>
+    <dimen name="widget_tile_step">1dp</dimen>
+    <dimen name="widget_tile_gap">3dp</dimen>
+    <dimen name="widget_short_gap">2dp</dimen>
     <dimen name="widget_notice_text">13sp</dimen>
     <!-- An hour of the hours: its least width and its height. -->
     <dimen name="widget_hour_width">48dp</dimen>

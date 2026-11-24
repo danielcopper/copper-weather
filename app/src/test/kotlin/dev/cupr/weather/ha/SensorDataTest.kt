@@ -83,6 +83,36 @@ class SensorDataTest {
     }
 
     @Test
+    fun `the warnings read their fields, each absent as sent or of another kind, and an absent list as none`() {
+        val data =
+            data(
+                """{"warnings":[{"level":2,"type":52,"headline":"Amtliche WARNUNG vor STURMBÖEN",""" +
+                    """"start":"2026-11-20T12:00:00+01:00","end":"2026-11-20T18:00:00+01:00"},{},""" +
+                    """{"level":2.5,"type":"52","headline":3,"start":"2026-11-20T12:00:00","end":5},7]}""",
+            )
+
+        assertEquals(
+            listOf(
+                SensorData.Warning(
+                    level = 2,
+                    type = 52,
+                    headline = "Amtliche WARNUNG vor STURMBÖEN",
+                    start = Instant.parse("2026-11-20T11:00:00Z"),
+                    end = Instant.parse("2026-11-20T17:00:00Z"),
+                ),
+                SensorData.Warning(null, null, null, null, null),
+                SensorData.Warning(null, null, null, null, null),
+            ),
+            data.warnings,
+        )
+        assertEquals(emptyList<SensorData.Warning>(), data("""{"warnings":[]}""").warnings)
+        // Absent or not a list: the warning sensor delivers nothing, which is not the same as no warning (D15).
+        assertNull(data("{}").warnings)
+        assertNull(data("""{"warnings":{}}""").warnings)
+        assertNull(data("""{"warnings":null}""").warnings)
+    }
+
+    @Test
     fun `rain_at and twilight read as sent, a rain start without an offset as absent`() {
         assertEquals(
             Instant.parse("2026-11-20T12:05:00Z"),

@@ -1,6 +1,6 @@
 [tools]
 java = "temurin-21.0.11+10.0.LTS"  # runs Gradle; AGP 9.5 needs JDK 17 or newer
-python = "3.15.2"  # runs the weather icon script and its tests
+python = "3.15.2"  # runs the weather icon and warning symbol scripts and their tests
 
 [vars]
 # The Android SDK lives under $HOME, installed by `setup` without root.
@@ -86,6 +86,10 @@ rm -f gradle/verification-metadata.xml
 [tasks.icons]
 description = "Write the weather icons from the dashboard's SVGs in icons/weather: the still images' VectorDrawables (D38) and the animated icons' AnimatedVectorDrawables with their layouts (D43)"
 run = "python3 scripts/weather_icons.py"
+
+[tasks.symbols]
+description = "Write the warnings' symbols from the copies of Google's Material Symbols in icons/symbols as VectorDrawables (D48)"
+run = "python3 scripts/warning_symbols.py"
 
 [tasks.install]
 description = "Build the debug APK and install it on the device adb is connected to"

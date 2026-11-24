@@ -2,16 +2,18 @@
 <!-- The widget "Wetter" one row high, the flat bucket (D11, D36): "now" as
      the dashboard's today (its image at the left, still or animated in the
      frame beside it (D43, D44), and beside it the temperature over the rain
-     hint or the condition, or "Neu anmelden" in that line's place while the
-     sign-in is no longer usable, and today's high, low and rain below them),
-     and beside it, after a divider, as many of the next days (D41) or hours
-     (D46) as fit, as the widget is set (D44), or a plain text instead, on the
-     card. Every part starts hidden; WidgetViews shows the ones it fills, adds
-     the days or the hours, and sets the colours from the palette, light and
-     dark (D7). Every part takes its looks from styles.xml, as in
-     widget_weather.xml, "Neu anmelden" and the plain text but for their
-     heights; without days or hours WidgetViews widens "now" to the card. The
-     whole card is one tap. -->
+     hint or the condition, or a warning's short form (D47) or "Neu anmelden"
+     in that line's place, and today's high, low and rain below them, or
+     "Stand 14:30" in their place (D16)), and beside it, after a divider, as
+     many of the next days (D41) or hours (D46) as fit, as the widget is set
+     (D44), on the card; or a plain text instead, in the text area across the
+     card, below a warning's short form while one applies (D47), and "Stand
+     14:30" below it with the warning (D16). Every part starts hidden;
+     WidgetViews shows the ones it fills, adds the days or the hours, and
+     sets the colours from the palette, light and dark (D7). Every part takes
+     its looks from styles.xml, as in widget_weather.xml, "Neu anmelden" and
+     the plain text but for their heights; without days or hours WidgetViews
+     widens "now" to the card. The whole card is one tap. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget"
     style="@style/WeatherWidget.FlatCard">
@@ -51,9 +53,29 @@
                 style="@style/WeatherWidget.Line.Long.Flat"
                 android:visibility="gone" />
 
+            <LinearLayout
+                android:id="@+id/short_form"
+                style="@style/WeatherWidget.ShortSlot"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/short_tiles"
+                    style="@style/WeatherWidget.ShortTiles" />
+
+                <TextView
+                    android:id="@+id/short_more"
+                    style="@style/WeatherWidget.ShortMore" />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/widget_notice"
                 style="@style/WeatherWidget.Notice.Flat"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/widget_plain"
+                style="@style/WeatherWidget.Plain"
+                android:layout_height="wrap_content"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -74,6 +96,11 @@
                     style="@style/WeatherWidget.FlatToday.Degree.Rain"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/stale"
+                style="@style/WeatherWidget.Stale.Flat"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 
@@ -91,11 +118,5 @@
     <LinearLayout
         android:id="@+id/hours"
         style="@style/WeatherWidget.FlatStrip"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/widget_plain"
-        style="@style/WeatherWidget.Plain"
-        android:layout_height="wrap_content"
         android:visibility="gone" />
 </LinearLayout>
